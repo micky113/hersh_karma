@@ -47,14 +47,14 @@ void main() {
     expect(find.text('Access Passport'), findsOneWidget);
 
     // 2. Perform Quick Login (John Doe)
-    final johnLoginBtn = find.text('John Doe (User)');
+    final johnLoginBtn = find.text('John (Individual)');
     expect(johnLoginBtn, findsOneWidget);
     await tester.ensureVisible(johnLoginBtn);
     await tester.tap(johnLoginBtn);
     await tester.pumpAndSettle(const Duration(milliseconds: 1000)); // wait for mock auth login lag
 
     // Should transition to NavigationShell
-    expect(find.text('Karma Passport'), findsOneWidget);
+    expect(find.text('Home'), findsNWidgets(2));
 
     // 3. Click Profile Detail Icon in AppBar leading
     final leadingProfile = find.byKey(const Key('appbar_profile_avatar'));
@@ -68,7 +68,7 @@ void main() {
     // Go back
     await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.text('Karma Passport'), findsOneWidget);
+    expect(find.text('Home'), findsNWidgets(2));
 
     // 4. Click Settings Icon in AppBar actions
     final settingsIcon = find.byIcon(Icons.settings_outlined);
@@ -79,10 +79,13 @@ void main() {
     // Verify Settings screen loaded
     expect(find.text('Settings'), findsOneWidget);
 
+    // Scroll settings list view to make Logout visible
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+
     // 5. Perform Logout
     final logoutTile = find.text('Logout Passport');
     expect(logoutTile, findsOneWidget);
-    await tester.ensureVisible(logoutTile);
     await tester.tap(logoutTile);
     await tester.pumpAndSettle();
 

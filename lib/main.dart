@@ -13,7 +13,7 @@ import 'services/mock/mock_karma_service.dart';
 import 'services/mock/mock_wallet_service.dart';
 import 'views/auth/login_screen.dart';
 import 'views/navigation_shell.dart';
-
+import 'services/voice_service.dart';
 import 'core/routes/app_routes.dart';
 
 void main() async {
@@ -64,14 +64,28 @@ class HershKarmaApp extends StatelessWidget {
           create: (_) => GovernanceProvider(),
         ),
       ],
-      child: MaterialApp(
-        title: 'Proof of Good - Karma Credits',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        initialRoute: AppRoutes.splash,
-        routes: AppRoutes.routes,
+      child: Consumer<AuthProvider>(
+        builder: (context, auth, _) {
+          final user = auth.currentUser;
+          final lang = user?.preferredLanguage ?? KarmaVoice.currentLanguage;
+          final isRtl = lang.toLowerCase() == 'hebrew' || lang.toLowerCase() == 'arabic';
+
+          return MaterialApp(
+            title: 'Proof of Good - Karma Credits',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: ThemeMode.system,
+            initialRoute: AppRoutes.splash,
+            routes: AppRoutes.routes,
+            builder: (context, child) {
+              return Directionality(
+                textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+                child: child!,
+              );
+            },
+          );
+        },
       ),
     );
   }

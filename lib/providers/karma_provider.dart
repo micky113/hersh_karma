@@ -10,6 +10,7 @@ import '../models/challenge.dart';
 import '../models/wish.dart';
 import '../repositories/karma_repo.dart';
 import 'auth_provider.dart';
+import '../models/app_feedback.dart';
 
 class KarmaProvider extends ChangeNotifier {
   final KarmaRepository _karmaRepository;
@@ -19,6 +20,42 @@ class KarmaProvider extends ChangeNotifier {
   List<KarmaAction> _pendingValidationActions = [];
   List<KarmaChallenge> _challenges = [];
   List<Wish> _allWishes = [];
+  
+  List<AppFeedback> _feedbacks = [
+    AppFeedback(
+      id: 'fb_1',
+      screenContext: 'ChallengesScreen',
+      category: FeedbackCategory.idea,
+      details: 'Schools should be able to create challenges.',
+      usefulVotes: 14,
+      notUsefulVotes: 2,
+      status: FeedbackStatus.reviewing,
+      aiClassification: 'Usability',
+      timestamp: DateTime.now().subtract(const Duration(days: 3)),
+    ),
+    AppFeedback(
+      id: 'fb_2',
+      screenContext: 'ProofCaptureScreen',
+      category: FeedbackCategory.idea,
+      details: 'Add Hindi voice support to the capture screens.',
+      usefulVotes: 28,
+      notUsefulVotes: 0,
+      status: FeedbackStatus.implemented,
+      aiClassification: 'Language',
+      timestamp: DateTime.now().subtract(const Duration(days: 5)),
+    ),
+    AppFeedback(
+      id: 'fb_3',
+      screenContext: 'DashboardScreen',
+      category: FeedbackCategory.broken,
+      details: 'This action isn\'t possible in my village due to offline GPS geofence restrictions.',
+      usefulVotes: 9,
+      notUsefulVotes: 1,
+      status: FeedbackStatus.testing,
+      aiClassification: 'Local Need',
+      timestamp: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+  ];
   
   bool _isLoading = false;
   bool _isSubmitting = false;
@@ -342,6 +379,11 @@ class KarmaProvider extends ChangeNotifier {
             description: 'Offered 20% discount on acoustic guitars for verified Karma users.',
             timestamp: DateTime.now().subtract(const Duration(days: 1)),
           ),
+          SponsorContribution(
+            sponsorName: 'Aarav Sharma',
+            description: 'मैने एक अतिरिक्त गिटार बुक किया है, मैं उसे दान करना चाहता हूँ।',
+            timestamp: DateTime.now().subtract(const Duration(hours: 12)),
+          ),
         ],
         createdAt: DateTime.now().subtract(const Duration(days: 3)),
       ),
@@ -417,6 +459,14 @@ class KarmaProvider extends ChangeNotifier {
     required String description,
     required WishCategory category,
     required int karmaTarget,
+    int verificationLevel = 1,
+    PrivacyLevel privacyLevel = PrivacyLevel.public,
+    List<String> evidenceDocumentUrls = const [],
+    bool isIdentityVerified = false,
+    bool ageConsentVerified = false,
+    SponsorshipType sponsorshipType = SponsorshipType.volunteerService,
+    String? retailerName,
+    bool isMinor = false,
   }) async {
     if (_activeUserId == null || _authProvider?.currentUser == null) return false;
 
@@ -425,6 +475,59 @@ class KarmaProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 1. Prohibited content safety checks
+      final prohibitedKeywords = [
+        'drugs', 'drug', 'cocaine', 'marijuana', 'weed', 'heroin', 'weapons', 'weapon', 'guns', 'gun', 'rifle', 
+        'gambling', 'casino', 'betting', 'cheat', 'fraud', 'begging', 'urgent cash', 
+        'send money', 'gimme money', 'cash app me', 'direct cash transfer'
+      ];
+      final combinedText = '$title $description'.toLowerCase();
+      for (final keyword in prohibitedKeywords) {
+        if (combinedText.contains(keyword)) {
+          throw Exception('Wish contains prohibited language or policy violations (keyword: "$keyword").');
+        }
+      }
+
+      // 2. Enhanced verification levels constraint
+      if ((verificationLevel == 3 || verificationLevel == 4) && !isIdentityVerified) {
+        throw Exception('Level 3 and Level 4 wishes require completed identity verification (KYC) first.');
+      }
+
+      // 3. Minors protection check
+      if (isMinor && !ageConsentVerified) {
+        throw Exception('Minor accounts require verified parent/guardian consent to submit a wish.');
+      }
+
+      // 4. Calculate dynamic Wish Trust Score
+      int score = 40; // base score
+      if (isIdentityVerified) score += 30;
+      if (evidenceDocumentUrls.isNotEmpty) score += 15;
+      if (sponsorshipType != SponsorshipType.directItemPurchase && sponsorshipType != SponsorshipType.serviceProviderPayment) {
+        // Volunteer/mentorship focus
+        score += 15;
+      } else if (retailerName != null && retailerName.isNotEmpty) {
+        // Direct-to-retailer routing setup
+        score += 15;
+      }
+
+      // 5. Generate custom Milestones list if target is monetary (> 0)
+      final List<WishMilestone> milestones = [];
+      if (sponsorshipType != SponsorshipType.volunteerService && karmaTarget > 0) {
+        if (karmaTarget > 500) {
+          milestones.addAll([
+            WishMilestone(title: 'Admission / Provider Setup', percentage: 0.20, amount: karmaTarget * 0.20),
+            WishMilestone(title: 'Milestone 1 progress delivery', percentage: 0.30, amount: karmaTarget * 0.30),
+            WishMilestone(title: 'Milestone 2 progress delivery', percentage: 0.25, amount: karmaTarget * 0.25),
+            WishMilestone(title: 'Final outcome validation', percentage: 0.25, amount: karmaTarget * 0.25),
+          ]);
+        } else {
+          milestones.addAll([
+            WishMilestone(title: 'Retailer purchase setup', percentage: 0.50, amount: karmaTarget * 0.50),
+            WishMilestone(title: 'Final item delivery verification', percentage: 0.50, amount: karmaTarget * 0.50),
+          ]);
+        }
+      }
+
       // Simulate AI understanding the wish and generating plan steps
       final List<WishPlanStep> wishPlan = [
         WishPlanStep(title: 'Clarify goals and requirements', isCompleted: true),
@@ -443,6 +546,16 @@ class KarmaProvider extends ChangeNotifier {
         karmaTarget: karmaTarget,
         wishPlan: wishPlan,
         createdAt: DateTime.now(),
+        verificationLevel: verificationLevel,
+        privacyLevel: privacyLevel,
+        wishTrustScore: score,
+        evidenceDocumentUrls: evidenceDocumentUrls,
+        isIdentityVerified: isIdentityVerified,
+        ageConsentVerified: ageConsentVerified,
+        sponsorshipType: sponsorshipType,
+        milestones: milestones,
+        retailerName: retailerName,
+        isReported: false,
       );
 
       _allWishes.insert(0, newWish);
@@ -451,7 +564,7 @@ class KarmaProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = e.toString().replaceAll('Exception: ', '');
       _isSubmitting = false;
       notifyListeners();
       return false;
@@ -490,7 +603,9 @@ class KarmaProvider extends ChangeNotifier {
         _authProvider!.updateLocalUserProfile(updatedUser);
 
         newRaised += karmaAmount;
-        contributionText = 'Sponsored $karmaAmount Karma credits towards fulfillment.';
+        
+        final targetRetailer = wish.retailerName ?? 'Verified Provider';
+        contributionText = 'Sponsored $karmaAmount Karma credits via Payment Gateway routed to $targetRetailer.';
       } else if (customContribution != null && customContribution.isNotEmpty) {
         contributionText = customContribution;
 
@@ -510,6 +625,23 @@ class KarmaProvider extends ChangeNotifier {
           timestamp: DateTime.now(),
         ));
 
+      // Calculate milestone status updates
+      final List<WishMilestone> updatedMilestones = wish.milestones.map((milestone) {
+        final milestoneIdx = wish.milestones.indexOf(milestone);
+        double cumulativePortion = 0.0;
+        for (int i = 0; i <= milestoneIdx; i++) {
+          cumulativePortion += wish.milestones[i].amount;
+        }
+
+        String newMilestoneStatus = milestone.status;
+        if (newRaised >= cumulativePortion) {
+          newMilestoneStatus = 'completed';
+        } else if (newRaised > (cumulativePortion - milestone.amount)) {
+          newMilestoneStatus = 'released';
+        }
+        return milestone.copyWith(status: newMilestoneStatus);
+      }).toList();
+
       // Determine status and mark steps completed accordingly
       WishStatus newStatus = wish.status;
       List<WishPlanStep> newPlan = List<WishPlanStep>.from(wish.wishPlan);
@@ -524,6 +656,7 @@ class KarmaProvider extends ChangeNotifier {
         sponsorContributions: newContributions,
         status: newStatus,
         wishPlan: newPlan,
+        milestones: updatedMilestones,
       );
 
       await _saveWishes(_activeUserId!);
@@ -548,6 +681,67 @@ class KarmaProvider extends ChangeNotifier {
     _allWishes[idx] = wish.copyWith(wishPlan: steps);
     await _saveWishes(_activeUserId!);
     notifyListeners();
+  }
+
+  Future<bool> reportWish(String wishId) async {
+    if (_activeUserId == null) return false;
+    final idx = _allWishes.indexWhere((e) => e.id == wishId);
+    if (idx == -1) return false;
+
+    _allWishes[idx] = _allWishes[idx].copyWith(isReported: true);
+    await _saveWishes(_activeUserId!);
+    notifyListeners();
+    return true;
+  }
+
+  List<AppFeedback> get feedbacks => _feedbacks;
+
+  void submitFeedback(AppFeedback fb) {
+    _feedbacks.insert(0, fb);
+    notifyListeners();
+  }
+
+  void voteFeedback(String id, bool useful) {
+    final idx = _feedbacks.indexWhere((e) => e.id == id);
+    if (idx != -1) {
+      final fb = _feedbacks[idx];
+      _feedbacks[idx] = fb.copyWith(
+        usefulVotes: useful ? fb.usefulVotes + 1 : fb.usefulVotes,
+        notUsefulVotes: !useful ? fb.notUsefulVotes + 1 : fb.notUsefulVotes,
+      );
+      notifyListeners();
+    }
+  }
+
+  AppFeedback parseSpeechImprovement(String rawSpeech, String screenContext) {
+    String structuredText = rawSpeech;
+    String classification = 'Usability';
+
+    final lower = rawSpeech.toLowerCase();
+    if (lower.contains('school') || lower.contains('institution')) {
+      structuredText = 'Allow educational institutions to create custom community challenges.';
+      classification = 'Usability';
+    } else if (lower.contains('hindi') || lower.contains('language') || lower.contains('translation')) {
+      structuredText = 'Expand speech translation and localize the user interfaces in regional Indian dialects.';
+      classification = 'Language';
+    } else if (lower.contains('village') || lower.contains('offline') || lower.contains('network')) {
+      structuredText = 'Support offline proof capture caching for rural action verification.';
+      classification = 'Local Need';
+    } else if (lower.contains('button') || lower.contains('confusing') || lower.contains('text')) {
+      structuredText = 'Increase font sizes, simplify text prompts, and optimize spacing on main action pages.';
+      classification = 'Accessibility';
+    }
+
+    return AppFeedback(
+      id: const Uuid().v4(),
+      screenContext: screenContext,
+      category: FeedbackCategory.idea,
+      details: structuredText,
+      hasVoiceNote: true,
+      timestamp: DateTime.now(),
+      aiClassification: classification,
+      status: FeedbackStatus.suggested,
+    );
   }
 
   @override

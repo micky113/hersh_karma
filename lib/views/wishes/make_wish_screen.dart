@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/karma_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/wish.dart';
 
 class MakeWishScreen extends StatefulWidget {
@@ -15,13 +16,25 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
   final _targetController = TextEditingController(text: '1000');
+  final _retailerController = TextEditingController();
+  final _evidenceController = TextEditingController();
+  
   WishCategory _selectedCategory = WishCategory.experience;
+  int _verificationLevel = 1;
+  PrivacyLevel _privacyLevel = PrivacyLevel.public;
+  SponsorshipType _sponsorshipType = SponsorshipType.volunteerService;
+  
+  bool _isMinor = false;
+  bool _isIdentityVerified = false;
+  bool _ageConsentVerified = false;
 
   @override
   void dispose() {
     _titleController.dispose();
     _descController.dispose();
     _targetController.dispose();
+    _retailerController.dispose();
+    _evidenceController.dispose();
     super.dispose();
   }
 
@@ -31,11 +44,23 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
     final karmaProvider = Provider.of<KarmaProvider>(context, listen: false);
     final target = int.tryParse(_targetController.text.trim()) ?? 1000;
 
+    final List<String> docs = _evidenceController.text.trim().isNotEmpty
+        ? _evidenceController.text.split(',').map((s) => s.trim()).toList()
+        : [];
+
     final success = await karmaProvider.submitWish(
       title: _titleController.text.trim(),
       description: _descController.text.trim(),
       category: _selectedCategory,
-      karmaTarget: target,
+      karmaTarget: _sponsorshipType == SponsorshipType.volunteerService ? 0 : target,
+      verificationLevel: _verificationLevel,
+      privacyLevel: _privacyLevel,
+      evidenceDocumentUrls: docs,
+      isIdentityVerified: _isIdentityVerified,
+      ageConsentVerified: _ageConsentVerified,
+      sponsorshipType: _sponsorshipType,
+      retailerName: _retailerController.text.trim().isNotEmpty ? _retailerController.text.trim() : null,
+      isMinor: _isMinor,
     );
 
     if (success && mounted) {
@@ -78,7 +103,7 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Wishes should be meaningful achievements or community projects. The network will coordinate to help sponsor, fund, or connect resources.',
+                'Wishes should be meaningful achievements. Direct cash transfers are disabled; funds are routed to verified providers.',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               const SizedBox(height: 24),
@@ -143,22 +168,159 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Karma target
-              TextFormField(
-                controller: _targetController,
-                keyboardType: TextInputType.number,
+              // Verification Level dropdown
+              DropdownButtonFormField<int>(
+                value: _verificationLevel,
                 decoration: const InputDecoration(
-                  labelText: 'Desired Karma Crowdfund Target',
-                  hintText: 'e.g. 500, 1000, 2000',
-                  prefixIcon: Icon(Icons.favorite_border_rounded),
+                  labelText: 'Wish Verification Level',
+                  prefixIcon: Icon(Icons.verified_user_outlined),
                 ),
-                validator: (val) {
-                  if (val == null || val.trim().isEmpty) return 'Enter a Karma goal';
-                  final parsed = int.tryParse(val.trim());
-                  if (parsed == null || parsed <= 0) return 'Enter a valid positive number';
-                  return null;
+                items: const [
+                  DropdownMenuItem(value: 1, child: Text('🟢 Level 1 — Personal/Experience')),
+                  DropdownMenuItem(value: 2, child: Text('🔵 Level 2 — Material (needs proof)')),
+                  DropdownMenuItem(value: 3, child: Text('🟠 Level 3 — High-Value (KYC required)')),
+                  DropdownMenuItem(value: 4, child: Text('🔴 Level 4 — Sensitive/High-Risk')),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _verificationLevel = val;
+                    });
+                  }
                 },
               ),
+              const SizedBox(height: 20),
+
+              // Privacy Level dropdown
+              DropdownButtonFormField<PrivacyLevel>(
+                value: _privacyLevel,
+                decoration: const InputDecoration(
+                  labelText: 'Privacy Setting',
+                  prefixIcon: Icon(Icons.visibility_outlined),
+                ),
+                items: PrivacyLevel.values.map((level) {
+                  return DropdownMenuItem(
+                    value: level,
+                    child: Text(level.label),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _privacyLevel = val;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Sponsorship Type dropdown
+              DropdownButtonFormField<SponsorshipType>(
+                value: _sponsorshipType,
+                decoration: const InputDecoration(
+                  labelText: 'Fulfillment / Routing Type',
+                  prefixIcon: Icon(Icons.payment_outlined),
+                ),
+                items: SponsorshipType.values.map((type) {
+                  return DropdownMenuItem(
+                    value: type,
+                    child: Text(type.label),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _sponsorshipType = val;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+
+              // Retailer name field (shown if monetary)
+              if (_sponsorshipType != SponsorshipType.volunteerService) ...[
+                TextFormField(
+                  controller: _retailerController,
+                  decoration: const InputDecoration(
+                    labelText: 'Verified Retailer / Provider Name',
+                    hintText: 'e.g. Croma Music Store, Apex Academy, WaterAid NGO',
+                    prefixIcon: Icon(Icons.storefront_outlined),
+                  ),
+                  validator: (val) => val == null || val.trim().isEmpty
+                      ? 'Enter a verified provider to receive funds'
+                      : null,
+                ),
+                const SizedBox(height: 20),
+
+                // Karma target goal
+                TextFormField(
+                  controller: _targetController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Desired Karma Crowdfund Target',
+                    hintText: 'e.g. 500, 1000, 2000',
+                    prefixIcon: Icon(Icons.favorite_border_rounded),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return 'Enter a Karma goal';
+                    final parsed = int.tryParse(val.trim());
+                    if (parsed == null || parsed <= 0) return 'Enter a valid positive number';
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Evidence documents input
+              TextFormField(
+                controller: _evidenceController,
+                decoration: const InputDecoration(
+                  labelText: 'Evidence / Reference Documents (Optional URLs)',
+                  hintText: 'Comma separated links: e.g. admission_receipt.pdf',
+                  prefixIcon: Icon(Icons.attachment_outlined),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Trust & Safety Toggle simulations
+              Text(
+                '🛡️ Safety Controls Verification',
+                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              
+              SwitchListTile(
+                title: const Text('Simulate KYC Identity Verified Account', style: TextStyle(fontSize: 12)),
+                subtitle: const Text('Required for Level 3 and 4 wishes', style: TextStyle(fontSize: 10)),
+                value: _isIdentityVerified,
+                onChanged: (val) {
+                  setState(() {
+                    _isIdentityVerified = val;
+                  });
+                },
+              ),
+
+              SwitchListTile(
+                title: const Text('Underage minor account holder (under 18)', style: TextStyle(fontSize: 12)),
+                value: _isMinor,
+                onChanged: (val) {
+                  setState(() {
+                    _isMinor = val;
+                    if (!val) _ageConsentVerified = false;
+                  });
+                },
+              ),
+
+              if (_isMinor)
+                SwitchListTile(
+                  title: const Text('Verified Parent/Guardian consent document attached', style: TextStyle(fontSize: 12)),
+                  value: _ageConsentVerified,
+                  onChanged: (val) {
+                    setState(() {
+                      _ageConsentVerified = val;
+                    });
+                  },
+                ),
               const SizedBox(height: 24),
 
               // AI plan card preview
@@ -180,12 +342,12 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              '🤖 AI Wish Plan Generator',
+                              '🤖 AI Safety Verification Engine',
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'When you submit, Karma Grid AI automatically analyzes your wish and creates a 4-step actionable execution roadmap. Sponsors can view milestones and contribute resources or Karma directly to specific steps.',
+                              'Wishes undergo automated scans for prohibited activities, weapons, drug requests, begging phrases, and collision networks. Suspicious cases are routed to human review.',
                               style: TextStyle(color: Colors.grey[750], fontSize: 11, height: 1.4),
                             ),
                           ],

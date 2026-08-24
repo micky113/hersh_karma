@@ -54,7 +54,7 @@ void main() {
     test('Should submit a good deed and increment totalSubmissions', () async {
       // 1. Log in John
       final user = await authService.login('john@karma.com', 'password123');
-      expect(user!.totalSubmissions, equals(8));
+      expect(user!.totalSubmissions, equals(126));
 
       // 2. Submit new deed
       final initialDeed = KarmaAction(
@@ -79,7 +79,7 @@ void main() {
 
       // Verify user total submissions updated
       final updatedUser = await authService.getCurrentUser();
-      expect(updatedUser!.totalSubmissions, equals(9));
+      expect(updatedUser!.totalSubmissions, equals(127));
     });
 
     test('Validator voting should reach consensus and award credits', () async {
@@ -865,7 +865,7 @@ void main() {
         // Reload wish
         final updatedWish = karmaProvider.allWishes.firstWhere((w) => w.id == 'wish_guitar');
         expect(updatedWish.karmaRaised, equals(170));
-        expect(updatedWish.sponsorContributions.length, equals(3)); // 2 seeded + 1 new
+        expect(updatedWish.sponsorContributions.length, equals(4)); // 3 seeded + 1 new
         expect(updatedWish.sponsorContributions.last.description, contains('Sponsored 50 Karma'));
 
         // Verify John's profile updates: credits deducted (120 - 50 = 70) and reputation rewarded (+10)
@@ -933,6 +933,108 @@ void main() {
 
         final updatedWish = karmaProvider.allWishes.firstWhere((w) => w.id == 'wish_guitar');
         expect(updatedWish.wishPlan[1].isCompleted, isTrue);
+      });
+
+      test('Should reject wish containing prohibited content (safety check)', () async {
+        await authProvider.login('john@karma.com', 'password123');
+        karmaProvider.update(authProvider);
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Prohibited request (weapons/guns)
+        final success = await karmaProvider.submitWish(
+          title: 'I want to buy a gun',
+          description: 'I need it for self defense.',
+          category: WishCategory.experience,
+          karmaTarget: 1000,
+        );
+
+        expect(success, isFalse);
+        expect(karmaProvider.error, contains('contains prohibited language'));
+      });
+
+      test('Should enforce identity verification (KYC) for Level 3/4 wishes', () async {
+        await authProvider.login('john@karma.com', 'password123');
+        karmaProvider.update(authProvider);
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Level 3 wish with unverified identity
+        final success = await karmaProvider.submitWish(
+          title: 'University degree tuition',
+          description: 'Need assistance for final semester college fees.',
+          category: WishCategory.education,
+          karmaTarget: 2000,
+          verificationLevel: 3,
+          isIdentityVerified: false,
+        );
+
+        expect(success, isFalse);
+        expect(karmaProvider.error, contains('require completed identity verification'));
+      });
+
+      test('Should enforce parental consent check for minors', () async {
+        await authProvider.login('john@karma.com', 'password123');
+        karmaProvider.update(authProvider);
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Minor wish without consent
+        final success = await karmaProvider.submitWish(
+          title: 'Coding course for kids',
+          description: 'Would love to study game programming.',
+          category: WishCategory.education,
+          karmaTarget: 500,
+          isMinor: true,
+          ageConsentVerified: false,
+        );
+
+        expect(success, isFalse);
+        expect(karmaProvider.error, contains('require verified parent/guardian consent'));
+      });
+
+      test('Should route payments to verified retailers and populate milestones', () async {
+        await authProvider.login('john@karma.com', 'password123');
+        karmaProvider.update(authProvider);
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Create direct-to-retailer wish
+        final success = await karmaProvider.submitWish(
+          title: 'Study Laptop Device',
+          description: 'Need a computer to learn software coding.',
+          category: WishCategory.education,
+          karmaTarget: 100,
+          sponsorshipType: SponsorshipType.directItemPurchase,
+          retailerName: 'Croma Digital Store',
+        );
+
+        expect(success, isTrue);
+
+        final newWish = karmaProvider.allWishes.first;
+        expect(newWish.retailerName, equals('Croma Digital Store'));
+        expect(newWish.milestones.length, equals(2)); // <=500 target gives 2 milestones
+
+        // Sponsor 50 Karma
+        final sponsorSuccess = await karmaProvider.sponsorWish(newWish.id, karmaAmount: 50);
+        expect(sponsorSuccess, isTrue);
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        final updatedWish = karmaProvider.allWishes.first;
+        expect(updatedWish.sponsorContributions.last.description, contains('via Payment Gateway routed to Croma Digital Store'));
+        // Milestone 1 (50% of 100 = 50) becomes completed!
+        expect(updatedWish.milestones[0].status, equals('completed'));
+      });
+
+      test('Should support reporting wishes and flag them', () async {
+        await authProvider.login('john@karma.com', 'password123');
+        karmaProvider.update(authProvider);
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        final wish = karmaProvider.allWishes.firstWhere((w) => w.id == 'wish_guitar');
+        expect(wish.isReported, isFalse);
+
+        final success = await karmaProvider.reportWish(wish.id);
+        expect(success, isTrue);
+
+        final updatedWish = karmaProvider.allWishes.firstWhere((w) => w.id == 'wish_guitar');
+        expect(updatedWish.isReported, isTrue);
       });
     });
   });

@@ -22,6 +22,7 @@ import '../../views/governance/governance_screen.dart';
 import '../../views/exchange/impact_exchange_screen.dart';
 import '../../views/submissions/karma_firewall_screen.dart';
 import '../../views/submissions/proof_capture_screen.dart';
+import '../../views/submissions/karma_result_screen.dart';
 import '../../views/wishes/wish_board_screen.dart';
 import '../../views/wishes/make_wish_screen.dart';
 import '../../views/wishes/wish_detail_screen.dart';
@@ -54,6 +55,7 @@ class AppRoutes {
   static const String wishes = '/wishes';
   static const String createWish = '/create-wish';
   static const String wishDetail = '/wish-detail';
+  static const String karmaResult = '/karma-result';
 
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -89,6 +91,7 @@ class AppRoutes {
         final wishId = ModalRoute.of(context)!.settings.arguments as String;
         return WishDetailScreen(wishId: wishId);
       },
+      karmaResult: (_) => const KarmaResultScreen(),
     };
   }
 }

@@ -313,12 +313,11 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
     );
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Deed submitted to Validator Queue!'),
-          backgroundColor: Color(0xFF00B074),
-        ),
-      );
+      final newDeed = karmaProvider.myActions.isNotEmpty ? karmaProvider.myActions.first : null;
+      final credits = newDeed?.creditsAwarded ?? 350;
+
+      Navigator.pushNamed(context, AppRoutes.karmaResult, arguments: credits);
+
       // Reset form
       _titleController.clear();
       _descController.clear();

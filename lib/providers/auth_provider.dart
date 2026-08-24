@@ -42,11 +42,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> signUp(String name, String email, String password) async {
+  Future<bool> signUp(String name, String email, String password, {UserRole role = UserRole.individual}) async {
     _setLoading(true);
     _clearError();
     try {
-      _currentUser = await _authRepository.signUp(name, email, password);
+      _currentUser = await _authRepository.signUp(name, email, password, role: role);
       _setLoading(false);
       return true;
     } catch (e) {

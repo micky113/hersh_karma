@@ -23,6 +23,70 @@ enum WishStatus {
   const WishStatus(this.label);
 }
 
+enum PrivacyLevel {
+  public('Public'),
+  communityOnly('Community Only'),
+  private('Private');
+
+  final String label;
+  const PrivacyLevel(this.label);
+}
+
+enum SponsorshipType {
+  directItemPurchase('Direct Item Purchase (Retailer)'),
+  serviceProviderPayment('Service Provider Payment'),
+  volunteerService('Volunteer / Mentorship');
+
+  final String label;
+  const SponsorshipType(this.label);
+}
+
+class WishMilestone {
+  final String title;
+  final double percentage; // e.g. 0.20
+  final double amount; // calculated target contribution portion
+  final String status; // 'pending', 'released', 'completed'
+
+  WishMilestone({
+    required this.title,
+    required this.percentage,
+    required this.amount,
+    this.status = 'pending',
+  });
+
+  WishMilestone copyWith({
+    String? title,
+    double? percentage,
+    double? amount,
+    String? status,
+  }) {
+    return WishMilestone(
+      title: title ?? this.title,
+      percentage: percentage ?? this.percentage,
+      amount: amount ?? this.amount,
+      status: status ?? this.status,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'percentage': percentage,
+      'amount': amount,
+      'status': status,
+    };
+  }
+
+  factory WishMilestone.fromJson(Map<String, dynamic> json) {
+    return WishMilestone(
+      title: json['title'] as String,
+      percentage: (json['percentage'] as num).toDouble(),
+      amount: (json['amount'] as num).toDouble(),
+      status: json['status'] as String? ?? 'pending',
+    );
+  }
+}
+
 class WishPlanStep {
   final String title;
   final bool isCompleted;
@@ -59,7 +123,7 @@ class WishPlanStep {
 
 class SponsorContribution {
   final String sponsorName;
-  final String description; // e.g. "Contributed 100 Karma", "I'll offer free guitar lessons"
+  final String description; // e.g. "Contributed 100 Karma to Croma Store for device stock"
   final DateTime timestamp;
 
   SponsorContribution({
@@ -99,6 +163,18 @@ class Wish {
   final List<SponsorContribution> sponsorContributions;
   final DateTime createdAt;
 
+  // New trust & safety fields
+  final int verificationLevel; // 1 to 4
+  final PrivacyLevel privacyLevel;
+  final int wishTrustScore; // 0 to 100
+  final List<String> evidenceDocumentUrls;
+  final bool isIdentityVerified;
+  final bool ageConsentVerified;
+  final SponsorshipType sponsorshipType;
+  final List<WishMilestone> milestones;
+  final String? retailerName;
+  final bool isReported;
+
   Wish({
     required this.id,
     required this.userId,
@@ -112,6 +188,16 @@ class Wish {
     required this.wishPlan,
     this.sponsorContributions = const [],
     required this.createdAt,
+    this.verificationLevel = 1,
+    this.privacyLevel = PrivacyLevel.public,
+    this.wishTrustScore = 50,
+    this.evidenceDocumentUrls = const [],
+    this.isIdentityVerified = false,
+    this.ageConsentVerified = false,
+    this.sponsorshipType = SponsorshipType.volunteerService,
+    this.milestones = const [],
+    this.retailerName,
+    this.isReported = false,
   });
 
   Wish copyWith({
@@ -127,6 +213,16 @@ class Wish {
     List<WishPlanStep>? wishPlan,
     List<SponsorContribution>? sponsorContributions,
     DateTime? createdAt,
+    int? verificationLevel,
+    PrivacyLevel? privacyLevel,
+    int? wishTrustScore,
+    List<String>? evidenceDocumentUrls,
+    bool? isIdentityVerified,
+    bool? ageConsentVerified,
+    SponsorshipType? sponsorshipType,
+    List<WishMilestone>? milestones,
+    String? retailerName,
+    bool? isReported,
   }) {
     return Wish(
       id: id ?? this.id,
@@ -141,6 +237,16 @@ class Wish {
       wishPlan: wishPlan ?? this.wishPlan,
       sponsorContributions: sponsorContributions ?? this.sponsorContributions,
       createdAt: createdAt ?? this.createdAt,
+      verificationLevel: verificationLevel ?? this.verificationLevel,
+      privacyLevel: privacyLevel ?? this.privacyLevel,
+      wishTrustScore: wishTrustScore ?? this.wishTrustScore,
+      evidenceDocumentUrls: evidenceDocumentUrls ?? this.evidenceDocumentUrls,
+      isIdentityVerified: isIdentityVerified ?? this.isIdentityVerified,
+      ageConsentVerified: ageConsentVerified ?? this.ageConsentVerified,
+      sponsorshipType: sponsorshipType ?? this.sponsorshipType,
+      milestones: milestones ?? this.milestones,
+      retailerName: retailerName ?? this.retailerName,
+      isReported: isReported ?? this.isReported,
     );
   }
 
@@ -158,6 +264,16 @@ class Wish {
       'wishPlan': wishPlan.map((e) => e.toJson()).toList(),
       'sponsorContributions': sponsorContributions.map((e) => e.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
+      'verificationLevel': verificationLevel,
+      'privacyLevel': privacyLevel.name,
+      'wishTrustScore': wishTrustScore,
+      'evidenceDocumentUrls': evidenceDocumentUrls,
+      'isIdentityVerified': isIdentityVerified,
+      'ageConsentVerified': ageConsentVerified,
+      'sponsorshipType': sponsorshipType.name,
+      'milestones': milestones.map((e) => e.toJson()).toList(),
+      'retailerName': retailerName,
+      'isReported': isReported,
     };
   }
 
@@ -185,6 +301,24 @@ class Wish {
           .map((e) => SponsorContribution.fromJson(e as Map<String, dynamic>))
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
+      verificationLevel: json['verificationLevel'] as int? ?? 1,
+      privacyLevel: PrivacyLevel.values.firstWhere(
+        (e) => e.name == json['privacyLevel'],
+        orElse: () => PrivacyLevel.public,
+      ),
+      wishTrustScore: json['wishTrustScore'] as int? ?? 50,
+      evidenceDocumentUrls: List<String>.from(json['evidenceDocumentUrls'] ?? []),
+      isIdentityVerified: json['isIdentityVerified'] as bool? ?? false,
+      ageConsentVerified: json['ageConsentVerified'] as bool? ?? false,
+      sponsorshipType: SponsorshipType.values.firstWhere(
+        (e) => e.name == json['sponsorshipType'],
+        orElse: () => SponsorshipType.volunteerService,
+      ),
+      milestones: (json['milestones'] as List? ?? [])
+          .map((e) => WishMilestone.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      retailerName: json['retailerName'] as String?,
+      isReported: json['isReported'] as bool? ?? false,
     );
   }
 }

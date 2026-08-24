@@ -2,17 +2,74 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/routes/app_routes.dart';
+import '../../models/user_profile.dart';
+import '../../services/voice_service.dart';
+import 'language_hub_modal.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.currentUser;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: ListView(
         children: [
           const SizedBox(height: 12),
+          _buildCategoryHeader('ACCESSIBILITY & VOICE'),
+          if (user != null) ...[
+            ListTile(
+              leading: const Icon(Icons.accessibility_new_rounded),
+              title: const Text('App Interface Mode'),
+              subtitle: Text(user.interfaceMode.name.toUpperCase()),
+              trailing: DropdownButton<AppInterfaceMode>(
+                value: user.interfaceMode,
+                underline: const SizedBox(),
+                items: AppInterfaceMode.values.map((mode) {
+                  return DropdownMenuItem(
+                    value: mode,
+                    child: Text(mode == AppInterfaceMode.simple
+                        ? 'Simple Mode 👵'
+                        : mode == AppInterfaceMode.standard
+                            ? 'Standard Mode ⚡'
+                            : 'Professional 🧑‍💼'),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    final updated = user.copyWith(interfaceMode: val);
+                    authProvider.updateLocalUserProfile(updated);
+                    KarmaVoice.speak('do_good', directText: 'Interface changed to ${val.name} mode', context: context);
+                  }
+                },
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.translate_rounded),
+              title: const Text('Voice Language'),
+              subtitle: Text(user.preferredLanguage),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => LanguageHubModal.show(context),
+            ),
+          ],
+          ListTile(
+            leading: const Icon(Icons.volume_up_rounded),
+            title: const Text('Voice Guidance'),
+            subtitle: const Text('Hear button descriptions and cues on tap'),
+            trailing: Switch(
+              value: !KarmaVoice.isMuted,
+              onChanged: (val) {
+                KarmaVoice.isMuted = !val;
+                if (user != null) {
+                  authProvider.updateLocalUserProfile(user.copyWith());
+                }
+              },
+            ),
+          ),
+          const Divider(),
           _buildCategoryHeader('GENERAL SETTINGS'),
           ListTile(
             leading: const Icon(Icons.palette_outlined),

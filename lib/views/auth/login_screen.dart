@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../core/routes/app_routes.dart';
+import '../../models/user_profile.dart';
+import '../support/language_hub_modal.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isSignUp = false;
+  UserRole _selectedRole = UserRole.individual;
 
   @override
   void dispose() {
@@ -36,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _nameController.text,
         _emailController.text,
         _passwordController.text,
+        role: _selectedRole,
       );
     } else {
       success = await authProvider.login(
@@ -82,6 +86,15 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.language_rounded, color: Color(0xFF00B074)),
+                  label: const Text('🌐 Language / भाषा', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00B074))),
+                  onPressed: () => LanguageHubModal.show(context),
+                ),
+              ),
+              const SizedBox(height: 12),
               const Icon(
                 Icons.favorite_rounded,
                 size: 72,
@@ -89,21 +102,33 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Proof of Good',
+                'Karma Grid — Proof of Good',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF00B074),
                 ),
               ),
+              const SizedBox(height: 4),
               Text(
-                'Decentralized Karma & Eco Ledger',
+                'Do good. Prove it. Create impact. Make wishes possible.',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildPillarBadge('🌱 Actions'),
+                  _buildPillarBadge('🔐 Proof'),
+                  _buildPillarBadge('🌍 Impact'),
+                  _buildPillarBadge('✨ Wishes'),
+                ],
+              ),
+              const SizedBox(height: 24),
               Card(
                 elevation: 4,
                 shadowColor: Colors.black12,
@@ -130,6 +155,27 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (val) =>
                                 val == null || val.isEmpty ? 'Enter display name' : null,
+                          ),
+                          const SizedBox(height: 16),
+                          DropdownButtonFormField<UserRole>(
+                            value: _selectedRole,
+                            decoration: const InputDecoration(
+                              labelText: 'Account Role / Type',
+                              prefixIcon: Icon(Icons.badge_outlined),
+                            ),
+                            items: UserRole.values.map((role) {
+                              return DropdownMenuItem(
+                                value: role,
+                                child: Text(role.label),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _selectedRole = val;
+                                });
+                              }
+                            },
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -191,20 +237,42 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
-                Row(
+                Column(
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _quickLogin('john@karma.com', 'password123'),
-                        child: const Text('John Doe (User)'),
-                      ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _quickLogin('john@karma.com', 'password123'),
+                            child: const Text('John (Individual)', style: TextStyle(fontSize: 11)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _quickLogin('jane@karma.com', 'password123'),
+                            child: const Text('Jane (NGO / Org)', style: TextStyle(fontSize: 11)),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => _quickLogin('jane@karma.com', 'password123'),
-                        child: const Text('Jane Smith (Validator)'),
-                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _quickLogin('school@karma.com', 'password123'),
+                            child: const Text('Apex (School / Inst)', style: TextStyle(fontSize: 11)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => _quickLogin('corp@karma.com', 'password123'),
+                            child: const Text('CSR Tech (Corporate)', style: TextStyle(fontSize: 11)),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 )
@@ -212,6 +280,21 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPillarBadge(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green.withOpacity(0.12)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF00B074)),
       ),
     );
   }

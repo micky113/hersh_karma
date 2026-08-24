@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/karma_category.dart';
+import '../../services/voice_service.dart';
+import '../support/feedback_modal.dart';
 
 class ProofCaptureScreen extends StatefulWidget {
   final KarmaCategory category;
@@ -62,6 +64,13 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
       appBar: AppBar(
         title: const Text('🔐 Proof Capture Mode'),
         backgroundColor: widget.category.color,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.white),
+            tooltip: 'Improve Karma Grid',
+            onPressed: () => FeedbackModal.show(context, 'ProofCaptureScreen'),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -195,7 +204,16 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
   Widget _buildCaptureBeforeStep(ThemeData theme) {
     return Column(
       children: [
-        Text('Step 2: Capture BEFORE Image', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Step 2: Capture BEFORE Image', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            IconButton(
+              icon: const Icon(Icons.volume_up, color: Colors.green),
+              onPressed: () => KarmaVoice.speak('before_proof', context: context),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         const Text('Align the area of impact. AI will scan for trash items or soil conditions.', style: TextStyle(color: Colors.black54)),
         const SizedBox(height: 24),
@@ -301,7 +319,16 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
           ),
         ),
         const SizedBox(height: 32),
-        Text('Step 3: Complete Your Activity', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Step 3: Complete Your Activity', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            IconButton(
+              icon: const Icon(Icons.volume_up, color: Colors.green),
+              onPressed: () => KarmaVoice.speak('action_in_progress', context: context),
+            ),
+          ],
+        ),
         const SizedBox(height: 12),
         Text('Complete your environmental action now.', style: TextStyle(color: widget.category.color, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
@@ -376,7 +403,16 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
   Widget _buildCaptureAfterStep(ThemeData theme) {
     return Column(
       children: [
-        Text('Step 5: Capture AFTER Image', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Step 5: Capture AFTER Image', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            IconButton(
+              icon: const Icon(Icons.volume_up, color: Colors.green),
+              onPressed: () => KarmaVoice.speak('after_proof', context: context),
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
         const Text('Confirming outcome. AI is scanning for remaining objects.', style: TextStyle(color: Colors.black54)),
         const SizedBox(height: 24),
@@ -484,7 +520,16 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
                   child: Icon(Icons.verified, color: Colors.white, size: 44),
                 ),
                 const SizedBox(height: 16),
-                Text('AI Screening Report', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('AI Screening Report', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                    IconButton(
+                      icon: const Icon(Icons.volume_up, color: Colors.green),
+                      onPressed: () => KarmaVoice.speak('verification', context: context),
+                    ),
+                  ],
+                ),
                 Text('Proof verified internally inside secure enclave', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                 const SizedBox(height: 24),
                 

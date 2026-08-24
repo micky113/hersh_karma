@@ -4,10 +4,10 @@ import '../providers/auth_provider.dart';
 import '../core/routes/app_routes.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'challenges/challenges_screen.dart';
-import 'submissions/submit_deed_screen.dart';
-import 'map/impact_map_screen.dart';
-import 'verification/validator_screen.dart';
+import 'wishes/wish_board_screen.dart';
 import 'wallet/wallet_screen.dart';
+import '../services/voice_service.dart';
+import 'support/feedback_modal.dart';
 
 class NavigationShell extends StatefulWidget {
   const NavigationShell({super.key});
@@ -23,9 +23,8 @@ class _NavigationShellState extends State<NavigationShell> {
   final List<Widget> _screens = [
     const DashboardScreen(),
     const ChallengesScreen(),
-    const SubmitDeedScreen(),
-    const ImpactMapScreen(),
-    const ValidatorScreen(),
+    const SizedBox.shrink(), // Dummy index placeholder for Create sheet
+    const WishBoardScreen(),
     const WalletScreen(),
   ];
 
@@ -34,13 +33,17 @@ class _NavigationShellState extends State<NavigationShell> {
     if (_firstLoad) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is int) {
-        _currentIndex = args;
+        // Adjust for index bounds in the new 5-tab scheme
+        _currentIndex = args >= 0 && args < 5 ? args : 0;
       }
       _firstLoad = false;
     }
 
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.currentUser;
+    if (user != null) {
+      KarmaVoice.currentLanguage = user.preferredLanguage;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -58,25 +61,24 @@ class _NavigationShellState extends State<NavigationShell> {
             ),
           ),
         ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _currentIndex == 0
-                  ? 'Karma Passport'
-                  : _currentIndex == 1
-                      ? 'Karma Challenges'
-                      : _currentIndex == 2
-                          ? 'Submit Proof of Good'
-                          : _currentIndex == 3
-                              ? 'Impact Network Map'
-                              : _currentIndex == 4
-                                  ? 'Community Validator'
-                                  : 'Decentralized Wallet',
-            ),
-          ],
+        title: Text(
+          _currentIndex == 0
+              ? 'Home'
+              : _currentIndex == 1
+                  ? 'Discover'
+                  : _currentIndex == 3
+                      ? 'Wishes Hub'
+                      : 'My Passport',
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber),
+            tooltip: 'Improve Karma Grid',
+            onPressed: () {
+              final screenNames = ['DashboardScreen', 'ChallengesScreen', 'SizedBox', 'WishBoardScreen', 'WalletScreen'];
+              FeedbackModal.show(context, screenNames[_currentIndex]);
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.notifications_none_rounded),
             tooltip: 'Notifications',
@@ -98,9 +100,13 @@ class _NavigationShellState extends State<NavigationShell> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (index == 2) {
+            _showCreateBottomSheet(context);
+          } else {
+            setState(() {
+              _currentIndex = index;
+            });
+          }
         },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFF00B074),
@@ -110,37 +116,98 @@ class _NavigationShellState extends State<NavigationShell> {
         showUnselectedLabels: true,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.badge_outlined),
-            activeIcon: Icon(Icons.badge_rounded),
-            label: 'Passport',
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.stars_outlined),
-            activeIcon: Icon(Icons.stars_rounded),
-            label: 'Missions',
+            icon: Icon(Icons.explore_outlined),
+            activeIcon: Icon(Icons.explore),
+            label: 'Discover',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline_rounded),
             activeIcon: Icon(Icons.add_circle_rounded),
-            label: 'Submit',
+            label: 'Create',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.map_outlined),
-            activeIcon: Icon(Icons.map_rounded),
-            label: 'Impact Map',
+            icon: Icon(Icons.auto_awesome_outlined),
+            activeIcon: Icon(Icons.auto_awesome),
+            label: 'Wishes',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.verified_user_outlined),
-            activeIcon: Icon(Icons.verified_user_rounded),
-            label: 'Validate',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            activeIcon: Icon(Icons.account_balance_wallet_rounded),
-            label: 'Wallet',
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Me',
           ),
         ],
       ),
+    );
+  }
+
+  void _showCreateBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Create & Contribute',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 24),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Color(0xFF00B074),
+                    child: Icon(Icons.volunteer_activism, color: Colors.white),
+                  ),
+                  title: const Text('🌱 Do an Action', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Complete a verified Proof of Good activity'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, AppRoutes.uploadProof);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.amber,
+                    child: Icon(Icons.report_problem_outlined, color: Colors.white),
+                  ),
+                  title: const Text('🔎 Report a Problem', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Flag visible community, animal or environmental issues'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, AppRoutes.reportAbuse);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const CircleAvatar(
+                    backgroundColor: Colors.purple,
+                    child: Icon(Icons.lightbulb_outline, color: Colors.white),
+                  ),
+                  title: const Text('💡 Add an Action Proposal', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text('Propose a new global leap-year action to the community'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, AppRoutes.proposeAction);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

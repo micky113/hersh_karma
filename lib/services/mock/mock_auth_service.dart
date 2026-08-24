@@ -15,24 +15,64 @@ class MockAuthService implements AuthRepository {
       'name': 'John Doe',
       'email': 'john@karma.com',
       'password': 'password123',
+      'role': 'individual',
       'reputationScore': 65,
-      'karmaCredits': 120, // starts with some credits so they can mint right away!
+      'karmaCredits': 120,
       'tokensBalance': 2.5,
       'categoryCredits': {'environment': 50, 'animalWelfare': 40, 'humanKindness': 30},
-      'totalSubmissions': 8,
-      'verifiedSubmissions': 5,
+      'totalSubmissions': 126,
+      'verifiedSubmissions': 118,
+      'wasteRecoveredKg': 4200.0,
+      'peopleTaught': 37,
+      'karmaRipplesCount': 12,
     },
     'jane@karma.com': {
       'id': 'user_jane',
-      'name': 'Jane Smith (Validator)',
+      'name': 'Green Earth Foundation (NGO)',
       'email': 'jane@karma.com',
       'password': 'password123',
-      'reputationScore': 90, // higher rep
-      'karmaCredits': 45,
-      'tokensBalance': 10.0,
-      'categoryCredits': {'education': 30, 'healthcare': 15},
-      'totalSubmissions': 4,
-      'verifiedSubmissions': 4,
+      'role': 'ngo',
+      'reputationScore': 90,
+      'karmaCredits': 450,
+      'tokensBalance': 100.0,
+      'categoryCredits': {'environment': 300, 'healthcare': 150},
+      'totalSubmissions': 62,
+      'verifiedSubmissions': 62,
+      'isOrgVerified': true,
+      'projectsCount': 14,
+      'peopleReached': 28400,
+      'totalVolunteers': 1200,
+    },
+    'school@karma.com': {
+      'id': 'user_school',
+      'name': 'Apex Academy (School)',
+      'email': 'school@karma.com',
+      'password': 'password123',
+      'role': 'institution',
+      'reputationScore': 85,
+      'karmaCredits': 500,
+      'tokensBalance': 0.0,
+      'categoryCredits': {'education': 400},
+      'totalSubmissions': 3820,
+      'verifiedSubmissions': 3800,
+      'isOrgVerified': true,
+      'studentsCount': 640,
+    },
+    'corp@karma.com': {
+      'id': 'user_corp',
+      'name': 'CSR TechCorp (Business)',
+      'email': 'corp@karma.com',
+      'password': 'password123',
+      'role': 'corporate',
+      'reputationScore': 95,
+      'karmaCredits': 2500,
+      'tokensBalance': 500.0,
+      'categoryCredits': {'environment': 1000},
+      'totalSubmissions': 37,
+      'verifiedSubmissions': 37,
+      'isOrgVerified': true,
+      'employeesCount': 2450,
+      'projectsCount': 37,
     }
   };
 
@@ -124,7 +164,7 @@ class MockAuthService implements AuthRepository {
   }
 
   @override
-  Future<UserProfile?> signUp(String name, String email, String password) async {
+  Future<UserProfile?> signUp(String name, String email, String password, {UserRole role = UserRole.individual}) async {
     await Future.delayed(const Duration(milliseconds: 800));
     final normalizedEmail = email.trim().toLowerCase();
     
@@ -133,6 +173,7 @@ class MockAuthService implements AuthRepository {
       id: newUserId,
       name: name,
       email: normalizedEmail,
+      role: role,
       reputationScore: 50,
       karmaCredits: 0,
       tokensBalance: 0.0,
