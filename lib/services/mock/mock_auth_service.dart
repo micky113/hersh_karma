@@ -205,4 +205,26 @@ class MockAuthService implements AuthRepository {
     await prefs.setString('profile_${updatedProfile.id}', jsonEncode(updatedProfile.toJson()));
     _authStateController.add(updatedProfile);
   }
+
+  @override
+  Future<List<UserProfile>> getAllUsers() async {
+    final List<UserProfile> list = [];
+    final prefs = await SharedPreferences.getInstance();
+    
+    for (final email in _mockUserDatabase.keys) {
+      final baseData = _mockUserDatabase[email]!;
+      final id = baseData['id'];
+      final storedJson = prefs.getString('profile_$id');
+      if (storedJson != null) {
+        try {
+          list.add(UserProfile.fromJson(jsonDecode(storedJson)));
+        } catch (_) {
+          list.add(UserProfile.fromJson(baseData));
+        }
+      } else {
+        list.add(UserProfile.fromJson(baseData));
+      }
+    }
+    return list;
+  }
 }

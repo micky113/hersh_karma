@@ -586,9 +586,9 @@ void main() {
         final submitted = await mockKarma.submitKarmaAction(action);
         
         expect(submitted.verificationLevel, equals(2));
-        expect(submitted.provisionalCredits, equals(15)); // 30% of 50
-        expect(submitted.verifiedCredits, equals(25)); // 50% of 50
-        expect(submitted.outcomeCredits, equals(10)); // 20% of 50
+        expect(submitted.provisionalCredits, equals(17)); // 30% of 55
+        expect(submitted.verifiedCredits, equals(28)); // 50% of 55
+        expect(submitted.outcomeCredits, equals(11)); // 20% of 55
       });
 
       test('Should trigger random audit and adjust user trust score correctly', () async {
@@ -682,11 +682,11 @@ void main() {
         // Assert that both provisional + verified + ripple credits were instantly released!
         // baseCredits = 50. confidence = 1.0. finalCredits = 50.
         // splits: prov = 15. verified = 25. outcome = 10.
-        // ripple: 20% of (15 + 25 + 10) = 10.
-        // Total instantly released = 15 (provisional) + 25 (verified) + 10 (ripple) = 50 credits!
-        // Final balance = 100 (initial) + 50 = 150 credits!
+        // ripple: 20% of (17 + 28 + 11) = 11.
+        // Total instantly released = 17 (provisional) + 28 (verified) + 11 (ripple) = 56 credits!
+        // Final balance = 100 (initial) + 56 = 156 credits!
         final updatedUser = await mockAuth.getCurrentUser();
-        expect(updatedUser!.karmaCredits, equals(150));
+        expect(updatedUser!.karmaCredits, equals(156));
       });
 
       test('Should mark action as Pending if Evidence Score is between 70 and 89', () async {

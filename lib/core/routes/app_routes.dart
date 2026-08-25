@@ -8,6 +8,7 @@ import '../../views/feed/community_feed_screen.dart';
 import '../../views/leaderboard/leaderboard_screen.dart';
 import '../../views/profile/profile_detail_screen.dart';
 import '../../views/submissions/upload_proof_screen.dart';
+import '../../views/submissions/submit_deed_screen.dart';
 import '../../views/submissions/ai_status_screen.dart';
 import '../../views/wallet/rewards_screen.dart';
 import '../../views/wallet/ngos_screen.dart';
@@ -17,6 +18,7 @@ import '../../views/support/help_screen.dart';
 import '../../views/support/about_screen.dart';
 import '../../views/missions/india_mission_screen.dart';
 import '../../views/missions/signature_activities_screen.dart';
+import '../../views/search/universal_search_screen.dart';
 import '../../views/governance/propose_action_screen.dart';
 import '../../views/governance/governance_screen.dart';
 import '../../views/exchange/impact_exchange_screen.dart';
@@ -56,6 +58,7 @@ class AppRoutes {
   static const String createWish = '/create-wish';
   static const String wishDetail = '/wish-detail';
   static const String karmaResult = '/karma-result';
+  static const String search = '/search';
 
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -67,7 +70,7 @@ class AppRoutes {
       feed: (_) => const CommunityFeedScreen(),
       leaderboard: (_) => const LeaderboardScreen(),
       profileDetail: (_) => const ProfileDetailScreen(),
-      uploadProof: (_) => const UploadProofScreen(),
+      uploadProof: (_) => const SubmitDeedScreen(),
       aiStatus: (_) => const AiStatusScreen(),
       rewards: (_) => const RewardsScreen(),
       ngos: (_) => const NGOsScreen(),
@@ -92,6 +95,7 @@ class AppRoutes {
         return WishDetailScreen(wishId: wishId);
       },
       karmaResult: (_) => const KarmaResultScreen(),
+      search: (_) => const UniversalSearchScreen(),
     };
   }
 }

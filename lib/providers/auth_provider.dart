@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_profile.dart';
 import '../repositories/auth_repo.dart';
 import '../services/mock/mock_auth_service.dart';
+import '../services/voice_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
@@ -13,6 +15,7 @@ class AuthProvider extends ChangeNotifier {
 
   AuthProvider(this._authRepository) {
     _listenToAuthChanges();
+    loadSavedLanguage();
   }
 
   UserProfile? get currentUser => _currentUser;
@@ -90,6 +93,37 @@ class AuthProvider extends ChangeNotifier {
       _currentUser = updatedProfile;
       notifyListeners();
     }
+  }
+
+  String _guestLanguage = 'English';
+
+  String get currentLanguage {
+    return _currentUser?.preferredLanguage ?? _guestLanguage;
+  }
+
+  Future<void> setLanguage(String lang) async {
+    KarmaVoice.currentLanguage = lang;
+    if (_currentUser != null) {
+      final updated = _currentUser!.copyWith(preferredLanguage: lang);
+      updateLocalUserProfile(updated);
+    } else {
+      _guestLanguage = lang;
+      notifyListeners();
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('guest_preferred_language', lang);
+  }
+
+  Future<void> loadSavedLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('guest_preferred_language') ?? 'English';
+    _guestLanguage = saved;
+    KarmaVoice.currentLanguage = saved;
+    notifyListeners();
+  }
+
+  Future<List<UserProfile>> getAllUsers() async {
+    return _authRepository.getAllUsers();
   }
 
   @override

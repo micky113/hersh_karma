@@ -225,14 +225,24 @@ class MockFirewallService {
       effortMultiplier = 5.0;
     }
 
+    // Verification Level multiplier: Level 1 (1.0x), Level 2 (1.1x), Level 3 (1.25x), Level 4 (1.5x), Level 5 (2.0x)
+    double levelMultiplier = 1.0;
+    switch (action.verificationLevel) {
+      case 2: levelMultiplier = 1.10; break;
+      case 3: levelMultiplier = 1.25; break;
+      case 4: levelMultiplier = 1.50; break;
+      case 5: levelMultiplier = 2.00; break;
+      default: levelMultiplier = 1.00;
+    }
+
     // Quality factor: creativity, participation, ripple bonuses
     double qualityFactor = 1.0;
     if (action.creativityBonus) qualityFactor += 0.10;
     if (action.participationBonus) qualityFactor += 0.15;
     if (action.rippleInspirationBonus) qualityFactor += 0.20;
 
-    // Payout calculation: Verified Impact * Quality * Scale * Effort * Confidence * Diminishing Returns
-    final double rawCredits = baseCredits * qualityFactor * scaleMultiplier * effortMultiplier * confidence * diminishingReturns;
+    // Payout calculation: Verified Impact * Level Multiplier * Quality * Scale * Effort * Confidence * Diminishing Returns
+    final double rawCredits = baseCredits * levelMultiplier * qualityFactor * scaleMultiplier * effortMultiplier * confidence * diminishingReturns;
     final int finalCredits = rawCredits.round();
 
     int prov = 0;

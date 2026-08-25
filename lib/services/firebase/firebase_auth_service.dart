@@ -63,7 +63,11 @@ class FirebaseAuthService implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    // await _firebaseAuth.signOut();
+    throw UnimplementedError('Configure Firebase project first.');
+  }
+
+  @override
+  Future<List<UserProfile>> getAllUsers() async {
     throw UnimplementedError('Configure Firebase project first.');
   }
 }

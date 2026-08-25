@@ -378,12 +378,16 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
     final theme = Theme.of(context);
     final confidence = _calculateConfidenceEstimate();
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('🌱 Curated Positive Action'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Search Preset Bar
             Text(
@@ -1243,6 +1247,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

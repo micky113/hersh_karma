@@ -8,6 +8,8 @@ import '../../models/karma_action.dart';
 import '../../models/karma_category.dart';
 import '../../models/user_profile.dart';
 import '../../services/voice_service.dart';
+import '../../models/community_problem.dart';
+import '../../core/localization/app_localizations.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -42,6 +44,7 @@ class DashboardScreen extends StatelessWidget {
       case UserRole.institution:
         return _buildSchoolDashboard(context, user, karmaProvider, theme);
       case UserRole.ngo:
+      case UserRole.government:
         return _buildNgoDashboard(context, user, karmaProvider, theme);
       case UserRole.corporate:
         return _buildCorporateDashboard(context, user, karmaProvider, theme);
@@ -78,7 +81,7 @@ class DashboardScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Welcome back,',
+                      AppLocalizations.translateWithContext(context, 'dash_welcome', defaultValue: 'Welcome back') + ',',
                       style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                     ),
                     Text(
@@ -109,6 +112,47 @@ class DashboardScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 16),
+
+          // 🔍 Prominent Universal Search Bar
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, AppRoutes.search),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey),
+                    SizedBox(width: 12),
+                    Text(
+                      '🔎 What are you looking for?',
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    Spacer(),
+                    Icon(Icons.mic, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 🇮🇳 India 30 Flagship Banner Card
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              leading: const Text('🇮🇳', style: TextStyle(fontSize: 24)),
+              title: const Text('India 30 Mission Hub', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              subtitle: const Text('Sanitation, waste, education, & national action targets', style: TextStyle(fontSize: 11)),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
+              onTap: () {
+                Navigator.pushNamed(context, AppRoutes.indiaMission);
+              },
+            ),
+          ),
           const SizedBox(height: 24),
 
           // 1. TOP METRICS PANEL (Your Karma & Your Impact)
@@ -123,10 +167,10 @@ class DashboardScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('YOUR KARMA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        Text(AppLocalizations.translateWithContext(context, 'dash_karma', defaultValue: 'Karma').toUpperCase() + ' (REPUTATION)', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
                         const SizedBox(height: 6),
                         Text('${user.karmaCredits} Credits', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF00B074))),
-                        Text('Trust score: ${(user.trustScore * 100).toInt()}%', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text(AppLocalizations.translateWithContext(context, 'dash_trust', defaultValue: 'Trust Score') + ': ${(user.trustScore * 100).toInt()}%', style: const TextStyle(fontSize: 11, color: Colors.grey)),
                       ],
                     ),
                   ),
@@ -142,7 +186,7 @@ class DashboardScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('YOUR IMPACT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
+                        Text(AppLocalizations.translateWithContext(context, 'dash_impact', defaultValue: 'Impact').toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
                         const SizedBox(height: 6),
                         Text('${user.verifiedSubmissions} Deeds', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
                         Text('${user.wasteRecoveredKg.toInt()} kg recovered', style: const TextStyle(fontSize: 11, color: Colors.grey)),
@@ -226,8 +270,8 @@ class DashboardScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: ListTile(
               leading: const Icon(Icons.mic, color: Colors.red),
-              title: const Text('Talk to Karma Grid', style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Speak naturally to ask for deeds or report garbage'),
+              title: Text(AppLocalizations.translateWithContext(context, 'dash_talk_mic', defaultValue: 'Talk to Karma Grid'), style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(AppLocalizations.translateWithContext(context, 'dash_talk_desc', defaultValue: 'Speak naturally to ask for deeds or report garbage'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
               onTap: () => _showSpeechAgentModal(context),
             ),
@@ -235,7 +279,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
           // 3. TODAY'S OPPORTUNITIES
-          _buildSectionTitle(theme, '🔥 Today\'s Opportunities'),
+          _buildSectionTitle(theme, '🔥 ' + AppLocalizations.translateWithContext(context, 'dash_opportunities', defaultValue: 'Today\'s Opportunities')),
           const SizedBox(height: 8),
           _buildChallengeCard(
             title: 'Global Plastic Recovery Drive',
@@ -246,7 +290,7 @@ class DashboardScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // 4. YOUR RIPPLE
-          _buildSectionTitle(theme, '🌊 Your Ripple'),
+          _buildSectionTitle(theme, '🌊 ' + AppLocalizations.translateWithContext(context, 'dash_ripples', defaultValue: 'Your Ripple')),
           const SizedBox(height: 8),
           Card(
             child: ListTile(
@@ -486,24 +530,54 @@ class DashboardScreen extends StatelessWidget {
                   child: const Text('Close'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final query = textController.text.trim().toLowerCase();
+                    final auth = Provider.of<AuthProvider>(context, listen: false);
+                    final user = auth.currentUser;
                     String reply = '';
-                    if (query.contains('what can i do') || query.contains('kya karu') || query.contains('today')) {
-                      reply = 'Here are three things you can do nearby. You can help clean a public space, help an animal, or teach someone a skill.';
-                    } else if (query.contains('garbage') || query.contains('kachra') || query.contains('report')) {
-                      reply = 'I understand you want to report a garbage problem. Opening the problem reporter now. Please take a photo of the area.';
-                      Future.delayed(const Duration(seconds: 2), () {
+
+                    if (query.contains('hindi') || query.contains('हिंदी')) {
+                      reply = 'भाषा बदलकर हिंदी कर दी गई है।';
+                      await auth.setLanguage('Hindi');
+                    } else if (query.contains('hebrew') || query.contains('עברית') || query.contains('עברית')) {
+                      reply = 'השפה שונתה לעברית.';
+                      await auth.setLanguage('Hebrew');
+                    } else if (query.contains('english')) {
+                      reply = 'Language changed to English.';
+                      await auth.setLanguage('English');
+                    } else if (query.contains('how much karma') || query.contains('karma') || query.contains('כמה קארמה') || query.contains('कर्म')) {
+                      final credits = user?.karmaCredits ?? 0;
+                      reply = 'You currently have $credits Karma Credits and PoG Reputation score is ${user?.reputationScore ?? 50}.';
+                    } else if (query.contains('wish') || query.contains('משאלה') || query.contains('इच्छा')) {
+                      reply = 'Opening the Wish Come True interface.';
+                      Future.delayed(const Duration(seconds: 1), () {
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.createWish);
+                        }
+                      });
+                    } else if (query.contains('report') || query.contains('problem') || query.contains('בעיה') || query.contains('रिपोर्ट') || query.contains('kachra') || query.contains('garbage')) {
+                      reply = 'Opening problem reporter. Please snap a BEFORE photo of the issue.';
+                      Future.delayed(const Duration(seconds: 1), () {
                         if (context.mounted) {
                           Navigator.pop(context);
                           Navigator.pushNamed(context, AppRoutes.reportAbuse);
                         }
                       });
+                    } else if (query.contains('what can i do') || query.contains('क्या करूँ') || query.contains('מה אוכל')) {
+                      reply = 'Here are actions nearby: Clean a public space, teach a child, or water local trees.';
                     } else {
-                      reply = 'Understood! I will guide you to complete a verified proof of good deed.';
+                      reply = 'Command understood. Redirecting to your Karma Passport.';
+                      Future.delayed(const Duration(seconds: 1), () {
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                          Navigator.pushNamed(context, AppRoutes.profileDetail);
+                        }
+                      });
                     }
+
                     setState(() {
-                      status = 'Heard command';
+                      status = 'Command Processed';
                       response = reply;
                     });
                     KarmaVoice.speak('', directText: reply, context: context);
@@ -598,6 +672,72 @@ class DashboardScreen extends StatelessWidget {
           _buildSectionTitle(theme, '🌊 Active Volunteers Feed'),
           _buildVolunteerCard('John Doe completed tree planting', '+35 Karma provisional'),
           _buildVolunteerCard('Apex Academy Class 12-B started neighborhood quest', 'Quorum pending'),
+          const SizedBox(height: 24),
+          _buildSectionTitle(theme, '🔎 Reported Community Problems'),
+          const SizedBox(height: 8),
+          if (karmaProvider.problems.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text('No active community problems reported nearby.', style: TextStyle(color: Colors.grey)),
+              ),
+            )
+          else
+            ...karmaProvider.problems.map((prob) {
+              final isResolved = prob.status == ProblemStatus.resolved;
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(color: prob.category.color.withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+                            child: Text(prob.category.label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: prob.category.color)),
+                          ),
+                          Text(
+                            prob.status.name.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isResolved ? Colors.green : Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(prob.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 4),
+                      Text(prob.description, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      const SizedBox(height: 8),
+                      Text('Reported by: ${prob.reporterName} • Lat: ${prob.latitude?.toStringAsFixed(3)}, Lon: ${prob.longitude?.toStringAsFixed(3)}', style: const TextStyle(fontSize: 10, color: Colors.black54)),
+                      if (!isResolved) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00B074), foregroundColor: Colors.white),
+                            icon: const Icon(Icons.check_circle_outline, size: 16),
+                            label: const Text('Claim & Resolve Problem', style: TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              _showResolveProblemDialog(context, karmaProvider, prob, user.name);
+                            },
+                          ),
+                        )
+                      ] else ...[
+                        const SizedBox(height: 8),
+                        Text('Resolved by: ${prob.resolverName ?? "Trustee Org"}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green)),
+                      ]
+                    ],
+                  ),
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -1199,6 +1339,47 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showResolveProblemDialog(BuildContext context, KarmaProvider karmaProvider, CommunityProblem prob, String orgName) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Resolve Community Problem'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Problem: ${prob.title}'),
+              const SizedBox(height: 8),
+              const Text('Please attach photo proof showing the resolved condition (AFTER photo evidence).'),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.camera_alt),
+                label: const Text('Attach AFTER Resolution Photo'),
+                onPressed: () {
+                  Navigator.pop(context);
+                  karmaProvider.resolveProblem(prob.id, orgName, 'resolved_after.png');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('🎉 Problem resolved! ${prob.reporterReward} Karma Credits released to original reporter (${prob.reporterName}).'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            )
+          ],
+        );
+      },
     );
   }
 

@@ -8,6 +8,7 @@ import 'wishes/wish_board_screen.dart';
 import 'wallet/wallet_screen.dart';
 import '../services/voice_service.dart';
 import 'support/feedback_modal.dart';
+import '../core/localization/app_localizations.dart';
 
 class NavigationShell extends StatefulWidget {
   const NavigationShell({super.key});
@@ -22,7 +23,6 @@ class _NavigationShellState extends State<NavigationShell> {
 
   final List<Widget> _screens = [
     const DashboardScreen(),
-    const ChallengesScreen(),
     const SizedBox.shrink(), // Dummy index placeholder for Create sheet
     const WishBoardScreen(),
     const WalletScreen(),
@@ -33,8 +33,8 @@ class _NavigationShellState extends State<NavigationShell> {
     if (_firstLoad) {
       final args = ModalRoute.of(context)?.settings.arguments;
       if (args is int) {
-        // Adjust for index bounds in the new 5-tab scheme
-        _currentIndex = args >= 0 && args < 5 ? args : 0;
+        // Adjust for index bounds in the new 4-tab scheme
+        _currentIndex = args >= 0 && args < 4 ? args : 0;
       }
       _firstLoad = false;
     }
@@ -63,19 +63,17 @@ class _NavigationShellState extends State<NavigationShell> {
         ),
         title: Text(
           _currentIndex == 0
-              ? 'Home'
-              : _currentIndex == 1
-                  ? 'Discover'
-                  : _currentIndex == 3
-                      ? 'Wishes Hub'
-                      : 'My Passport',
+              ? AppLocalizations.translateWithContext(context, 'nav_home', defaultValue: 'Home')
+              : _currentIndex == 2
+                  ? AppLocalizations.translateWithContext(context, 'nav_wishes', defaultValue: 'Wishes')
+                  : AppLocalizations.translateWithContext(context, 'nav_me', defaultValue: 'Me'),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.lightbulb_outline_rounded, color: Colors.amber),
             tooltip: 'Improve Karma Grid',
             onPressed: () {
-              final screenNames = ['DashboardScreen', 'ChallengesScreen', 'SizedBox', 'WishBoardScreen', 'WalletScreen'];
+              final screenNames = ['DashboardScreen', 'SizedBox', 'WishBoardScreen', 'WalletScreen'];
               FeedbackModal.show(context, screenNames[_currentIndex]);
             },
           ),
@@ -100,7 +98,7 @@ class _NavigationShellState extends State<NavigationShell> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
         onTap: (index) {
-          if (index == 2) {
+          if (index == 1) {
             _showCreateBottomSheet(context);
           } else {
             setState(() {
@@ -114,31 +112,26 @@ class _NavigationShellState extends State<NavigationShell> {
         selectedFontSize: 11,
         unselectedFontSize: 9,
         showUnselectedLabels: true,
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: AppLocalizations.translateWithContext(context, 'nav_home', defaultValue: 'Home'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.explore_outlined),
-            activeIcon: Icon(Icons.explore),
-            label: 'Discover',
+            icon: const Icon(Icons.add_circle_outline_rounded),
+            activeIcon: const Icon(Icons.add_circle_rounded),
+            label: AppLocalizations.translateWithContext(context, 'nav_create', defaultValue: 'Create'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline_rounded),
-            activeIcon: Icon(Icons.add_circle_rounded),
-            label: 'Create',
+            icon: const Icon(Icons.auto_awesome_outlined),
+            activeIcon: const Icon(Icons.auto_awesome),
+            label: AppLocalizations.translateWithContext(context, 'nav_wishes', defaultValue: 'Wishes'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.auto_awesome_outlined),
-            activeIcon: Icon(Icons.auto_awesome),
-            label: 'Wishes',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Me',
+            icon: const Icon(Icons.person_outline),
+            activeIcon: const Icon(Icons.person),
+            label: AppLocalizations.translateWithContext(context, 'nav_me', defaultValue: 'Me'),
           ),
         ],
       ),
@@ -159,10 +152,10 @@ class _NavigationShellState extends State<NavigationShell> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Create & Contribute',
+                Text(
+                  AppLocalizations.translateWithContext(context, 'nav_create', defaultValue: 'Create & Contribute'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 24),
                 ListTile(
@@ -170,7 +163,7 @@ class _NavigationShellState extends State<NavigationShell> {
                     backgroundColor: Color(0xFF00B074),
                     child: Icon(Icons.volunteer_activism, color: Colors.white),
                   ),
-                  title: const Text('🌱 Do an Action', style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text('🌱 ' + AppLocalizations.translateWithContext(context, 'nav_do_good', defaultValue: 'Do an Action'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: const Text('Complete a verified Proof of Good activity'),
                   onTap: () {
                     Navigator.pop(context);
@@ -183,7 +176,7 @@ class _NavigationShellState extends State<NavigationShell> {
                     backgroundColor: Colors.amber,
                     child: Icon(Icons.report_problem_outlined, color: Colors.white),
                   ),
-                  title: const Text('🔎 Report a Problem', style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text('🔎 ' + AppLocalizations.translateWithContext(context, 'rep_title', defaultValue: 'Report a Problem'), style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: const Text('Flag visible community, animal or environmental issues'),
                   onTap: () {
                     Navigator.pop(context);

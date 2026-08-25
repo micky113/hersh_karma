@@ -147,14 +147,12 @@ class LanguageHubModal {
     final isSelected = KarmaVoice.currentLanguage.toLowerCase() == name.toLowerCase();
 
     return InkWell(
-      onTap: () {
-        KarmaVoice.currentLanguage = name;
-        if (user != null) {
-          final updated = user.copyWith(preferredLanguage: name);
-          authProvider.updateLocalUserProfile(updated);
+      onTap: () async {
+        await authProvider.setLanguage(name);
+        if (context.mounted) {
+          KarmaVoice.speak('do_good', context: context);
+          Navigator.pop(context);
         }
-        KarmaVoice.speak('do_good', context: context);
-        Navigator.pop(context);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

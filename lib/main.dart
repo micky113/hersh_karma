@@ -66,9 +66,9 @@ class HershKarmaApp extends StatelessWidget {
       ],
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {
-          final user = auth.currentUser;
-          final lang = user?.preferredLanguage ?? KarmaVoice.currentLanguage;
-          final isRtl = lang.toLowerCase() == 'hebrew' || lang.toLowerCase() == 'arabic';
+          final lang = auth.currentLanguage;
+          final isRtl = lang.toLowerCase() == 'hebrew' || lang.toLowerCase() == 'arabic' || lang.toLowerCase() == 'urdu';
+          final localeStr = isRtl ? 'he' : (lang.toLowerCase() == 'hindi' ? 'hi' : 'en');
 
           return MaterialApp(
             title: 'Proof of Good - Karma Credits',
@@ -76,6 +76,7 @@ class HershKarmaApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: ThemeMode.system,
+            locale: Locale(localeStr),
             initialRoute: AppRoutes.splash,
             routes: AppRoutes.routes,
             builder: (context, child) {

@@ -11,6 +11,8 @@ import '../models/wish.dart';
 import '../repositories/karma_repo.dart';
 import 'auth_provider.dart';
 import '../models/app_feedback.dart';
+import '../models/community_problem.dart';
+import '../models/user_profile.dart';
 
 class KarmaProvider extends ChangeNotifier {
   final KarmaRepository _karmaRepository;
@@ -20,6 +22,7 @@ class KarmaProvider extends ChangeNotifier {
   List<KarmaAction> _pendingValidationActions = [];
   List<KarmaChallenge> _challenges = [];
   List<Wish> _allWishes = [];
+  List<CommunityProblem> _problems = [];
   
   List<AppFeedback> _feedbacks = [
     AppFeedback(
@@ -110,6 +113,7 @@ class KarmaProvider extends ChangeNotifier {
 
       _loadChallenges(userId);
       _loadWishes(userId);
+      _loadProblems(userId);
 
       // Listen to all actions (includes my own and others)
       _allActionsSub = _karmaRepository.streamKarmaActions().listen((actions) {
@@ -135,6 +139,7 @@ class KarmaProvider extends ChangeNotifier {
       _pendingValidationActions = [];
       _challenges = [];
       _allWishes = [];
+      _problems = [];
       notifyListeners();
     }
   }
@@ -742,6 +747,159 @@ class KarmaProvider extends ChangeNotifier {
       aiClassification: classification,
       status: FeedbackStatus.suggested,
     );
+  }
+
+  List<CommunityProblem> get problems => _problems;
+
+  Future<void> _loadProblems(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedJson = prefs.getString('community_problems');
+    if (storedJson != null) {
+      try {
+        final List<dynamic> list = jsonDecode(storedJson);
+        _problems = list.map((item) => CommunityProblem.fromJson(item as Map<String, dynamic>)).toList();
+      } catch (e) {
+        _problems = _seedProblems();
+        await _saveProblems();
+      }
+    } else {
+      _problems = _seedProblems();
+      await _saveProblems();
+    }
+    await _loadFeedbacks();
+    notifyListeners();
+  }
+
+  List<CommunityProblem> _seedProblems() {
+    return [
+      CommunityProblem(
+        id: 'prob_1',
+        reporterId: 'user_john',
+        reporterName: 'John Doe',
+        title: 'Huge Garbage Pile near Sector-4 Park',
+        description: 'Over 200kg of visible plastic and organic wastes dumped by the roadside.',
+        category: KarmaCategory.environment,
+        latitude: 12.9716,
+        longitude: 77.5946,
+        beforeImageUrl: 'captured_before.png',
+        status: ProblemStatus.reported,
+        timestamp: DateTime.now().subtract(const Duration(days: 3)),
+      ),
+      CommunityProblem(
+        id: 'prob_2',
+        reporterId: 'user_aarav',
+        reporterName: 'Aarav Sharma',
+        title: 'Injured Stray Dog near Temple Road',
+        description: 'A stray street dog has an injured leg and needs immediate veterinary aid.',
+        category: KarmaCategory.animalWelfare,
+        latitude: 12.9616,
+        longitude: 77.5846,
+        beforeImageUrl: 'dog_injured.png',
+        status: ProblemStatus.underReview,
+        timestamp: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+    ];
+  }
+
+  Future<void> _saveProblems() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('community_problems', jsonEncode(_problems.map((e) => e.toJson()).toList()));
+  }
+
+  Future<void> _loadFeedbacks() async {
+    final prefs = await SharedPreferences.getInstance();
+    final storedJson = prefs.getString('user_feedbacks');
+    if (storedJson != null) {
+      try {
+        final List<dynamic> list = jsonDecode(storedJson);
+        _feedbacks = list.map((item) => AppFeedback.fromJson(item as Map<String, dynamic>)).toList();
+      } catch (e) {
+        // Use seeded feedbacks
+      }
+    }
+  }
+
+  Future<void> _saveFeedbacks() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_feedbacks', jsonEncode(_feedbacks.map((e) => e.toJson()).toList()));
+  }
+
+  Future<bool> submitProblem({
+    required String title,
+    required String description,
+    required KarmaCategory category,
+    double? latitude,
+    double? longitude,
+    String? beforeImageUrl,
+  }) async {
+    if (_activeUserId == null) return false;
+    _isSubmitting = true;
+    notifyListeners();
+
+    final newProb = CommunityProblem(
+      id: 'prob_${DateTime.now().millisecondsSinceEpoch}',
+      reporterId: _activeUserId!,
+      reporterName: _authProvider?.currentUser?.name ?? 'Anonymous',
+      title: title,
+      description: description,
+      category: category,
+      latitude: latitude,
+      longitude: longitude,
+      beforeImageUrl: beforeImageUrl,
+      status: ProblemStatus.reported,
+      timestamp: DateTime.now(),
+    );
+
+    _problems.insert(0, newProb);
+    await _saveProblems();
+
+    // Reward reporter +5 Reputation points
+    if (_authProvider != null && _authProvider!.currentUser != null) {
+      final user = _authProvider!.currentUser!;
+      final updated = user.copyWith(
+        reputationScore: user.reputationScore + 5,
+      );
+      _authProvider!.updateLocalUserProfile(updated);
+    }
+
+    _isSubmitting = false;
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> resolveProblem(String id, String resolverName, String afterImageUrl) async {
+    final idx = _problems.indexWhere((e) => e.id == id);
+    if (idx == -1) return false;
+
+    final prob = _problems[idx];
+    final updatedProb = prob.copyWith(
+      status: ProblemStatus.resolved,
+      resolverName: resolverName,
+      afterImageUrl: afterImageUrl,
+    );
+
+    _problems[idx] = updatedProb;
+    await _saveProblems();
+
+    // Reward reporter +20 Karma credits and +10 reputation
+    if (_authProvider != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final reporterProfileJson = prefs.getString('profile_${prob.reporterId}');
+      if (reporterProfileJson != null) {
+        final reporter = UserProfile.fromJson(jsonDecode(reporterProfileJson));
+        final updatedReporter = reporter.copyWith(
+          karmaCredits: reporter.karmaCredits + prob.reporterReward,
+          reputationScore: (reporter.reputationScore + 10).clamp(0, 100),
+        );
+        await prefs.setString('profile_${prob.reporterId}', jsonEncode(updatedReporter.toJson()));
+        if (_activeUserId == prob.reporterId) {
+          _authProvider!.updateLocalUserProfile(updatedReporter);
+        }
+      }
+    }
+
+    notifyListeners();
+    return true;
   }
 
   @override

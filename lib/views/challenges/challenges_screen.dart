@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../models/challenge.dart';
+import '../../core/routes/app_routes.dart';
 
 class ChallengesScreen extends StatelessWidget {
   const ChallengesScreen({super.key});
@@ -21,6 +22,31 @@ class ChallengesScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 🔍 Prominent Universal Search Bar
+          GestureDetector(
+            onTap: () => Navigator.pushNamed(context, AppRoutes.search),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Icon(Icons.search, color: Colors.grey),
+                    SizedBox(width: 12),
+                    Text(
+                      '🔎 What are you looking for?',
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                    Spacer(),
+                    Icon(Icons.mic, color: Colors.grey),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // Banner Card
           Card(
             color: theme.colorScheme.primary.withOpacity(0.08),
