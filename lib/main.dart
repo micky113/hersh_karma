@@ -16,8 +16,19 @@ import 'views/navigation_shell.dart';
 import 'services/voice_service.dart';
 import 'core/routes/app_routes.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('Firebase initialization note: $e');
+  }
 
   // Create singletons of mock services for offline persistence
   final mockAuthService = MockAuthService();

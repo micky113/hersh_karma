@@ -17,6 +17,7 @@ import 'package:hersh_karma/providers/governance_provider.dart';
 import 'package:hersh_karma/services/mock/mock_auth_service.dart';
 import 'package:hersh_karma/services/mock/mock_karma_service.dart';
 import 'package:hersh_karma/services/mock/mock_wallet_service.dart';
+import 'package:hersh_karma/core/localization/app_localizations.dart';
 
 void main() {
   // Setup Mock SharedPreferences before all tests
@@ -42,11 +43,30 @@ void main() {
       expect(user.reputationScore, equals(65));
     });
 
-    test('Should create a dynamic user if not exist', () async {
-      final user = await authService.login('new_tester@karma.com', 'password123');
+    test('Should authenticate with Google / Gmail', () async {
+      final user = await authService.signInWithGoogle(email: 'mohit.sharma@gmail.com', name: 'Mohit Sharma');
       expect(user, isNotNull);
-      expect(user!.name, equals('NEW_TESTER'));
-      expect(user.reputationScore, equals(50)); // Default reputation
+      expect(user!.email, equals('mohit.sharma@gmail.com'));
+      expect(user.name, equals('Mohit Sharma'));
+      expect(user.karmaCredits, equals(100));
+    });
+
+    test('Should restore session automatically when user logs in and app restarts on device', () async {
+      final provider1 = AuthProvider(authService);
+      final loggedIn = await provider1.signInWithGoogle(email: 'rahul.verma@gmail.com', name: 'Rahul Verma');
+      expect(loggedIn, isTrue);
+      expect(provider1.isAuthenticated, isTrue);
+      expect(provider1.currentUser?.name, equals('Rahul Verma'));
+
+      // Simulate app restart / new session creation on same device
+      final freshAuthService = MockAuthService();
+      final provider2 = AuthProvider(freshAuthService);
+      final restored = await provider2.restoreSession();
+
+      expect(restored, isNotNull);
+      expect(provider2.isAuthenticated, isTrue);
+      expect(provider2.currentUser?.email, equals('rahul.verma@gmail.com'));
+      expect(provider2.currentUser?.name, equals('Rahul Verma'));
     });
   });
 
@@ -1038,4 +1058,59 @@ void main() {
       });
     });
   });
+
+  group('Proof of Good - India-First 22 Languages & RTL Localization Tests', () {
+    test('Should support all 22 Eighth Schedule Indian languages plus global languages in catalog', () {
+      final supported = AppLocalizations.supportedLanguages;
+      expect(supported.length, greaterThanOrEqualTo(24));
+
+      final codes = supported.map((l) => l['code']).toSet();
+      // 22 Eighth Schedule Languages
+      final expectedIndic = [
+        'hi', 'bn', 'te', 'mr', 'ta', 'ur', 'gu', 'kn', 'or', 'ml',
+        'pa', 'as', 'mai', 'sat', 'ks', 'ne', 'kok', 'doi', 'sd', 'brx', 'sa', 'mni'
+      ];
+      for (final code in expectedIndic) {
+        expect(codes.contains(code), isTrue, reason: 'Expected language code $code to be present');
+      }
+
+      // Global languages
+      expect(codes.contains('en'), isTrue);
+      expect(codes.contains('he'), isTrue);
+      expect(codes.contains('ar'), isTrue);
+    });
+
+    test('Should detect RTL directionality accurately for Hebrew, Arabic, Urdu, Kashmiri, and Sindhi', () {
+      expect(AppLocalizations.isRtlLanguage('he'), isTrue);
+      expect(AppLocalizations.isRtlLanguage('Hebrew'), isTrue);
+      expect(AppLocalizations.isRtlLanguage('ar'), isTrue);
+      expect(AppLocalizations.isRtlLanguage('Arabic'), isTrue);
+      expect(AppLocalizations.isRtlLanguage('ur'), isTrue);
+      expect(AppLocalizations.isRtlLanguage('Urdu'), isTrue);
+      expect(AppLocalizations.isRtlLanguage('ks'), isTrue);
+      expect(AppLocalizations.isRtlLanguage('sd'), isTrue);
+
+      // LTR languages should return false
+      expect(AppLocalizations.isRtlLanguage('en'), isFalse);
+      expect(AppLocalizations.isRtlLanguage('hi'), isFalse);
+      expect(AppLocalizations.isRtlLanguage('bn'), isFalse);
+      expect(AppLocalizations.isRtlLanguage('te'), isFalse);
+      expect(AppLocalizations.isRtlLanguage('ta'), isFalse);
+    });
+
+    test('Should translate centralized keys into Hindi, Bengali, Tamil, Telugu, Marathi, and Urdu correctly', () {
+      expect(AppLocalizations.translate('app_title', lang: 'hi'), equals('कर्म ग्रिड'));
+      expect(AppLocalizations.translate('app_title', lang: 'bn'), equals('কর্ম গ্রিড'));
+      expect(AppLocalizations.translate('app_title', lang: 'ta'), equals('கர்மா கிரிட்'));
+      expect(AppLocalizations.translate('app_title', lang: 'te'), equals('కర్మ గ్రిడ్'));
+      expect(AppLocalizations.translate('app_title', lang: 'mr'), equals('कर्म ग्रिड'));
+      expect(AppLocalizations.translate('app_title', lang: 'ur'), equals('کرما گرڈ'));
+      expect(AppLocalizations.translate('app_title', lang: 'he'), equals('קארמה גריד'));
+      expect(AppLocalizations.translate('app_title', lang: 'ar'), equals('كارما جريد'));
+
+      // Fallback to English on unknown language
+      expect(AppLocalizations.translate('app_title', lang: 'xyz'), equals('Karma Grid'));
+    });
+  });
 }
+

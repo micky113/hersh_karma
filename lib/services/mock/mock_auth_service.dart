@@ -191,6 +191,48 @@ class MockAuthService implements AuthRepository {
   }
 
   @override
+  Future<UserProfile?> signInWithGoogle({String? email, String? name}) async {
+    await Future.delayed(const Duration(milliseconds: 600)); // simulate Google OAuth handshake
+    final googleEmail = (email != null && email.isNotEmpty) ? email.trim().toLowerCase() : 'user@gmail.com';
+    final googleName = (name != null && name.isNotEmpty) ? name.trim() : googleEmail.split('@')[0].toUpperCase();
+
+    final userId = 'google_${googleEmail.replaceAll('@', '_').replaceAll('.', '_')}';
+    final prefs = await SharedPreferences.getInstance();
+    final storedJson = prefs.getString('profile_$userId');
+
+    if (storedJson != null) {
+      try {
+        _currentUser = UserProfile.fromJson(jsonDecode(storedJson));
+      } catch (_) {
+        _currentUser = UserProfile(
+          id: userId,
+          name: googleName,
+          email: googleEmail,
+          role: UserRole.individual,
+          reputationScore: 70,
+          karmaCredits: 100,
+          verifiedSubmissions: 5,
+        );
+      }
+    } else {
+      _currentUser = UserProfile(
+        id: userId,
+        name: googleName,
+        email: googleEmail,
+        role: UserRole.individual,
+        reputationScore: 70,
+        karmaCredits: 100,
+        verifiedSubmissions: 5,
+      );
+      await prefs.setString('profile_$userId', jsonEncode(_currentUser!.toJson()));
+    }
+
+    await _saveSession(_currentUser!);
+    _authStateController.add(_currentUser);
+    return _currentUser;
+  }
+
+  @override
   Future<void> logout() async {
     _currentUser = null;
     await _clearSession();

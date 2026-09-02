@@ -18,10 +18,14 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   void _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 2));
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Restore persistent device session (Google Auth / LocalStorage / SharedPreferences)
+    await auth.restoreSession();
+    await Future.delayed(const Duration(milliseconds: 1200));
+    
     if (!mounted) return;
 
-    final auth = Provider.of<AuthProvider>(context, listen: false);
     if (auth.isAuthenticated) {
       Navigator.pushReplacementNamed(context, AppRoutes.home);
     } else {

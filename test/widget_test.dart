@@ -44,14 +44,14 @@ void main() {
 
     // 1. Splash Screen boots, waits 2s, transitions to LoginScreen
     await tester.pumpAndSettle(const Duration(seconds: 2));
-    expect(find.text('Access Passport'), findsOneWidget);
+    expect(find.text('Access Your Karma Passport'), findsOneWidget);
 
-    // 2. Perform Quick Login (John Doe)
-    final johnLoginBtn = find.text('John (Individual)');
-    expect(johnLoginBtn, findsOneWidget);
-    await tester.ensureVisible(johnLoginBtn);
-    await tester.tap(johnLoginBtn);
-    await tester.pumpAndSettle(const Duration(milliseconds: 1000)); // wait for mock auth login lag
+    // 2. Perform Login with Google / Gmail
+    final googleLoginBtn = find.text('Continue with Google / Gmail');
+    expect(googleLoginBtn, findsOneWidget);
+    await tester.ensureVisible(googleLoginBtn);
+    await tester.tap(googleLoginBtn);
+    await tester.pumpAndSettle(const Duration(milliseconds: 1000)); // wait for auth login lag
 
     // Should transition to NavigationShell
     expect(find.text('Home'), findsNWidgets(2));
@@ -90,6 +90,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // Should return to LoginScreen
-    expect(find.text('Access Passport'), findsOneWidget);
+    expect(find.text('Access Your Karma Passport'), findsOneWidget);
   });
 }

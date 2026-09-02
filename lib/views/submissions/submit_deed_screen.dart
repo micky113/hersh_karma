@@ -621,6 +621,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: _durationCategory,
                     decoration: const InputDecoration(
                       labelText: 'Duration Type',
@@ -643,6 +644,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
+                    isExpanded: true,
                     value: _impactScope,
                     decoration: const InputDecoration(
                       labelText: 'Impact Scope',

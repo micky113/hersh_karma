@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../core/routes/app_routes.dart';
-import '../../models/karma_action.dart';
-import '../../models/karma_category.dart';
 import '../../models/user_profile.dart';
-import '../../services/voice_service.dart';
-import '../../models/community_problem.dart';
 import '../../core/localization/app_localizations.dart';
+import '../widgets/visual_journey_banner.dart';
+import '../widgets/universal_search_bar.dart';
+import '../widgets/demo_badge.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -36,42 +34,26 @@ class DashboardScreen extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (user.interfaceMode == AppInterfaceMode.simple) {
-      return _buildSimpleDashboard(context, user, karmaProvider, theme);
-    }
+    final isDark = theme.brightness == Brightness.dark;
 
-    switch (user.role) {
-      case UserRole.institution:
-        return _buildSchoolDashboard(context, user, karmaProvider, theme);
-      case UserRole.ngo:
-      case UserRole.government:
-        return _buildNgoDashboard(context, user, karmaProvider, theme);
-      case UserRole.corporate:
-        return _buildCorporateDashboard(context, user, karmaProvider, theme);
-      case UserRole.communityGroup:
-        return _buildCommunityGroupDashboard(context, user, karmaProvider, theme);
-      default:
-        return _buildIndividualDashboard(context, user, karmaProvider, theme);
-    }
-  }
-
-  Widget _buildIndividualDashboard(BuildContext context, UserProfile user, KarmaProvider karmaProvider, ThemeData theme) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 1. WELCOME HEADER + TRUST BADGE
           Row(
             children: [
               CircleAvatar(
-                radius: 24,
-                backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+                radius: 22,
+                backgroundColor: const Color(0xFF00B074).withOpacity(0.12),
                 child: Text(
                   user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
+                  style: const TextStyle(
+                    color: Color(0xFF00B074),
                     fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    fontSize: 18,
                   ),
                 ),
               ),
@@ -82,17 +64,19 @@ class DashboardScreen extends StatelessWidget {
                   children: [
                     Text(
                       AppLocalizations.translateWithContext(context, 'dash_welcome', defaultValue: 'Welcome back') + ',',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                      style: theme.textTheme.bodySmall?.copyWith(color: isDark ? Colors.white60 : Colors.grey[600]),
                     ),
                     Text(
                       user.name,
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: _getBadgeColor(user.reputationScore).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
@@ -104,1286 +88,383 @@ class DashboardScreen extends StatelessWidget {
                 child: Text(
                   _getReputationBadge(user.reputationScore),
                   style: TextStyle(
-                    color: _getBadgeColor(user.reputationScore).withOpacity(0.9),
+                    color: _getBadgeColor(user.reputationScore).withOpacity(0.95),
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // 🔍 Prominent Universal Search Bar
-          GestureDetector(
-            onTap: () => Navigator.pushNamed(context, AppRoutes.search),
-            child: Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: Colors.grey),
-                    SizedBox(width: 12),
-                    Text(
-                      '🔎 What are you looking for?',
-                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                    Spacer(),
-                    Icon(Icons.mic, color: Colors.grey),
-                  ],
-                ),
+          // 2. COMPACT SUMMARY (Karma, Impact, Trust)
+          Card(
+            elevation: 1.5,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildMiniMetric(
+                    AppLocalizations.translateWithContext(context, 'dash_karma', defaultValue: '✨ Karma'),
+                    '${user.karmaCredits} Credits',
+                    const Color(0xFF00B074),
+                  ),
+                  Container(height: 24, width: 1, color: isDark ? Colors.white12 : Colors.grey.shade300),
+                  _buildMiniMetric(
+                    AppLocalizations.translateWithContext(context, 'dash_impact', defaultValue: '🌍 Impact'),
+                    '${user.verifiedSubmissions} Verified',
+                    Colors.blue,
+                  ),
+                  Container(height: 24, width: 1, color: isDark ? Colors.white12 : Colors.grey.shade300),
+                  _buildMiniMetric(
+                    AppLocalizations.translateWithContext(context, 'dash_trust', defaultValue: '🛡️ Trust'),
+                    '${(user.trustScore * 100).toInt()}% Rating',
+                    Colors.purple,
+                  ),
+                ],
               ),
             ),
           ),
           const SizedBox(height: 12),
 
-          // 🇮🇳 India 30 Flagship Banner Card
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: ListTile(
-              leading: const Text('🇮🇳', style: TextStyle(fontSize: 24)),
-              title: const Text('India 30 Mission Hub', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-              subtitle: const Text('Sanitation, waste, education, & national action targets', style: TextStyle(fontSize: 11)),
-              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.indiaMission);
-              },
-            ),
-          ),
-          const SizedBox(height: 24),
+          // 3. UNIVERSAL SEARCH BAR + VOICE AGENT
+          const UniversalSearchBar(),
+          const SizedBox(height: 12),
 
-          // 1. TOP METRICS PANEL (Your Karma & Your Impact)
+          // 4. VISUAL JOURNEY BANNER (Proof-of-Good progression)
+          const VisualJourneyBanner(compact: true),
+          const SizedBox(height: 14),
+
+          // 5. THE 4 PRIMARY DECISION CARDS ("What can I do now?")
           Row(
             children: [
+              // 🌱 DO GOOD
               Expanded(
-                child: Card(
-                  color: const Color(0xFF00B074).withOpacity(0.06),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocalizations.translateWithContext(context, 'dash_karma', defaultValue: 'Karma').toUpperCase() + ' (REPUTATION)', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                        const SizedBox(height: 6),
-                        Text('${user.karmaCredits} Credits', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF00B074))),
-                        Text(AppLocalizations.translateWithContext(context, 'dash_trust', defaultValue: 'Trust Score') + ': ${(user.trustScore * 100).toInt()}%', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Card(
-                  color: Colors.blue.withOpacity(0.06),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocalizations.translateWithContext(context, 'dash_impact', defaultValue: 'Impact').toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-                        const SizedBox(height: 6),
-                        Text('${user.verifiedSubmissions} Deeds', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue)),
-                        Text('${user.wasteRecoveredKg.toInt()} kg recovered', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // 2. THREE PRIMARY ACTIONS
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
+                child: _buildPrimaryActionCard(
+                  context,
+                  emoji: '🌱',
+                  title: AppLocalizations.translateWithContext(context, 'dash_action_do', defaultValue: 'DO GOOD'),
+                  subtitle: AppLocalizations.translateWithContext(context, 'dash_action_do_sub', defaultValue: 'Find a deed & prove impact'),
+                  color: const Color(0xFF00B074),
                   onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
-                  child: Card(
-                    color: Colors.green[50],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.green.withOpacity(0.2))),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(
-                        children: [
-                          const Text('🌱', style: TextStyle(fontSize: 24)),
-                          const SizedBox(height: 4),
-                          Text(KarmaVoice.getTranslation('do_good', defaultValue: 'DO GOOD'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
+
+              // 🔎 REPORT PROBLEM
               Expanded(
-                child: InkWell(
+                child: _buildPrimaryActionCard(
+                  context,
+                  emoji: '🔎',
+                  title: AppLocalizations.translateWithContext(context, 'dash_action_report', defaultValue: 'REPORT'),
+                  subtitle: AppLocalizations.translateWithContext(context, 'dash_action_report_sub', defaultValue: 'Report a local problem'),
+                  color: Colors.orange.shade800,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.reportAbuse),
-                  child: Card(
-                    color: Colors.amber[50],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.amber.withOpacity(0.2))),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(
-                        children: [
-                          const Text('🔎', style: TextStyle(fontSize: 24)),
-                          const SizedBox(height: 4),
-                          Text(KarmaVoice.getTranslation('report', defaultValue: 'REPORT'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.amber, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: InkWell(
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.createWish),
-                  child: Card(
-                    color: Colors.purple[50],
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.purple.withOpacity(0.2))),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Column(
-                        children: [
-                          const Text('✨', style: TextStyle(fontSize: 24)),
-                          const SizedBox(height: 4),
-                          Text(KarmaVoice.getTranslation('make_wish', defaultValue: 'MAKE WISH'), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purple, fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
 
-          // 🎙️ TALK TO KARMA MICROPHONE TILE
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: ListTile(
-              leading: const Icon(Icons.mic, color: Colors.red),
-              title: Text(AppLocalizations.translateWithContext(context, 'dash_talk_mic', defaultValue: 'Talk to Karma Grid'), style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(AppLocalizations.translateWithContext(context, 'dash_talk_desc', defaultValue: 'Speak naturally to ask for deeds or report garbage'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-              onTap: () => _showSpeechAgentModal(context),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 3. TODAY'S OPPORTUNITIES
-          _buildSectionTitle(theme, '🔥 ' + AppLocalizations.translateWithContext(context, 'dash_opportunities', defaultValue: 'Today\'s Opportunities')),
-          const SizedBox(height: 8),
-          _buildChallengeCard(
-            title: 'Global Plastic Recovery Drive',
-            desc: 'Collect & photograph 5 items of plastic waste. 1.5x Multiplier today!',
-            volunteers: '1,420 people participating',
-            deadline: 'Active now',
-          ),
-          const SizedBox(height: 24),
-
-          // 4. YOUR RIPPLE
-          _buildSectionTitle(theme, '🌊 ' + AppLocalizations.translateWithContext(context, 'dash_ripples', defaultValue: 'Your Ripple')),
-          const SizedBox(height: 8),
-          Card(
-            child: ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Colors.tealAccent,
-                child: Text('🌊', style: TextStyle(fontSize: 16)),
-              ),
-              title: Text('${user.karmaRipplesCount} Active Ripple Chains', style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text('Matching donations & continuous downstream impact generated'),
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: Colors.teal, borderRadius: BorderRadius.circular(8)),
-                child: const Text('+20% Multiplier', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSimpleDashboard(BuildContext context, UserProfile user, KarmaProvider karmaProvider, ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Namaste, ${user.name}',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              // ✨ MAKE A WISH
+              Expanded(
+                child: _buildSecondaryActionCard(
+                  context,
+                  emoji: '✨',
+                  title: AppLocalizations.translateWithContext(context, 'dash_action_wish', defaultValue: 'MAKE A WISH'),
+                  subtitle: AppLocalizations.translateWithContext(context, 'dash_action_wish_sub', defaultValue: 'Ask community for help'),
+                  color: Colors.purple.shade700,
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.createWish),
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.volume_up, size: 32, color: Color(0xFF00B074)),
-                onPressed: () {
-                  KarmaVoice.speak('do_good', directText: 'Welcome back ${user.name}. Pick an action below.', context: context);
-                },
+              const SizedBox(width: 10),
+
+              // 🤝 HELP A WISH
+              Expanded(
+                child: _buildSecondaryActionCard(
+                  context,
+                  emoji: '🤝',
+                  title: AppLocalizations.translateWithContext(context, 'dash_action_help_wish', defaultValue: 'HELP A WISH'),
+                  subtitle: AppLocalizations.translateWithContext(context, 'dash_action_help_wish_sub', defaultValue: 'Support someone in need'),
+                  color: Colors.blue.shade700,
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.wishes),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 18),
 
-          // TALK TO KARMA MICROPHONE TARGET (VERY LARGE)
-          InkWell(
-            onTap: () => _showSpeechAgentModal(context),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.red.withOpacity(0.3), width: 2),
+          // 6. LOCATION-AWARE INDIA-FIRST OPPORTUNITIES
+          Row(
+            children: [
+              const Text('🇮🇳 Today\'s Action Opportunities', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const Spacer(),
+              TextButton(
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
+                child: const Text('View All', style: TextStyle(fontSize: 11)),
               ),
-              child: Column(
-                children: const [
-                  Icon(Icons.mic, size: 64, color: Colors.red),
-                  SizedBox(height: 12),
-                  Text(
-                    '🎙️ TALK TO KARMA',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.red),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    'Tap and speak to ask what to do, or report garbage',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
+            ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
 
-          // 🌱 DO GOOD
-          InkWell(
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.uploadProof);
-            },
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.green.withOpacity(0.3), width: 2),
-              ),
-              child: Row(
-                children: [
-                  const Text('🌱', style: TextStyle(fontSize: 48)),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(KarmaVoice.getTranslation('do_good', defaultValue: 'DO GOOD'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green)),
-                        const Text('Start a verified positive activity', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.volume_up, size: 28, color: Colors.green),
-                    onPressed: () {
-                      KarmaVoice.speak('before_proof', context: context);
-                    },
-                  ),
-                ],
-              ),
+          _buildOpportunityTile(
+            context,
+            emoji: '🌍',
+            title: 'Plastic Recovery & Segregation',
+            subtitle: 'Collect & photograph 5 items of plastic waste. Verified 1.5x Multiplier today!',
+            badge: '+75 Karma',
+            badgeColor: Colors.green,
+            isDemo: true,
+            onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
+          ),
+          const SizedBox(height: 8),
+
+          _buildOpportunityTile(
+            context,
+            emoji: '🌱',
+            title: 'Neighborhood Composting Drive',
+            subtitle: 'Clear organic waste near park and start community pit with before/after photos.',
+            badge: '+50 Karma',
+            badgeColor: Colors.teal,
+            isDemo: true,
+            onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
+          ),
+          const SizedBox(height: 14),
+
+          // 7. ECOSYSTEM FLYWHEEL HUB BANNER
+          Card(
+            color: const Color(0xFF00B074).withOpacity(0.05),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: const Color(0xFF00B074).withOpacity(0.15)),
+            ),
+            child: ListTile(
+              leading: const Text('🌐', style: TextStyle(fontSize: 22)),
+              title: const Text('Unified Flywheel Hub', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
+              subtitle: const Text('Explore Stories, Karma Graph & Collective Intelligence', style: TextStyle(fontSize: 10.5, color: Colors.grey)),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFF00B074)),
+              onTap: () => Navigator.pushNamed(context, AppRoutes.ecosystemHub),
             ),
           ),
           const SizedBox(height: 16),
 
-          // 🔎 REPORT A PROBLEM
-          InkWell(
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.reportAbuse);
-            },
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.amber[50],
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.amber.withOpacity(0.3), width: 2),
-              ),
-              child: Row(
-                children: [
-                  const Text('🔎', style: TextStyle(fontSize: 48)),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(KarmaVoice.getTranslation('report', defaultValue: 'REPORT'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.amber)),
-                        const Text('Flag garbage, water or animal issues', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.volume_up, size: 28, color: Colors.amber),
-                    onPressed: () {
-                      KarmaVoice.speak('report', context: context);
-                    },
-                  ),
-                ],
-              ),
+          // 8. TRANSPARENCY & TRUST PROMISE
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: isDark ? Colors.white10 : Colors.grey.shade200),
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // ✨ MAKE A WISH
-          InkWell(
-            onTap: () {
-              Navigator.pushNamed(context, AppRoutes.createWish);
-            },
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.purple[50],
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
-              ),
-              child: Row(
-                children: [
-                  const Text('✨', style: TextStyle(fontSize: 48)),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(KarmaVoice.getTranslation('make_wish', defaultValue: 'MAKE WISH'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.purple)),
-                        const Text('Submit your wish to the community', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.volume_up, size: 28, color: Colors.purple),
-                    onPressed: () {
-                      KarmaVoice.speak('make_wish', context: context);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showSpeechAgentModal(BuildContext context) {
-    final textController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            String status = '🎙️ Listening... Speak naturally';
-            String response = '';
-            
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Talk to Karma Grid'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    status,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: textController,
-                    decoration: const InputDecoration(
-                      labelText: 'Type or simulate speech command',
-                      hintText: 'e.g. "What can I do today?" or "yahan bahut kachra hai"',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  if (response.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.green[50], borderRadius: BorderRadius.circular(8)),
-                      child: Text(
-                        '🤖 Karma: $response',
-                        style: const TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                  ]
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.translateWithContext(context, 'safety_title', defaultValue: '🛡️ Trust & Safety Promise'),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                 ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final query = textController.text.trim().toLowerCase();
-                    final auth = Provider.of<AuthProvider>(context, listen: false);
-                    final user = auth.currentUser;
-                    String reply = '';
-
-                    if (query.contains('hindi') || query.contains('हिंदी')) {
-                      reply = 'भाषा बदलकर हिंदी कर दी गई है।';
-                      await auth.setLanguage('Hindi');
-                    } else if (query.contains('hebrew') || query.contains('עברית') || query.contains('עברית')) {
-                      reply = 'השפה שונתה לעברית.';
-                      await auth.setLanguage('Hebrew');
-                    } else if (query.contains('english')) {
-                      reply = 'Language changed to English.';
-                      await auth.setLanguage('English');
-                    } else if (query.contains('how much karma') || query.contains('karma') || query.contains('כמה קארמה') || query.contains('कर्म')) {
-                      final credits = user?.karmaCredits ?? 0;
-                      reply = 'You currently have $credits Karma Credits and PoG Reputation score is ${user?.reputationScore ?? 50}.';
-                    } else if (query.contains('wish') || query.contains('משאלה') || query.contains('इच्छा')) {
-                      reply = 'Opening the Wish Come True interface.';
-                      Future.delayed(const Duration(seconds: 1), () {
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.createWish);
-                        }
-                      });
-                    } else if (query.contains('report') || query.contains('problem') || query.contains('בעיה') || query.contains('रिपोर्ट') || query.contains('kachra') || query.contains('garbage')) {
-                      reply = 'Opening problem reporter. Please snap a BEFORE photo of the issue.';
-                      Future.delayed(const Duration(seconds: 1), () {
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.reportAbuse);
-                        }
-                      });
-                    } else if (query.contains('what can i do') || query.contains('क्या करूँ') || query.contains('מה אוכל')) {
-                      reply = 'Here are actions nearby: Clean a public space, teach a child, or water local trees.';
-                    } else {
-                      reply = 'Command understood. Redirecting to your Karma Passport.';
-                      Future.delayed(const Duration(seconds: 1), () {
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          Navigator.pushNamed(context, AppRoutes.profileDetail);
-                        }
-                      });
-                    }
-
-                    setState(() {
-                      status = 'Command Processed';
-                      response = reply;
-                    });
-                    KarmaVoice.speak('', directText: reply, context: context);
-                  },
-                  child: const Text('Send Speech 🎙️'),
-                )
+                const SizedBox(height: 4),
+                Text(
+                  AppLocalizations.translateWithContext(context, 'safety_desc', defaultValue: 'No crypto hype • No arbitrary daily caps • Real evidence verification • Direct-to-vendor wish support'),
+                  style: TextStyle(fontSize: 11, color: isDark ? Colors.white60 : Colors.grey.shade600, height: 1.3),
+                ),
               ],
-            );
-          }
-        );
-      }
-    );
-  }
-
-  Widget _buildSchoolDashboard(BuildContext context, UserProfile user, KarmaProvider karmaProvider, ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildOrgHeader(user, theme),
-          const SizedBox(height: 20),
-          _buildOrgPassportCard(
-            title: 'INSTITUTION PASSPORT',
-            orgName: user.name,
-            roleName: 'EDUCATIONAL INSTITUTION',
-            karmaCredits: 82400,
-            primaryMetric: '${user.studentsCount} Students Participating',
-            secondaryMetric: '3,820 Actions Completed',
-            bgColor: Colors.indigo,
-          ),
-          const SizedBox(height: 20),
-          _buildSectionTitle(theme, '🌱 Community Impact'),
-          _buildStatGrid([
-            _buildMiniStatCard('Trees Planted', '1,200', Icons.park_outlined, Colors.green),
-            _buildMiniStatCard('Litter Cleanups', '150', Icons.cleaning_services_outlined, Colors.amber),
-            _buildMiniStatCard('Tutoring Hours', '820 hrs', Icons.menu_book_outlined, Colors.blue),
-            _buildMiniStatCard('Food Donated', '450 meals', Icons.volunteer_activism_outlined, Colors.red),
-          ]),
-          const SizedBox(height: 24),
-          _buildSectionTitle(theme, '🏫 Classes Leaderboard'),
-          const SizedBox(height: 8),
-          _buildLeaderboardItem(1, 'Class 10-A', '24,100 Karma'),
-          _buildLeaderboardItem(2, 'Class 12-B', '18,200 Karma'),
-          _buildLeaderboardItem(3, 'Class 9-C', '15,500 Karma'),
-          const SizedBox(height: 24),
-          _buildSectionTitle(theme, '🏆 Active School Challenges'),
-          _buildChallengeCard(
-            title: 'Clean Our Neighborhood Challenge',
-            desc: 'Collaborative cleanup around the neighborhood park. NGO Verified.',
-            volunteers: '240 students active',
-            deadline: 'Ends in 4 days',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNgoDashboard(BuildContext context, UserProfile user, KarmaProvider karmaProvider, ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildOrgHeader(user, theme),
-          const SizedBox(height: 20),
-          _buildOrgPassportCard(
-            title: 'IMPACT ORGANIZATION PASSPORT',
-            orgName: user.name,
-            roleName: 'VERIFIED NGO / TRUSTEE',
-            karmaCredits: user.karmaCredits,
-            primaryMetric: '1.2M Project Impact (PoG)',
-            secondaryMetric: '${user.projectsCount} Active Projects  •  ${user.peopleReached} Reached',
-            bgColor: Colors.teal,
-          ),
-          const SizedBox(height: 20),
-          _buildSectionTitle(theme, '🔐 Pending Verifications Queue'),
-          const SizedBox(height: 8),
-          _buildVerificationQueueCard(
-            actionTitle: 'Neighborhood Waste Collection & Segregation',
-            submitter: 'Apex Academy Class 10-A',
-            timeAgo: 'Submitted 2 hours ago',
-            evidenceScore: '92/100 (Scene Match: 95%)',
-          ),
-          _buildVerificationQueueCard(
-            actionTitle: 'Wetland Restoration & Clean Plant Seedlings',
-            submitter: 'Rajesh Kumar (Individual)',
-            timeAgo: 'Submitted 4 hours ago',
-            evidenceScore: '87/100 (Scene Match: 91%)',
-          ),
-          const SizedBox(height: 24),
-          _buildSectionTitle(theme, '🌊 Active Volunteers Feed'),
-          _buildVolunteerCard('John Doe completed tree planting', '+35 Karma provisional'),
-          _buildVolunteerCard('Apex Academy Class 12-B started neighborhood quest', 'Quorum pending'),
-          const SizedBox(height: 24),
-          _buildSectionTitle(theme, '🔎 Reported Community Problems'),
-          const SizedBox(height: 8),
-          if (karmaProvider.problems.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('No active community problems reported nearby.', style: TextStyle(color: Colors.grey)),
-              ),
-            )
-          else
-            ...karmaProvider.problems.map((prob) {
-              final isResolved = prob.status == ProblemStatus.resolved;
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(color: prob.category.color.withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
-                            child: Text(prob.category.label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: prob.category.color)),
-                          ),
-                          Text(
-                            prob.status.name.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isResolved ? Colors.green : Colors.orange,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(prob.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      const SizedBox(height: 4),
-                      Text(prob.description, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      const SizedBox(height: 8),
-                      Text('Reported by: ${prob.reporterName} • Lat: ${prob.latitude?.toStringAsFixed(3)}, Lon: ${prob.longitude?.toStringAsFixed(3)}', style: const TextStyle(fontSize: 10, color: Colors.black54)),
-                      if (!isResolved) ...[
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF00B074), foregroundColor: Colors.white),
-                            icon: const Icon(Icons.check_circle_outline, size: 16),
-                            label: const Text('Claim & Resolve Problem', style: TextStyle(fontSize: 12)),
-                            onPressed: () {
-                              _showResolveProblemDialog(context, karmaProvider, prob, user.name);
-                            },
-                          ),
-                        )
-                      ] else ...[
-                        const SizedBox(height: 8),
-                        Text('Resolved by: ${prob.resolverName ?? "Trustee Org"}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green)),
-                      ]
-                    ],
-                  ),
-                ),
-              );
-            }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCorporateDashboard(BuildContext context, UserProfile user, KarmaProvider karmaProvider, ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildOrgHeader(user, theme),
-          const SizedBox(height: 20),
-          _buildOrgPassportCard(
-            title: 'CSR CORPORATE PASSPORT',
-            orgName: user.name,
-            roleName: 'BUSINESS / SPONSOR',
-            karmaCredits: user.karmaCredits,
-            primaryMetric: '4.8M CSR Impact Created',
-            secondaryMetric: '${user.employeesCount} Participating  •  ${user.projectsCount} Sponsored',
-            bgColor: Colors.purple,
-          ),
-          const SizedBox(height: 20),
-          _buildSectionTitle(theme, '🏢 CSR Initiative Funding allocations'),
-          const SizedBox(height: 8),
-          _buildCSRFundCard('Environmental Restoration Restoration', '1,200,000 Karma Funded', 'Active (NGO Verified)', 0.8),
-          _buildCSRFundCard('Education & Mentorship Course Scholarships', '800,000 Karma Funded', 'Active (Institution Verified)', 0.5),
-          const SizedBox(height: 24),
-          _buildSectionTitle(theme, '🎯 Active Corporate Challenges'),
-          _buildChallengeCard(
-            title: 'Ride to Work Green Challenge',
-            desc: 'Cycle or walk to work. Earn reputation and company matching carbon points.',
-            volunteers: '480 employees active',
-            deadline: 'Ends in 2 weeks',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommunityGroupDashboard(BuildContext context, UserProfile user, KarmaProvider karmaProvider, ThemeData theme) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildOrgHeader(user, theme),
-          const SizedBox(height: 20),
-          _buildOrgPassportCard(
-            title: 'GROUP COLLABORATION PASSPORT',
-            orgName: user.name,
-            roleName: 'COMMUNITY GROUP',
-            karmaCredits: user.karmaCredits,
-            primaryMetric: '${user.totalVolunteers} Volunteers/Members',
-            secondaryMetric: '${user.verifiedSubmissions} Group Actions completed',
-            bgColor: Colors.deepOrange,
-          ),
-          const SizedBox(height: 20),
-          _buildSectionTitle(theme, '👥 Nearby Collaborative Opportunities'),
-          _buildChallengeCard(
-            title: 'Public Park Tree Care',
-            desc: 'Group weeding and sapling watering at Central Gardens.',
-            volunteers: '18 active groups participating',
-            deadline: 'Every Saturday morning',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrgHeader(UserProfile user, ThemeData theme) {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
-          child: Text(
-            user.name.isNotEmpty ? user.name[0].toUpperCase() : 'O',
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniMetric(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: color)),
+      ],
+    );
+  }
+
+  Widget _buildPrimaryActionCard(
+    BuildContext context, {
+    required String emoji,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(isDark ? 0.22 : 0.1),
+                color.withOpacity(isDark ? 0.08 : 0.03),
+              ],
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    user.name,
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  if (user.isOrgVerified) ...[
-                    const SizedBox(width: 6),
-                    const Icon(Icons.verified_rounded, color: Colors.blue, size: 18),
-                  ],
-                ],
-              ),
+              Text(emoji, style: const TextStyle(fontSize: 26)),
+              const SizedBox(height: 8),
               Text(
-                user.role.label,
-                style: TextStyle(fontSize: 12, color: Colors.grey[650], fontWeight: FontWeight.bold),
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 14,
+                  color: color,
+                ),
               ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOrgPassportCard({
-    required String title,
-    required String orgName,
-    required String roleName,
-    required int karmaCredits,
-    required String primaryMetric,
-    required String secondaryMetric,
-    required Color bgColor,
-  }) {
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 4,
-      shadowColor: Colors.black12,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [bgColor, bgColor.withRed((bgColor.red + 30).clamp(0, 255))],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                    fontSize: 10,
-                  ),
-                ),
-                const Icon(
-                  Icons.verified_user_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              orgName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-              ),
-            ),
-            Text(
-              roleName,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-                letterSpacing: 1.0,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'TOTAL KARMA',
-                      style: TextStyle(color: Colors.white70, fontSize: 8),
-                    ),
-                    Text(
-                      '$karmaCredits Karma',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      primaryMetric,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                    ),
-                    Text(
-                      secondaryMetric,
-                      style: const TextStyle(color: Colors.white70, fontSize: 9),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(ThemeData theme, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Text(
-        text,
-        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildStatGrid(List<Widget> children) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.5,
-      children: children,
-    );
-  }
-
-  Widget _buildMiniStatCard(String label, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 16, color: color),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(fontSize: 10, color: Colors.grey, overflow: TextOverflow.ellipsis),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLeaderboardItem(int rank, String className, String score) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 12,
-              backgroundColor: rank == 1 ? Colors.amber[100] : Colors.grey[200],
-              child: Text(
-                '$rank',
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: rank == 1 ? Colors.amber[900] : Colors.grey[800],
+                  color: isDark ? Colors.white70 : Colors.grey.shade700,
+                  height: 1.2,
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                className,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-              ),
-            ),
-            Text(
-              score,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00B074), fontSize: 13),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildChallengeCard({
+  Widget _buildSecondaryActionCard(
+    BuildContext context, {
+    required String emoji,
     required String title,
-    required String desc,
-    required String volunteers,
-    required String deadline,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(top: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            const SizedBox(height: 4),
-            Text(desc, style: TextStyle(color: Colors.grey[700], fontSize: 11, height: 1.4)),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.people_alt_outlined, size: 14, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Text(volunteers, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                  ],
-                ),
-                Text(deadline, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigo)),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVerificationQueueCard({
-    required String actionTitle,
-    required String submitter,
-    required String timeAgo,
-    required String evidenceScore,
-  }) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(actionTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-            const SizedBox(height: 4),
-            Text('By $submitter  •  $timeAgo', style: const TextStyle(fontSize: 10, color: Colors.grey)),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(4)),
-                  child: Text('AI Confidence: $evidenceScore', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue[900])),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00B074),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  onPressed: () {},
-                  child: const Text('Verify Deed ✅', style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVolunteerCard(String text, String reward) {
-    return Card(
-      elevation: 0.5,
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: const Icon(Icons.volunteer_activism_outlined, color: Colors.teal),
-        title: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        trailing: Text(reward, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber)),
-      ),
-    );
-  }
-
-  Widget _buildCSRFundCard(String title, String funded, String status, double progress) {
-    return Card(
-      elevation: 0.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                Text(status, style: const TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(funded, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            const SizedBox(height: 10),
-            LinearProgressIndicator(value: progress, minHeight: 4, backgroundColor: Colors.grey[200], valueColor: const AlwaysStoppedAnimation(Colors.purple)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPassportStat(String label, String value, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.white70, size: 14),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(color: Colors.white70, fontSize: 11),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
-    );
-  }
-
-  List<PieChartSectionData> _buildPieChartSections(Map<String, int> data) {
-    final List<PieChartSectionData> sections = [];
-    final totalCredits = data.values.fold(0, (sum, value) => sum + value);
-    if (totalCredits == 0) return [];
-
-    data.forEach((catKey, value) {
-      if (value > 0) {
-        final category = KarmaCategory.fromJson(catKey);
-        final percentage = (value / totalCredits) * 100;
-        sections.add(
-          PieChartSectionData(
-            color: category.color,
-            value: value.toDouble(),
-            title: '${percentage.toStringAsFixed(0)}%',
-            radius: 50,
-            titleStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        );
-      }
-    });
-
-    return sections;
-  }
-
-  List<Widget> _buildChartLegend(Map<String, int> data) {
-    final List<Widget> legend = [];
-    data.forEach((catKey, value) {
-      if (value > 0) {
-        final category = KarmaCategory.fromJson(catKey);
-        legend.add(
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: category.color,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '${category.icon} ${category.label} ($value)',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        );
-      }
-    });
-    return legend;
-  }
-
-  Widget _buildDeedItem(BuildContext context, KarmaAction action) {
     final theme = Theme.of(context);
-    final isVerified = action.status == DeedStatus.verified;
-    final isRejected = action.status == DeedStatus.rejected;
-
-    Color statusColor = Colors.orange;
-    IconData statusIcon = Icons.pending_actions_rounded;
-    if (isVerified) {
-      statusColor = const Color(0xFF00B074);
-      statusIcon = Icons.check_circle_rounded;
-    } else if (isRejected) {
-      statusColor = Colors.red;
-      statusIcon = Icons.cancel_rounded;
-    }
+    final isDark = theme.brightness == Brightness.dark;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: CircleAvatar(
-          radius: 22,
-          backgroundColor: action.category.color.withOpacity(0.15),
-          child: Text(
-            action.category.icon,
-            style: const TextStyle(fontSize: 20),
-          ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                action.title,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (isVerified)
-              Text(
-                '+${action.creditsAwarded} CR',
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              action.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(statusIcon, color: statusColor, size: 14),
-                    const SizedBox(width: 4),
                     Text(
-                      action.status.name.toUpperCase(),
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                      ),
+                      title,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: color),
+                    ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 9.5, color: isDark ? Colors.white60 : Colors.grey.shade600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-                Text(
-                  _formatDate(action.timestamp),
-                  style: TextStyle(color: Colors.grey[500], fontSize: 11),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  void _showResolveProblemDialog(BuildContext context, KarmaProvider karmaProvider, CommunityProblem prob, String orgName) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Resolve Community Problem'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _buildOpportunityTile(
+    BuildContext context, {
+    required String emoji,
+    required String title,
+    required String subtitle,
+    required String badge,
+    required Color badgeColor,
+    required VoidCallback onTap,
+    bool isDemo = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Problem: ${prob.title}'),
-              const SizedBox(height: 8),
-              const Text('Please attach photo proof showing the resolved condition (AFTER photo evidence).'),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.camera_alt),
-                label: const Text('Attach AFTER Resolution Photo'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  karmaProvider.resolveProblem(prob.id, orgName, 'resolved_after.png');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('🎉 Problem resolved! ${prob.reporterReward} Karma Credits released to original reporter (${prob.reporterName}).'),
-                      backgroundColor: Colors.green,
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+                          ),
+                        ),
+                        if (isDemo) const DemoBadge(),
+                      ],
                     ),
-                  );
-                },
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.grey.shade600, height: 1.25),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: badgeColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  badge,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10.5, color: badgeColor),
+                ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            )
-          ],
-        );
-      },
+        ),
+      ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    return '${dt.day}/${dt.month}/${dt.year}';
   }
 }

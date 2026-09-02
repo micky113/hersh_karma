@@ -1,36 +1,128 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Karma Grid - Proof of Good">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="hersh_karma">
+  <meta name="apple-mobile-web-app-title" content="Karma Grid">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>hersh_karma</title>
+  <title>Karma Grid — Proof of Good</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Firebase Web SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCNxbnliCxMk2cKtzobIWyLHppEBIMmPro",
+      authDomain: "hersh-karma.firebaseapp.com",
+      projectId: "hersh-karma",
+      storageBucket: "hersh-karma.firebasestorage.app",
+      messagingSenderId: "341148406350",
+      appId: "1:341148406350:web:0d8e5bb68b7a38d7e8a91f",
+      measurementId: "G-LNR0V3QCEM"
+    };
+    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    // Direct Browser Google OAuth Popup Bridge
+    window.signInWithGooglePopup = function() {
+      return new Promise(function(resolve, reject) {
+        try {
+          if (typeof firebase === 'undefined' || !firebase.auth) {
+            reject(new Error('Firebase Auth SDK is initializing. Please try again.'));
+            return;
+          }
+          var provider = new firebase.auth.GoogleAuthProvider();
+          provider.addScope('email');
+          provider.addScope('profile');
+          provider.setCustomParameters({ prompt: 'select_account' });
+
+          firebase.auth().signInWithPopup(provider).then(function(result) {
+            var user = result.user;
+            resolve({
+              uid: user.uid,
+              email: user.email,
+              displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Karma Contributor'),
+              photoURL: user.photoURL || ''
+            });
+          }).catch(function(error) {
+            reject(error);
+          });
+        } catch (err) {
+          reject(err);
+        }
+      });
+    };
+
+    // Direct Browser Session Restoration Bridge
+    window.getFirebaseCurrentUser = function() {
+      return new Promise(function(resolve) {
+        try {
+          if (typeof firebase === 'undefined' || !firebase.auth) {
+            resolve(null);
+            return;
+          }
+          var currentUser = firebase.auth().currentUser;
+          if (currentUser) {
+            resolve({
+              uid: currentUser.uid,
+              email: currentUser.email,
+              displayName: currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'Karma Contributor'),
+              photoURL: currentUser.photoURL || ''
+            });
+            return;
+          }
+          // Listen once if auth state is initializing from browser cache
+          var unsubscribe = firebase.auth().onAuthStateChanged(function(u) {
+            unsubscribe();
+            if (u) {
+              resolve({
+                uid: u.uid,
+                email: u.email,
+                displayName: u.displayName || (u.email ? u.email.split('@')[0] : 'Karma Contributor'),
+                photoURL: u.photoURL || ''
+              });
+            } else {
+              resolve(null);
+            }
+          });
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    };
+
+    // Direct Browser SignOut Bridge
+    window.signOutFirebaseUser = function() {
+      return new Promise(function(resolve) {
+        try {
+          if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().signOut().then(function() {
+              resolve(true);
+            }).catch(function() {
+              resolve(false);
+            });
+          } else {
+            resolve(true);
+          }
+        } catch (e) {
+          resolve(true);
+        }
+      });
+    };
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
