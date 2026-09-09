@@ -88,4 +88,64 @@ class FirebaseStorageService {
       'afterImageUrl': afterUrl,
     };
   }
+
+  /// Uploads supporting wish attachments or evidence
+  Future<String?> uploadWishAttachment({
+    required String userId,
+    required String wishId,
+    required XFile file,
+  }) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final sanitizedUserId = userId.isNotEmpty ? userId : 'anonymous';
+      final fileName = '${wishId}_${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+      final storageRef = _storage.ref().child('wishes/$sanitizedUserId/$fileName');
+
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        customMetadata: {
+          'userId': sanitizedUserId,
+          'wishId': wishId,
+          'uploadedAt': DateTime.now().toIso8601String(),
+        },
+      );
+
+      final uploadTask = storageRef.putData(bytes, metadata);
+      final snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      debugPrint('Firebase Storage wish attachment note: $e');
+      return file.path.isNotEmpty ? file.path : 'data:image/jpeg;name=${file.name}';
+    }
+  }
+
+  /// Uploads Organization / Institution KYC verification documents
+  Future<String?> uploadKycDocument({
+    required String userId,
+    required String orgName,
+    required XFile file,
+  }) async {
+    try {
+      final bytes = await file.readAsBytes();
+      final sanitizedUserId = userId.isNotEmpty ? userId : 'anonymous';
+      final fileName = 'kyc_${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+      final storageRef = _storage.ref().child('kyc/$sanitizedUserId/$fileName');
+
+      final metadata = SettableMetadata(
+        contentType: 'application/octet-stream',
+        customMetadata: {
+          'userId': sanitizedUserId,
+          'orgName': orgName,
+          'uploadedAt': DateTime.now().toIso8601String(),
+        },
+      );
+
+      final uploadTask = storageRef.putData(bytes, metadata);
+      final snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      debugPrint('Firebase Storage KYC doc note: $e');
+      return file.path.isNotEmpty ? file.path : file.name;
+    }
+  }
 }

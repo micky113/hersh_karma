@@ -10,6 +10,9 @@ import 'providers/admin_provider.dart';
 import 'repositories/auth_repo.dart';
 import 'repositories/karma_repo.dart';
 import 'repositories/wallet_repo.dart';
+import 'services/firebase/firebase_auth_service.dart';
+import 'services/firebase/firebase_karma_service.dart';
+import 'services/firebase/firebase_wallet_service.dart';
 import 'services/mock/mock_auth_service.dart';
 import 'services/mock/mock_karma_service.dart';
 import 'services/mock/mock_wallet_service.dart';
@@ -24,24 +27,38 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  bool firebaseReady = false;
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    firebaseReady = true;
+    debugPrint('🔥 Firebase successfully initialized with project: ${DefaultFirebaseOptions.currentPlatform.projectId}');
   } catch (e) {
-    debugPrint('Firebase initialization note: $e');
+    debugPrint('Firebase initialization note (using offline fallback): $e');
   }
 
-  // Create singletons of mock services for offline persistence
-  final mockAuthService = MockAuthService();
-  final mockKarmaService = MockKarmaService(mockAuthService);
-  final mockWalletService = MockWalletService(mockAuthService);
+  // Use Firebase services when available; fallback to mock services for offline / sandboxed tests
+  final AuthRepository authRepository;
+  final KarmaRepository karmaRepository;
+  final WalletRepository walletRepository;
+
+  if (firebaseReady) {
+    authRepository = FirebaseAuthService();
+    karmaRepository = FirebaseKarmaService();
+    walletRepository = FirebaseWalletService();
+  } else {
+    final mockAuth = MockAuthService();
+    authRepository = mockAuth;
+    karmaRepository = MockKarmaService(mockAuth);
+    walletRepository = MockWalletService(mockAuth);
+  }
 
   runApp(
     HershKarmaApp(
-      authRepository: mockAuthService,
-      karmaRepository: mockKarmaService,
-      walletRepository: mockWalletService,
+      authRepository: authRepository,
+      karmaRepository: karmaRepository,
+      walletRepository: walletRepository,
     ),
   );
 }

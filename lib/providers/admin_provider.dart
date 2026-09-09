@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/admin/admin_role.dart';
 import '../models/admin/admin_user.dart';
 import '../models/admin/admin_audit_log.dart';
@@ -366,6 +367,13 @@ class AdminProvider extends ChangeNotifier {
 
     _auditLogs.insert(0, entry);
     _persistAuditLogs();
+
+    try {
+      FirebaseFirestore.instance
+          .collection('audit_logs')
+          .doc(entry.id)
+          .set(entry.toJson(), SetOptions(merge: true));
+    } catch (_) {}
   }
 
   Future<void> _persistAuditLogs() async {

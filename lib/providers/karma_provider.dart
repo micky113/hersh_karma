@@ -11,6 +11,7 @@ import '../models/challenge.dart';
 import '../models/wish.dart';
 import '../repositories/karma_repo.dart';
 import '../services/firebase/firebase_storage_service.dart';
+import '../services/firebase/firebase_karma_service.dart';
 import 'auth_provider.dart';
 import '../models/app_feedback.dart';
 import '../models/community_problem.dart';
@@ -589,6 +590,9 @@ class KarmaProvider extends ChangeNotifier {
 
       _allWishes.insert(0, newWish);
       await _saveWishes(_activeUserId!);
+      if (_karmaRepository is FirebaseKarmaService) {
+        await (_karmaRepository as FirebaseKarmaService).saveWish(newWish);
+      }
       _isSubmitting = false;
       notifyListeners();
       return true;
@@ -689,6 +693,9 @@ class KarmaProvider extends ChangeNotifier {
       );
 
       await _saveWishes(_activeUserId!);
+      if (_karmaRepository is FirebaseKarmaService) {
+        await (_karmaRepository as FirebaseKarmaService).saveWish(_allWishes[idx]);
+      }
       notifyListeners();
       return true;
     } catch (e) {
@@ -709,6 +716,9 @@ class KarmaProvider extends ChangeNotifier {
 
     _allWishes[idx] = wish.copyWith(wishPlan: steps);
     await _saveWishes(_activeUserId!);
+    if (_karmaRepository is FirebaseKarmaService) {
+      await (_karmaRepository as FirebaseKarmaService).saveWish(_allWishes[idx]);
+    }
     notifyListeners();
   }
 
@@ -719,6 +729,9 @@ class KarmaProvider extends ChangeNotifier {
 
     _allWishes[idx] = _allWishes[idx].copyWith(isReported: true);
     await _saveWishes(_activeUserId!);
+    if (_karmaRepository is FirebaseKarmaService) {
+      await (_karmaRepository as FirebaseKarmaService).saveWish(_allWishes[idx]);
+    }
     notifyListeners();
     return true;
   }

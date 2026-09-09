@@ -2,11 +2,18 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/karma_action.dart';
+import '../../models/wish.dart';
+import '../../models/proposed_action.dart';
+import '../../models/challenge.dart';
+import '../../models/app_feedback.dart';
+import '../../models/admin/admin_audit_log.dart';
+import '../../models/admin/fraud_alert.dart';
 import '../../repositories/karma_repo.dart';
 
 class FirebaseKarmaService implements KarmaRepository {
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
+  // ================= DEEDS & SUBMISSIONS =================
   @override
   Future<List<KarmaAction>> fetchKarmaActions({String? userId}) async {
     try {
@@ -29,7 +36,7 @@ class FirebaseKarmaService implements KarmaRepository {
     try {
       final data = action.toJson();
       await _firestore.collection('deeds').doc(action.id).set(data);
-      debugPrint('KarmaAction submitted to Firestore deeds: ${action.id}');
+      debugPrint('KarmaAction registered in Firestore collection "deeds": ${action.id}');
       return action;
     } catch (e) {
       debugPrint('Firestore submitKarmaAction note: $e');
@@ -109,6 +116,114 @@ class FirebaseKarmaService implements KarmaRepository {
               .toList());
     } catch (e) {
       debugPrint('Firestore streamPendingActions note: $e');
+      return const Stream.empty();
+    }
+  }
+
+  // ================= WISHES =================
+  Future<void> saveWish(Wish wish) async {
+    try {
+      await _firestore.collection('wishes').doc(wish.id).set(wish.toJson());
+      debugPrint('Wish registered in Firestore collection "wishes": ${wish.id}');
+    } catch (e) {
+      debugPrint('Firestore saveWish note: $e');
+    }
+  }
+
+  Stream<List<Wish>> streamWishes() {
+    try {
+      return _firestore
+          .collection('wishes')
+          .orderBy('createdAt', descending: true)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) => Wish.fromJson(doc.data()))
+              .toList());
+    } catch (e) {
+      debugPrint('Firestore streamWishes note: $e');
+      return const Stream.empty();
+    }
+  }
+
+  // ================= COMMUNITY GOVERNANCE PROPOSALS =================
+  Future<void> saveProposal(ProposedAction proposal) async {
+    try {
+      await _firestore.collection('proposals').doc(proposal.id).set(proposal.toJson());
+      debugPrint('Proposal registered in Firestore collection "proposals": ${proposal.id}');
+    } catch (e) {
+      debugPrint('Firestore saveProposal note: $e');
+    }
+  }
+
+  Stream<List<ProposedAction>> streamProposals() {
+    try {
+      return _firestore
+          .collection('proposals')
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) => ProposedAction.fromJson(doc.data()))
+              .toList());
+    } catch (e) {
+      debugPrint('Firestore streamProposals note: $e');
+      return const Stream.empty();
+    }
+  }
+
+  // ================= FEEDBACK & USER REPORTS =================
+  Future<void> saveFeedback(AppFeedback feedback) async {
+    try {
+      await _firestore.collection('feedback').doc(feedback.id).set(feedback.toJson());
+    } catch (e) {
+      debugPrint('Firestore saveFeedback note: $e');
+    }
+  }
+
+  // ================= ADMIN & TRUST CENTER AUDIT LOGS =================
+  Future<void> saveAuditLog(AdminAuditLogEntry log) async {
+    try {
+      await _firestore.collection('audit_logs').doc(log.id).set(log.toJson());
+      debugPrint('Admin Audit Log registered in Firestore "audit_logs": ${log.id}');
+    } catch (e) {
+      debugPrint('Firestore saveAuditLog note: $e');
+    }
+  }
+
+  Stream<List<AdminAuditLogEntry>> streamAuditLogs() {
+    try {
+      return _firestore
+          .collection('audit_logs')
+          .orderBy('timestamp', descending: true)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) => AdminAuditLogEntry.fromJson(doc.data()))
+              .toList());
+    } catch (e) {
+      debugPrint('Firestore streamAuditLogs note: $e');
+      return const Stream.empty();
+    }
+  }
+
+  // ================= FRAUD & ANTI-GAMING ALERTS =================
+  Future<void> saveFraudAlert(FraudAlert alert) async {
+    try {
+      await _firestore.collection('fraud_alerts').doc(alert.id).set(alert.toJson());
+      debugPrint('Fraud Alert registered in Firestore "fraud_alerts": ${alert.id}');
+    } catch (e) {
+      debugPrint('Firestore saveFraudAlert note: $e');
+    }
+  }
+
+  Stream<List<FraudAlert>> streamFraudAlerts() {
+    try {
+      return _firestore
+          .collection('fraud_alerts')
+          .orderBy('timestamp', descending: true)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+              .map((doc) => FraudAlert.fromJson(doc.data()))
+              .toList());
+    } catch (e) {
+      debugPrint('Firestore streamFraudAlerts note: $e');
       return const Stream.empty();
     }
   }
