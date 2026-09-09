@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/foundation.dart';
 import '../../models/user_profile.dart';
 import '../../repositories/auth_repo.dart';
+import 'web_google_auth.dart';
 
 class FirebaseAuthService implements AuthRepository {
   final fb.FirebaseAuth _firebaseAuth = fb.FirebaseAuth.instance;
@@ -19,6 +21,11 @@ class FirebaseAuthService implements AuthRepository {
         final data = docSnapshot.data()!;
         final profile = UserProfile.fromJson(data);
         _currentUser = profile;
+        if (kIsWeb) {
+          try {
+            await WebGoogleAuth.setFirestoreDoc('users', fbUser.uid, jsonEncode(profile.toJson()));
+          } catch (_) {}
+        }
         return profile;
       } else {
         // Create initial Firestore user document
@@ -36,6 +43,11 @@ class FirebaseAuthService implements AuthRepository {
         );
 
         await docRef.set(initialProfile.toJson(), SetOptions(merge: true));
+        if (kIsWeb) {
+          try {
+            await WebGoogleAuth.setFirestoreDoc('users', fbUser.uid, jsonEncode(initialProfile.toJson()));
+          } catch (_) {}
+        }
         _currentUser = initialProfile;
         return initialProfile;
       }
@@ -50,6 +62,11 @@ class FirebaseAuthService implements AuthRepository {
         karmaCredits: 100,
         tokensBalance: 0.0,
       );
+      if (kIsWeb) {
+        try {
+          await WebGoogleAuth.setFirestoreDoc('users', fbUser.uid, jsonEncode(fallbackProfile.toJson()));
+        } catch (_) {}
+      }
       _currentUser = fallbackProfile;
       return fallbackProfile;
     }
@@ -76,18 +93,22 @@ class FirebaseAuthService implements AuthRepository {
   @override
   Future<UserProfile?> signInWithGoogle({String? email, String? name}) async {
     try {
-      final googleProvider = fb.GoogleAuthProvider();
-      googleProvider.addScope('email');
-      googleProvider.addScope('profile');
+      fb.User? fbUser = _firebaseAuth.currentUser;
 
-      fb.UserCredential credential;
-      if (kIsWeb) {
-        credential = await _firebaseAuth.signInWithPopup(googleProvider);
-      } else {
-        credential = await _firebaseAuth.signInWithProvider(googleProvider);
+      if (fbUser == null) {
+        final googleProvider = fb.GoogleAuthProvider();
+        googleProvider.addScope('email');
+        googleProvider.addScope('profile');
+
+        fb.UserCredential credential;
+        if (kIsWeb) {
+          credential = await _firebaseAuth.signInWithPopup(googleProvider);
+        } else {
+          credential = await _firebaseAuth.signInWithProvider(googleProvider);
+        }
+        fbUser = credential.user;
       }
 
-      final fbUser = credential.user;
       if (fbUser != null) {
         return await _syncUserWithFirestore(fbUser, defaultName: name);
       }
@@ -109,6 +130,11 @@ class FirebaseAuthService implements AuthRepository {
         try {
           await _firestore.collection('users').doc(fallbackId).set(fallbackProfile.toJson(), SetOptions(merge: true));
         } catch (_) {}
+        if (kIsWeb) {
+          try {
+            await WebGoogleAuth.setFirestoreDoc('users', fallbackId, jsonEncode(fallbackProfile.toJson()));
+          } catch (_) {}
+        }
         _currentUser = fallbackProfile;
         return fallbackProfile;
       }
@@ -118,7 +144,8 @@ class FirebaseAuthService implements AuthRepository {
 
   @override
   Future<UserProfile?> login(String email, String password) async {
-    final cleanEmail = email.trim();
+    final rawEmail = email.trim();
+    final cleanEmail = rawEmail.contains('@') ? rawEmail : '$rawEmail@karma.org';
     try {
       final credential = await _firebaseAuth.signInWithEmailAndPassword(
         email: cleanEmail,
@@ -131,7 +158,7 @@ class FirebaseAuthService implements AuthRepository {
     } on fb.FirebaseAuthException catch (e) {
       debugPrint('FirebaseAuth login exception: ${e.code} - ${e.message}');
       // If user does not exist in Firebase Authentication yet, seamlessly create the account!
-      if (e.code == 'user-not-found' || e.code == 'invalid-credential' || e.code == 'channel-error') {
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential' || e.code == 'channel-error' || e.code == 'wrong-password') {
         try {
           final newCred = await _firebaseAuth.createUserWithEmailAndPassword(
             email: cleanEmail,
@@ -155,7 +182,8 @@ class FirebaseAuthService implements AuthRepository {
 
   @override
   Future<UserProfile?> signUp(String name, String email, String password, {UserRole role = UserRole.individual}) async {
-    final cleanEmail = email.trim();
+    final rawEmail = email.trim();
+    final cleanEmail = rawEmail.contains('@') ? rawEmail : '$rawEmail@karma.org';
     try {
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
         email: cleanEmail,

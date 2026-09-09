@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/transaction.dart';
 import '../../models/user_profile.dart';
 import '../../repositories/wallet_repo.dart';
+import 'web_google_auth.dart';
 
 class FirebaseWalletService implements WalletRepository {
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
@@ -86,6 +88,12 @@ class FirebaseWalletService implements WalletRepository {
       }
     } catch (e) {
       debugPrint('Firestore mintTokens note: $e');
+    }
+
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('transactions', newTx.id, jsonEncode(newTx.toJson()));
+      } catch (_) {}
     }
 
     return newTx;

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../models/karma_action.dart';
@@ -9,6 +10,7 @@ import '../../models/app_feedback.dart';
 import '../../models/admin/admin_audit_log.dart';
 import '../../models/admin/fraud_alert.dart';
 import '../../repositories/karma_repo.dart';
+import 'web_google_auth.dart';
 
 class FirebaseKarmaService implements KarmaRepository {
   FirebaseFirestore get _firestore => FirebaseFirestore.instance;
@@ -33,15 +35,25 @@ class FirebaseKarmaService implements KarmaRepository {
 
   @override
   Future<KarmaAction> submitKarmaAction(KarmaAction action) async {
+    final data = action.toJson();
+    final jsonStr = jsonEncode(data);
+
     try {
-      final data = action.toJson();
       await _firestore.collection('deeds').doc(action.id).set(data);
       debugPrint('KarmaAction registered in Firestore collection "deeds": ${action.id}');
-      return action;
     } catch (e) {
-      debugPrint('Firestore submitKarmaAction note: $e');
-      return action;
+      debugPrint('Firestore submitKarmaAction SDK error: $e');
     }
+
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('deeds', action.id, jsonStr);
+      } catch (e) {
+        debugPrint('Direct JS setFirestoreDoc error: $e');
+      }
+    }
+
+    return action;
   }
 
   @override
@@ -128,6 +140,12 @@ class FirebaseKarmaService implements KarmaRepository {
     } catch (e) {
       debugPrint('Firestore saveWish note: $e');
     }
+
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('wishes', wish.id, jsonEncode(wish.toJson()));
+      } catch (_) {}
+    }
   }
 
   Stream<List<Wish>> streamWishes() {
@@ -153,6 +171,12 @@ class FirebaseKarmaService implements KarmaRepository {
     } catch (e) {
       debugPrint('Firestore saveProposal note: $e');
     }
+
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('proposals', proposal.id, jsonEncode(proposal.toJson()));
+      } catch (_) {}
+    }
   }
 
   Stream<List<ProposedAction>> streamProposals() {
@@ -176,6 +200,12 @@ class FirebaseKarmaService implements KarmaRepository {
     } catch (e) {
       debugPrint('Firestore saveFeedback note: $e');
     }
+
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('feedback', feedback.id, jsonEncode(feedback.toJson()));
+      } catch (_) {}
+    }
   }
 
   // ================= ADMIN & TRUST CENTER AUDIT LOGS =================
@@ -185,6 +215,12 @@ class FirebaseKarmaService implements KarmaRepository {
       debugPrint('Admin Audit Log registered in Firestore "audit_logs": ${log.id}');
     } catch (e) {
       debugPrint('Firestore saveAuditLog note: $e');
+    }
+
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('audit_logs', log.id, jsonEncode(log.toJson()));
+      } catch (_) {}
     }
   }
 
@@ -210,6 +246,12 @@ class FirebaseKarmaService implements KarmaRepository {
       debugPrint('Fraud Alert registered in Firestore "fraud_alerts": ${alert.id}');
     } catch (e) {
       debugPrint('Firestore saveFraudAlert note: $e');
+    }
+
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('fraud_alerts', alert.id, jsonEncode(alert.toJson()));
+      } catch (_) {}
     }
   }
 

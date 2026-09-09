@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/localization/app_localizations.dart';
@@ -29,29 +30,36 @@ void main() async {
 
   bool firebaseReady = false;
   try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
     firebaseReady = true;
     debugPrint('🔥 Firebase successfully initialized with project: ${DefaultFirebaseOptions.currentPlatform.projectId}');
   } catch (e) {
-    debugPrint('Firebase initialization note (using offline fallback): $e');
+    debugPrint('Firebase initialization note: $e');
+    if (Firebase.apps.isNotEmpty || e.toString().contains('duplicate-app') || e.toString().contains('already exists')) {
+      firebaseReady = true;
+    }
   }
 
-  // Use Firebase services when available; fallback to mock services for offline / sandboxed tests
+  // Always use Live Firebase services on Web and in production
   final AuthRepository authRepository;
   final KarmaRepository karmaRepository;
   final WalletRepository walletRepository;
 
-  if (firebaseReady) {
+  if (firebaseReady || kIsWeb) {
     authRepository = FirebaseAuthService();
     karmaRepository = FirebaseKarmaService();
     walletRepository = FirebaseWalletService();
+    debugPrint('🚀 Running with LIVE Firebase Services (Firestore & Auth & Storage)');
   } else {
     final mockAuth = MockAuthService();
     authRepository = mockAuth;
     karmaRepository = MockKarmaService(mockAuth);
     walletRepository = MockWalletService(mockAuth);
+    debugPrint('⚠️ Running with Mock Offline Services');
   }
 
   runApp(

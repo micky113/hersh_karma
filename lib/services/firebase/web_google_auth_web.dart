@@ -60,4 +60,24 @@ class WebGoogleAuthPlatform {
       await js_util.promiseToFuture<dynamic>(promise);
     } catch (_) {}
   }
+
+  static Future<bool> setFirestoreDoc(String collectionName, String docId, String jsonString) async {
+    try {
+      final promise = js_util.callMethod(html.window, 'setFirestoreDoc', [collectionName, docId, jsonString]);
+      final result = await js_util.promiseToFuture<dynamic>(promise);
+      return result == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<String?> getFirestoreDoc(String collectionName, String docId) async {
+    try {
+      final promise = js_util.callMethod(html.window, 'getFirestoreDoc', [collectionName, docId]);
+      final result = await js_util.promiseToFuture<dynamic>(promise);
+      return result?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
 }

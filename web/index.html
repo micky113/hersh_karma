@@ -22,6 +22,8 @@
   <!-- Firebase Web SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-storage-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCNxbnliCxMk2cKtzobIWyLHppEBIMmPro",
@@ -119,6 +121,60 @@
           }
         } catch (e) {
           resolve(true);
+        }
+      });
+    };
+
+    // Direct Browser Firestore Set Document Bridge
+    window.setFirestoreDoc = function(collectionName, docId, jsonString) {
+      return new Promise(function(resolve, reject) {
+        try {
+          if (typeof firebase === 'undefined' || !firebase.firestore) {
+            console.warn('Firebase Firestore SDK not available on window');
+            resolve(false);
+            return;
+          }
+          var db = firebase.firestore();
+          var data = typeof jsonString === 'string' ? JSON.parse(jsonString) : jsonString;
+          db.collection(collectionName).doc(docId).set(data, { merge: true })
+            .then(function() {
+              console.log('✅ Firestore write success -> ' + collectionName + '/' + docId);
+              resolve(true);
+            })
+            .catch(function(err) {
+              console.error('❌ Firestore write error:', err);
+              resolve(false);
+            });
+        } catch (err) {
+          console.error('❌ Firestore set exception:', err);
+          resolve(false);
+        }
+      });
+    };
+
+    // Direct Browser Firestore Get Document Bridge
+    window.getFirestoreDoc = function(collectionName, docId) {
+      return new Promise(function(resolve) {
+        try {
+          if (typeof firebase === 'undefined' || !firebase.firestore) {
+            resolve(null);
+            return;
+          }
+          var db = firebase.firestore();
+          db.collection(collectionName).doc(docId).get()
+            .then(function(doc) {
+              if (doc.exists) {
+                resolve(JSON.stringify(doc.data()));
+              } else {
+                resolve(null);
+              }
+            })
+            .catch(function(err) {
+              console.error('❌ Firestore read error:', err);
+              resolve(null);
+            });
+        } catch (e) {
+          resolve(null);
         }
       });
     };

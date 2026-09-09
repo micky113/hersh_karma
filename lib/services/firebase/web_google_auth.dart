@@ -12,4 +12,10 @@ abstract class WebGoogleAuth {
 
   static Future<void> signOutWeb() =>
       WebGoogleAuthPlatform.signOutWeb();
+
+  static Future<bool> setFirestoreDoc(String collectionName, String docId, String jsonString) =>
+      WebGoogleAuthPlatform.setFirestoreDoc(collectionName, docId, jsonString);
+
+  static Future<String?> getFirestoreDoc(String collectionName, String docId) =>
+      WebGoogleAuthPlatform.getFirestoreDoc(collectionName, docId);
 }
