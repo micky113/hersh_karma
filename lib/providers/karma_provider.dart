@@ -307,6 +307,17 @@ class KarmaProvider extends ChangeNotifier {
         }
       }
 
+      int baseCredits = 350;
+      if (verificationLevel == 2) {
+        baseCredits = 100;
+      } else if (evidenceScore >= 90) {
+        baseCredits = 450;
+      }
+      if (creativityBonus) baseCredits += 50;
+      if (participationBonus) baseCredits += 30;
+      if (rippleInspirationBonus) baseCredits += 70;
+      final totalAwardedCredits = baseCredits * scale;
+
       final action = KarmaAction(
         id: deedId,
         userId: _activeUserId!,
@@ -319,7 +330,8 @@ class KarmaProvider extends ChangeNotifier {
         latitude: latitude,
         longitude: longitude,
         witnessEmail: witnessEmail,
-        status: DeedStatus.pending,
+        status: (evidenceScore >= 90) ? DeedStatus.verified : DeedStatus.pending,
+        creditsAwarded: totalAwardedCredits,
         scale: scale,
         confidenceScore: confidenceScore,
         durationCategory: durationCategory,
@@ -339,6 +351,15 @@ class KarmaProvider extends ChangeNotifier {
       );
 
       await _karmaRepository.submitKarmaAction(action);
+
+      // Increment user total submissions and add earned credits
+      if (_authProvider != null) {
+        await _authProvider!.addCredits(
+          totalAwardedCredits,
+          isVerified: (action.status == DeedStatus.verified),
+        );
+      }
+
       _isSubmitting = false;
       notifyListeners();
       return true;
@@ -354,7 +375,10 @@ class KarmaProvider extends ChangeNotifier {
     if (_activeUserId == null) return false;
     
     try {
-      await _karmaRepository.voteOnKarmaAction(deedId, _activeUserId!, approve);
+      final updated = await _karmaRepository.voteOnKarmaAction(deedId, _activeUserId!, approve);
+      if (updated.status == DeedStatus.verified && _authProvider != null && updated.userId == _activeUserId) {
+        await _authProvider!.addCredits(updated.creditsAwarded, isVerified: true);
+      }
       return true;
     } catch (e) {
       _error = e.toString();

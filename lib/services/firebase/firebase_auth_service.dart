@@ -13,8 +13,13 @@ class FirebaseAuthService implements AuthRepository {
   UserProfile? _currentUser;
 
   Future<UserProfile> _syncUserWithFirestore(fb.User fbUser, {String? defaultName, UserRole defaultRole = UserRole.individual}) async {
+    final uid = fbUser.uid;
+    final rawEmail = fbUser.email?.trim() ?? '';
+    final cleanEmail = rawEmail.isNotEmpty ? rawEmail : '$uid@karma.org';
+
     try {
-      final docRef = _firestore.collection('users').doc(fbUser.uid);
+      // 1. Check existing user document by UID
+      final docRef = _firestore.collection('users').doc(uid);
       final docSnapshot = await docRef.get();
 
       if (docSnapshot.exists && docSnapshot.data() != null) {
@@ -23,40 +28,68 @@ class FirebaseAuthService implements AuthRepository {
         _currentUser = profile;
         if (kIsWeb) {
           try {
-            await WebGoogleAuth.setFirestoreDoc('users', fbUser.uid, jsonEncode(profile.toJson()));
+            await WebGoogleAuth.setFirestoreDoc('users', uid, jsonEncode(profile.toJson()));
           } catch (_) {}
         }
         return profile;
-      } else {
-        // Create initial Firestore user document
-        final initialProfile = UserProfile(
-          id: fbUser.uid,
-          name: fbUser.displayName ?? defaultName ?? fbUser.email?.split('@')[0].toUpperCase() ?? 'Karma Contributor',
-          email: fbUser.email ?? 'user@gmail.com',
-          role: defaultRole,
-          reputationScore: 70,
-          karmaCredits: 100,
-          tokensBalance: 0.0,
-          categoryCredits: const {},
-          verifiedSubmissions: 0,
-          totalSubmissions: 0,
-        );
+      }
 
-        await docRef.set(initialProfile.toJson(), SetOptions(merge: true));
-        if (kIsWeb) {
+      // 2. Check if user already exists under this email
+      if (rawEmail.isNotEmpty) {
+        try {
+          final query = await _firestore.collection('users').where('email', isEqualTo: rawEmail).limit(1).get();
+          if (query.docs.isNotEmpty) {
+            final profile = UserProfile.fromJson(query.docs.first.data());
+            _currentUser = profile;
+            // Also link to this UID
+            try {
+              await docRef.set(profile.toJson(), SetOptions(merge: true));
+            } catch (_) {}
+            return profile;
+          }
+        } catch (_) {}
+      }
+
+      // 3. Check Web JS bridge cache
+      if (kIsWeb) {
+        final jsDoc = await WebGoogleAuth.getFirestoreDoc('users', uid);
+        if (jsDoc != null && jsDoc.isNotEmpty) {
           try {
-            await WebGoogleAuth.setFirestoreDoc('users', fbUser.uid, jsonEncode(initialProfile.toJson()));
+            final profile = UserProfile.fromJson(jsonDecode(jsDoc));
+            _currentUser = profile;
+            return profile;
           } catch (_) {}
         }
-        _currentUser = initialProfile;
-        return initialProfile;
       }
+
+      // 4. Only create initial document if user is genuinely brand new
+      final initialProfile = UserProfile(
+        id: uid,
+        name: fbUser.displayName ?? defaultName ?? (cleanEmail.contains('@') ? cleanEmail.split('@')[0].toUpperCase() : 'Karma Contributor'),
+        email: cleanEmail,
+        role: defaultRole,
+        reputationScore: 70,
+        karmaCredits: 100,
+        tokensBalance: 0.0,
+        categoryCredits: const {},
+        verifiedSubmissions: 0,
+        totalSubmissions: 0,
+      );
+
+      await docRef.set(initialProfile.toJson(), SetOptions(merge: true));
+      if (kIsWeb) {
+        try {
+          await WebGoogleAuth.setFirestoreDoc('users', uid, jsonEncode(initialProfile.toJson()));
+        } catch (_) {}
+      }
+      _currentUser = initialProfile;
+      return initialProfile;
     } catch (e) {
       debugPrint('Firestore user sync note: $e');
       final fallbackProfile = UserProfile(
-        id: fbUser.uid,
-        name: fbUser.displayName ?? defaultName ?? fbUser.email?.split('@')[0].toUpperCase() ?? 'Karma Contributor',
-        email: fbUser.email ?? 'user@gmail.com',
+        id: uid,
+        name: fbUser.displayName ?? defaultName ?? (cleanEmail.contains('@') ? cleanEmail.split('@')[0].toUpperCase() : 'Karma Contributor'),
+        email: cleanEmail,
         role: defaultRole,
         reputationScore: 70,
         karmaCredits: 100,
@@ -64,7 +97,7 @@ class FirebaseAuthService implements AuthRepository {
       );
       if (kIsWeb) {
         try {
-          await WebGoogleAuth.setFirestoreDoc('users', fbUser.uid, jsonEncode(fallbackProfile.toJson()));
+          await WebGoogleAuth.setFirestoreDoc('users', uid, jsonEncode(fallbackProfile.toJson()));
         } catch (_) {}
       }
       _currentUser = fallbackProfile;
@@ -234,5 +267,20 @@ class FirebaseAuthService implements AuthRepository {
       debugPrint('Firestore getAllUsers note: $e');
     }
     return _currentUser != null ? [_currentUser!] : [];
+  }
+
+  @override
+  Future<void> updateUserProfile(UserProfile profile) async {
+    _currentUser = profile;
+    try {
+      await _firestore.collection('users').doc(profile.id).set(profile.toJson(), SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('Firestore updateUserProfile error: $e');
+    }
+    if (kIsWeb) {
+      try {
+        await WebGoogleAuth.setFirestoreDoc('users', profile.id, jsonEncode(profile.toJson()));
+      } catch (_) {}
+    }
   }
 }

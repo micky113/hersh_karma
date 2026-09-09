@@ -165,12 +165,27 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateLocalUserProfile(UserProfile updatedProfile) {
+  Future<void> updateLocalUserProfile(UserProfile updatedProfile) async {
     _currentUser = updatedProfile;
-    if (_authRepository is MockAuthService) {
-      (_authRepository as MockAuthService).updateLocalUserProfile(updatedProfile);
-    }
     notifyListeners();
+    try {
+      await _authRepository.updateUserProfile(updatedProfile);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('current_session_user', jsonEncode(updatedProfile.toJson()));
+    } catch (e) {
+      debugPrint('updateLocalUserProfile error: $e');
+    }
+  }
+
+  Future<void> addCredits(int creditsToAdd, {bool isVerified = false}) async {
+    if (_currentUser == null) return;
+    final updated = _currentUser!.copyWith(
+      karmaCredits: _currentUser!.karmaCredits + creditsToAdd,
+      totalSubmissions: _currentUser!.totalSubmissions + 1,
+      verifiedSubmissions: isVerified ? _currentUser!.verifiedSubmissions + 1 : _currentUser!.verifiedSubmissions,
+      reputationScore: (_currentUser!.reputationScore + (isVerified ? 5 : 2)).clamp(0, 100),
+    );
+    await updateLocalUserProfile(updated);
   }
 
   String _guestLanguage = 'English';

@@ -41,6 +41,20 @@ class FirebaseKarmaService implements KarmaRepository {
     try {
       await _firestore.collection('deeds').doc(action.id).set(data);
       debugPrint('KarmaAction registered in Firestore collection "deeds": ${action.id}');
+
+      // Increment submitter's stats in users collection
+      if (action.userId.isNotEmpty) {
+        final updateMap = <String, dynamic>{
+          'totalSubmissions': FieldValue.increment(1),
+          'karmaCredits': FieldValue.increment(action.creditsAwarded),
+        };
+        if (action.status == DeedStatus.verified) {
+          updateMap['verifiedSubmissions'] = FieldValue.increment(1);
+        }
+        try {
+          await _firestore.collection('users').doc(action.userId).set(updateMap, SetOptions(merge: true));
+        } catch (_) {}
+      }
     } catch (e) {
       debugPrint('Firestore submitKarmaAction SDK error: $e');
     }

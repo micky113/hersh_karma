@@ -250,12 +250,17 @@ class MockAuthService implements AuthRepository {
   }
 
   // Helper method for other services to update the current user profile state
-  void updateLocalUserProfile(UserProfile updatedProfile) async {
+  @override
+  Future<void> updateUserProfile(UserProfile updatedProfile) async {
     _currentUser = updatedProfile;
     await _saveSession(updatedProfile);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('profile_${updatedProfile.id}', jsonEncode(updatedProfile.toJson()));
     _authStateController.add(updatedProfile);
+  }
+
+  void updateLocalUserProfile(UserProfile updatedProfile) async {
+    await updateUserProfile(updatedProfile);
   }
 
   @override
