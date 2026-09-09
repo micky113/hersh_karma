@@ -68,6 +68,25 @@ void main() {
       expect(provider2.currentUser?.email, equals('rahul.verma@gmail.com'));
       expect(provider2.currentUser?.name, equals('Rahul Verma'));
     });
+
+    test('Should register new user and immediately create authenticated session', () async {
+      final auth = AuthProvider(authService);
+      final registered = await auth.signUp('Aarav Patel', 'aarav.patel@karma.org', 'password123');
+      expect(registered, isTrue);
+      expect(auth.isAuthenticated, isTrue);
+      expect(auth.currentUser?.name, equals('Aarav Patel'));
+      expect(auth.currentUser?.email, equals('aarav.patel@karma.org'));
+    });
+
+    test('Should send password reset link for valid email address', () async {
+      final auth = AuthProvider(authService);
+      final success = await auth.resetPassword('john@karma.com');
+      expect(success, isTrue);
+
+      final failure = await auth.resetPassword('invalid-email');
+      expect(failure, isFalse);
+      expect(auth.error, contains('valid email'));
+    });
   });
 
   group('Proof of Good - Submission & Validator Tests', () {

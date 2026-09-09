@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/karma_provider.dart';
 import '../../models/app_feedback.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../services/voice_service.dart';
 
 class FeedbackModal {
@@ -33,13 +34,13 @@ class FeedbackModal {
                       decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
                     ),
                     const SizedBox(height: 12),
-                    const TabBar(
-                      labelColor: Color(0xFF00B074),
+                    TabBar(
+                      labelColor: const Color(0xFF00B074),
                       unselectedLabelColor: Colors.grey,
-                      indicatorColor: Color(0xFF00B074),
+                      indicatorColor: const Color(0xFF00B074),
                       tabs: [
-                        Tab(icon: Icon(Icons.lightbulb_outline), text: 'Give Feedback 💡'),
-                        Tab(icon: Icon(Icons.people_outline), text: 'Community Ideas 👥'),
+                        Tab(icon: const Icon(Icons.lightbulb_outline), text: AppLocalizations.translateWithContext(context, 'fb_tab_give', defaultValue: 'Give Feedback 💡')),
+                        Tab(icon: const Icon(Icons.people_outline), text: AppLocalizations.translateWithContext(context, 'fb_tab_ideas', defaultValue: 'Community Ideas 👥')),
                       ],
                     ),
                     Expanded(

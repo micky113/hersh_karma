@@ -135,16 +135,19 @@ class _EcosystemHubScreenState extends State<EcosystemHubScreen> {
                     color: const Color(0xFF00B074).withOpacity(0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Text('THE 4-STEP ACTION LOOP', style: TextStyle(color: Color(0xFF00B074), fontWeight: FontWeight.bold, fontSize: 10)),
+                  child: Text(
+                    AppLocalizations.translateWithContext(context, 'eco_loop_badge', defaultValue: 'THE 4-STEP ACTION LOOP'),
+                    style: const TextStyle(color: Color(0xFF00B074), fontWeight: FontWeight.bold, fontSize: 10),
+                  ),
                 ),
                 const Spacer(),
                 const Text('Civilization MVP 1', style: TextStyle(fontSize: 10, color: Colors.grey)),
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Every real-world improvement follows this 4-step lifecycle:',
-              style: TextStyle(fontSize: 12, color: Colors.black87),
+            Text(
+              AppLocalizations.translateWithContext(context, 'eco_loop_sub', defaultValue: 'Every real-world improvement follows this 4-step lifecycle:'),
+              style: const TextStyle(fontSize: 12, color: Colors.black87),
             ),
             const SizedBox(height: 14),
             Row(
@@ -152,8 +155,8 @@ class _EcosystemHubScreenState extends State<EcosystemHubScreen> {
                 _buildActionStepTile(
                   context,
                   emoji: '🌱',
-                  title: '1. DO GOOD',
-                  subtitle: 'Take action',
+                  title: AppLocalizations.translateWithContext(context, 'dash_action_do', defaultValue: '1. DO GOOD'),
+                  subtitle: AppLocalizations.translateWithContext(context, 'dash_action_do_sub', defaultValue: 'Take action'),
                   color: Colors.green,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
                 ),
@@ -161,8 +164,8 @@ class _EcosystemHubScreenState extends State<EcosystemHubScreen> {
                 _buildActionStepTile(
                   context,
                   emoji: '🔎',
-                  title: '2. REPORT',
-                  subtitle: 'Flag problem',
+                  title: AppLocalizations.translateWithContext(context, 'dash_action_report', defaultValue: '2. REPORT'),
+                  subtitle: AppLocalizations.translateWithContext(context, 'dash_action_report_sub', defaultValue: 'Flag problem'),
                   color: Colors.orange,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.reportAbuse),
                 ),
@@ -170,8 +173,8 @@ class _EcosystemHubScreenState extends State<EcosystemHubScreen> {
                 _buildActionStepTile(
                   context,
                   emoji: '🛠️',
-                  title: '3. SOLVE',
-                  subtitle: 'Fix & claim',
+                  title: AppLocalizations.translateWithContext(context, 'disc_fix_earn', defaultValue: '3. SOLVE'),
+                  subtitle: AppLocalizations.translateWithContext(context, 'Fix & claim', defaultValue: 'Fix & claim'),
                   color: Colors.blue,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.search),
                 ),
@@ -179,8 +182,8 @@ class _EcosystemHubScreenState extends State<EcosystemHubScreen> {
                 _buildActionStepTile(
                   context,
                   emoji: '📸',
-                  title: '4. PROVE',
-                  subtitle: '30-day update',
+                  title: AppLocalizations.translateWithContext(context, 'step_verified', defaultValue: '4. PROVE'),
+                  subtitle: AppLocalizations.translateWithContext(context, '30-day update', defaultValue: '30-day update'),
                   color: Colors.purple,
                   onTap: () => Navigator.pushNamed(context, AppRoutes.karmaFirewall),
                 ),

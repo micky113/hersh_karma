@@ -27,8 +27,8 @@ void main() {
     // Settle Splash Screen and navigate to login
     await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    // Log in via Google / Gmail
-    final googleLoginBtn = find.text('Continue with Google / Gmail');
+    // Log in via Google
+    final googleLoginBtn = find.text('Continue with Google');
     expect(googleLoginBtn, findsOneWidget);
     await tester.ensureVisible(googleLoginBtn);
     await tester.tap(googleLoginBtn);

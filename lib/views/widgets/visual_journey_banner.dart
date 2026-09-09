@@ -11,12 +11,12 @@ class VisualJourneyBanner extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     final steps = [
-      {'icon': '📸', 'title': AppLocalizations.translateWithContext(context, 'step_before', defaultValue: 'BEFORE 📸'), 'desc': 'Capture starting condition'},
-      {'icon': '⚡', 'title': AppLocalizations.translateWithContext(context, 'step_action', defaultValue: 'DO / FIX ⚡'), 'desc': 'Take positive action'},
-      {'icon': '📸', 'title': AppLocalizations.translateWithContext(context, 'step_after', defaultValue: 'AFTER 📸'), 'desc': 'Capture result'},
-      {'icon': '✓', 'title': AppLocalizations.translateWithContext(context, 'step_verified', defaultValue: 'VERIFIED ✓'), 'desc': 'Multi-layer screening'},
-      {'icon': '🌍', 'title': AppLocalizations.translateWithContext(context, 'step_impact', defaultValue: 'IMPACT 🌍'), 'desc': 'Real-world difference'},
-      {'icon': '✨', 'title': AppLocalizations.translateWithContext(context, 'step_karma', defaultValue: 'KARMA ✨'), 'desc': 'Passport recognition'},
+      {'icon': '📸', 'title': AppLocalizations.translateWithContext(context, 'step_before', defaultValue: 'BEFORE 📸'), 'desc': AppLocalizations.translateWithContext(context, 'step_before_desc', defaultValue: 'Photograph starting condition')},
+      {'icon': '⚡', 'title': AppLocalizations.translateWithContext(context, 'step_action', defaultValue: 'DO / FIX ⚡'), 'desc': AppLocalizations.translateWithContext(context, 'step_action_desc', defaultValue: 'Complete the positive action')},
+      {'icon': '📸', 'title': AppLocalizations.translateWithContext(context, 'step_after', defaultValue: 'AFTER 📸'), 'desc': AppLocalizations.translateWithContext(context, 'step_after_desc', defaultValue: 'Photograph the change')},
+      {'icon': '✓', 'title': AppLocalizations.translateWithContext(context, 'step_verified', defaultValue: 'VERIFIED ✓'), 'desc': AppLocalizations.translateWithContext(context, 'step_verified_desc', defaultValue: 'Multi-layer proof verification')},
+      {'icon': '🌍', 'title': AppLocalizations.translateWithContext(context, 'step_impact', defaultValue: 'IMPACT 🌍'), 'desc': AppLocalizations.translateWithContext(context, 'step_impact_desc', defaultValue: 'Measurable positive change')},
+      {'icon': '✨', 'title': AppLocalizations.translateWithContext(context, 'step_karma', defaultValue: 'KARMA ✨'), 'desc': AppLocalizations.translateWithContext(context, 'step_karma_desc', defaultValue: 'Recognition & digital passport record')},
     ];
 
     return Container(

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
+import 'core/localization/app_localizations.dart';
 import 'providers/auth_provider.dart';
 import 'providers/karma_provider.dart';
 import 'providers/wallet_provider.dart';
 import 'providers/governance_provider.dart';
+import 'providers/admin_provider.dart';
 import 'repositories/auth_repo.dart';
 import 'repositories/karma_repo.dart';
 import 'repositories/wallet_repo.dart';
@@ -74,12 +76,15 @@ class HershKarmaApp extends StatelessWidget {
         ChangeNotifierProvider<GovernanceProvider>(
           create: (_) => GovernanceProvider(),
         ),
+        ChangeNotifierProvider<AdminProvider>(
+          create: (_) => AdminProvider(),
+        ),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) {
           final lang = auth.currentLanguage;
-          final isRtl = lang.toLowerCase() == 'hebrew' || lang.toLowerCase() == 'arabic' || lang.toLowerCase() == 'urdu';
-          final localeStr = isRtl ? 'he' : (lang.toLowerCase() == 'hindi' ? 'hi' : 'en');
+          final isRtl = AppLocalizations.isRtlLanguage(lang);
+          final localeStr = AppLocalizations.getLocaleCode(lang);
 
           return MaterialApp(
             title: 'Proof of Good - Karma Credits',

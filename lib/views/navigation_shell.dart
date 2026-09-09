@@ -43,6 +43,18 @@ class _NavigationShellState extends State<NavigationShell> {
 
     final authProvider = Provider.of<AuthProvider>(context);
     final user = authProvider.currentUser;
+
+    if (!authProvider.isAuthenticated || user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, AppRoutes.login);
+        }
+      });
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final lang = authProvider.currentLanguage;
     final isRtl = AppLocalizations.isRtlLanguage(lang);
 

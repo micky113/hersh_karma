@@ -119,6 +119,20 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> resetPassword(String email) async {
+    _setLoading(true);
+    _clearError();
+    try {
+      final res = await _authRepository.resetPassword(email);
+      _setLoading(false);
+      return res;
+    } catch (e) {
+      _setError(e.toString().replaceAll('Exception: ', ''));
+      _setLoading(false);
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     _setLoading(true);
     try {
@@ -152,12 +166,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void updateLocalUserProfile(UserProfile updatedProfile) {
+    _currentUser = updatedProfile;
     if (_authRepository is MockAuthService) {
       (_authRepository as MockAuthService).updateLocalUserProfile(updatedProfile);
-    } else {
-      _currentUser = updatedProfile;
-      notifyListeners();
     }
+    notifyListeners();
   }
 
   String _guestLanguage = 'English';

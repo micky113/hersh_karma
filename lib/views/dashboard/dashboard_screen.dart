@@ -12,10 +12,10 @@ import '../widgets/demo_badge.dart';
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
-  String _getReputationBadge(int rep) {
-    if (rep >= 85) return '👑 Gold Validator';
-    if (rep >= 70) return '🛡️ Silver Contributor';
-    return '🌱 Green Citizen';
+  String _getReputationBadge(BuildContext context, int rep) {
+    if (rep >= 85) return AppLocalizations.translateWithContext(context, 'rep_gold', defaultValue: '👑 Gold Validator');
+    if (rep >= 70) return AppLocalizations.translateWithContext(context, 'rep_silver', defaultValue: '🛡️ Silver Contributor');
+    return AppLocalizations.translateWithContext(context, 'rep_citizen', defaultValue: '🌱 Green Citizen');
   }
 
   Color _getBadgeColor(int rep) {
@@ -86,7 +86,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  _getReputationBadge(user.reputationScore),
+                  _getReputationBadge(context, user.reputationScore),
                   style: TextStyle(
                     color: _getBadgeColor(user.reputationScore).withOpacity(0.95),
                     fontWeight: FontWeight.bold,
@@ -109,19 +109,19 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   _buildMiniMetric(
                     AppLocalizations.translateWithContext(context, 'dash_karma', defaultValue: '✨ Karma'),
-                    '${user.karmaCredits} Credits',
+                    '${user.karmaCredits} ${AppLocalizations.translateWithContext(context, 'unit_credits', defaultValue: 'Credits')}',
                     const Color(0xFF00B074),
                   ),
                   Container(height: 24, width: 1, color: isDark ? Colors.white12 : Colors.grey.shade300),
                   _buildMiniMetric(
                     AppLocalizations.translateWithContext(context, 'dash_impact', defaultValue: '🌍 Impact'),
-                    '${user.verifiedSubmissions} Verified',
+                    '${user.verifiedSubmissions} ${AppLocalizations.translateWithContext(context, 'unit_verified', defaultValue: 'Verified')}',
                     Colors.blue,
                   ),
                   Container(height: 24, width: 1, color: isDark ? Colors.white12 : Colors.grey.shade300),
                   _buildMiniMetric(
                     AppLocalizations.translateWithContext(context, 'dash_trust', defaultValue: '🛡️ Trust'),
-                    '${(user.trustScore * 100).toInt()}% Rating',
+                    '${(user.trustScore * 100).toInt()}% ${AppLocalizations.translateWithContext(context, 'unit_rating', defaultValue: 'Rating')}',
                     Colors.purple,
                   ),
                 ],
@@ -149,7 +149,7 @@ class DashboardScreen extends StatelessWidget {
                   title: AppLocalizations.translateWithContext(context, 'dash_action_do', defaultValue: 'DO GOOD'),
                   subtitle: AppLocalizations.translateWithContext(context, 'dash_action_do_sub', defaultValue: 'Find a deed & prove impact'),
                   color: const Color(0xFF00B074),
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.submitDeed),
                 ),
               ),
               const SizedBox(width: 10),
@@ -202,11 +202,17 @@ class DashboardScreen extends StatelessWidget {
           // 6. LOCATION-AWARE INDIA-FIRST OPPORTUNITIES
           Row(
             children: [
-              const Text('🇮🇳 Today\'s Action Opportunities', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(
+                AppLocalizations.translateWithContext(context, 'dash_today_opps', defaultValue: '🇮🇳 Today\'s Action Opportunities'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
               const Spacer(),
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, AppRoutes.search),
-                child: const Text('View All', style: TextStyle(fontSize: 11)),
+                child: Text(
+                  AppLocalizations.translateWithContext(context, 'dash_view_all', defaultValue: 'View All'),
+                  style: const TextStyle(fontSize: 11),
+                ),
               ),
             ],
           ),
@@ -215,9 +221,9 @@ class DashboardScreen extends StatelessWidget {
           _buildOpportunityTile(
             context,
             emoji: '🌍',
-            title: 'Plastic Recovery & Segregation',
-            subtitle: 'Collect & photograph 5 items of plastic waste. Verified 1.5x Multiplier today!',
-            badge: '+75 Karma',
+            title: AppLocalizations.translateWithContext(context, 'opp_plastic_title', defaultValue: 'Plastic Recovery & Segregation'),
+            subtitle: AppLocalizations.translateWithContext(context, 'opp_plastic_desc', defaultValue: 'Collect & photograph 5 items of plastic waste. Verified 1.5x Multiplier today!'),
+            badge: '+75 ${AppLocalizations.translateWithContext(context, 'dash_karma', defaultValue: 'Karma')}',
             badgeColor: Colors.green,
             isDemo: true,
             onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
@@ -227,9 +233,9 @@ class DashboardScreen extends StatelessWidget {
           _buildOpportunityTile(
             context,
             emoji: '🌱',
-            title: 'Neighborhood Composting Drive',
-            subtitle: 'Clear organic waste near park and start community pit with before/after photos.',
-            badge: '+50 Karma',
+            title: AppLocalizations.translateWithContext(context, 'opp_compost_title', defaultValue: 'Neighborhood Composting Drive'),
+            subtitle: AppLocalizations.translateWithContext(context, 'opp_compost_desc', defaultValue: 'Clear organic waste near park and start community pit with before/after photos.'),
+            badge: '+50 ${AppLocalizations.translateWithContext(context, 'dash_karma', defaultValue: 'Karma')}',
             badgeColor: Colors.teal,
             isDemo: true,
             onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
@@ -245,8 +251,14 @@ class DashboardScreen extends StatelessWidget {
             ),
             child: ListTile(
               leading: const Text('🌐', style: TextStyle(fontSize: 22)),
-              title: const Text('Unified Flywheel Hub', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5)),
-              subtitle: const Text('Explore Stories, Karma Graph & Collective Intelligence', style: TextStyle(fontSize: 10.5, color: Colors.grey)),
+              title: Text(
+                AppLocalizations.translateWithContext(context, 'dash_flywheel_title', defaultValue: 'Unified Flywheel Hub'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
+              ),
+              subtitle: Text(
+                AppLocalizations.translateWithContext(context, 'dash_flywheel_sub', defaultValue: 'Explore Stories, Karma Graph & Collective Intelligence'),
+                style: const TextStyle(fontSize: 10.5, color: Colors.grey),
+              ),
               trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Color(0xFF00B074)),
               onTap: () => Navigator.pushNamed(context, AppRoutes.ecosystemHub),
             ),

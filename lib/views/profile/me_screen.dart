@@ -28,10 +28,10 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
     super.dispose();
   }
 
-  String _getReputationBadge(int rep) {
-    if (rep >= 85) return '👑 Gold Validator';
-    if (rep >= 70) return '🛡️ Silver Contributor';
-    return '🌱 Green Citizen';
+  String _getReputationBadge(BuildContext context, int rep) {
+    if (rep >= 85) return AppLocalizations.translateWithContext(context, 'rep_gold', defaultValue: '👑 Gold Validator');
+    if (rep >= 70) return AppLocalizations.translateWithContext(context, 'rep_silver', defaultValue: '🛡️ Silver Contributor');
+    return AppLocalizations.translateWithContext(context, 'rep_citizen', defaultValue: '🌱 Green Citizen');
   }
 
   @override
@@ -120,7 +120,7 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      _getReputationBadge(user.reputationScore),
+                      _getReputationBadge(context, user.reputationScore),
                       style: const TextStyle(color: Color(0xFF00B074), fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -144,9 +144,9 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
         // Karma Credits
         Expanded(
           child: _buildMetricTile(
-            title: '✨ Karma',
+            title: AppLocalizations.translateWithContext(context, 'dash_karma', defaultValue: '✨ Karma'),
             value: '${user.karmaCredits}',
-            subtitle: 'Recognition earned',
+            subtitle: AppLocalizations.translateWithContext(context, 'me_metric_recog', defaultValue: 'Recognition earned'),
             color: const Color(0xFF00B074),
             onTap: () => Navigator.pushNamed(context, AppRoutes.rewards),
           ),
@@ -156,9 +156,9 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
         // Impact
         Expanded(
           child: _buildMetricTile(
-            title: '🌍 Impact',
+            title: AppLocalizations.translateWithContext(context, 'dash_impact', defaultValue: '🌍 Impact'),
             value: '${user.verifiedSubmissions}',
-            subtitle: 'Verified changes',
+            subtitle: AppLocalizations.translateWithContext(context, 'me_metric_verified', defaultValue: 'Verified deeds'),
             color: Colors.blue,
             onTap: () => Navigator.pushNamed(context, AppRoutes.impactExchange),
           ),
@@ -168,9 +168,9 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
         // Trust
         Expanded(
           child: _buildMetricTile(
-            title: '🛡️ Trust',
+            title: AppLocalizations.translateWithContext(context, 'dash_trust', defaultValue: '🛡️ Trust'),
             value: '${(user.trustScore * 100).toInt()}%',
-            subtitle: 'Reliability score',
+            subtitle: AppLocalizations.translateWithContext(context, 'me_metric_trust', defaultValue: 'Audited trust'),
             color: Colors.purple,
             onTap: () => Navigator.pushNamed(context, AppRoutes.karmaFirewall),
           ),
@@ -216,8 +216,14 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
           backgroundColor: Color(0xFF00B074),
           child: Icon(Icons.verified_user_rounded, color: Colors.white),
         ),
-        title: const Text('🪪 Karma Passport', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        subtitle: const Text('Your complete record of verified real-world impact', style: TextStyle(fontSize: 11)),
+        title: Text(
+          AppLocalizations.translateWithContext(context, 'me_passport', defaultValue: '🪪 Karma Passport'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          AppLocalizations.translateWithContext(context, 'me_passport_sub', defaultValue: 'Your complete record of verified real-world impact'),
+          style: const TextStyle(fontSize: 11),
+        ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00B074)),
         onTap: () => Navigator.pushNamed(context, AppRoutes.profileDetail),
       ),
@@ -235,8 +241,8 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
           indicatorColor: const Color(0xFF00B074),
           indicatorWeight: 3,
           tabs: [
-            Tab(text: '🌱 My Actions (${karmaProvider.myActions.length})'),
-            const Tab(text: '🔎 My Reports (3)'),
+            Tab(text: '${AppLocalizations.translateWithContext(context, 'me_my_actions', defaultValue: '🌱 My Actions')} (${karmaProvider.myActions.length})'),
+            Tab(text: '${AppLocalizations.translateWithContext(context, 'me_my_reports', defaultValue: '🔎 My Reports')} (3)'),
           ],
         ),
         const SizedBox(height: 12),
@@ -247,7 +253,7 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
             children: [
               // My Actions
               karmaProvider.myActions.isEmpty
-                  ? const Center(child: Text('No actions submitted yet. Tap + Create!', style: TextStyle(color: Colors.grey, fontSize: 12)))
+                  ? Center(child: Text(AppLocalizations.translateWithContext(context, 'me_no_actions', defaultValue: 'No actions submitted yet. Tap + Create!'), style: const TextStyle(color: Colors.grey, fontSize: 12)))
                   : ListView.builder(
                       itemCount: karmaProvider.myActions.length,
                       itemBuilder: (context, index) {
@@ -296,7 +302,7 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
         children: [
           ListTile(
             leading: const Icon(Icons.language_rounded, color: Colors.blue),
-            title: const Text('Language & Region', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            title: Text(AppLocalizations.translateWithContext(context, 'me_lang_region', defaultValue: 'Language & Region'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             subtitle: Text(authProvider.currentLanguage, style: const TextStyle(fontSize: 11)),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
             onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
@@ -304,7 +310,7 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.swap_horiz_rounded, color: Colors.purple),
-            title: const Text('Interface Mode', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            title: Text(AppLocalizations.translateWithContext(context, 'me_interface_mode', defaultValue: 'Interface Mode'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             subtitle: Text(user.interfaceMode == AppInterfaceMode.simple ? 'Simple (High Accessibility)' : 'Standard (Full Dashboard)', style: const TextStyle(fontSize: 11)),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
             onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
@@ -312,7 +318,7 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
           const Divider(height: 1),
           ListTile(
             leading: const Icon(Icons.logout_rounded, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
+            title: Text(AppLocalizations.translateWithContext(context, 'me_logout', defaultValue: 'Logout'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.red)),
             onTap: () async {
               await authProvider.logout();
               if (mounted) {

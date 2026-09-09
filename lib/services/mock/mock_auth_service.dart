@@ -233,6 +233,16 @@ class MockAuthService implements AuthRepository {
   }
 
   @override
+  Future<bool> resetPassword(String email) async {
+    await Future.delayed(const Duration(milliseconds: 600));
+    final normalized = email.trim().toLowerCase();
+    if (normalized.isEmpty || !normalized.contains('@')) {
+      throw Exception('Please enter a valid email address.');
+    }
+    return true;
+  }
+
+  @override
   Future<void> logout() async {
     _currentUser = null;
     await _clearSession();

@@ -8,6 +8,8 @@ import '../../data/india_30_presets.dart';
 import '../../data/karma_grid_presets.dart';
 import '../../core/routes/app_routes.dart';
 
+import '../../core/localization/app_localizations.dart';
+
 class IndiaMissionScreen extends StatefulWidget {
   const IndiaMissionScreen({super.key});
 
@@ -48,7 +50,7 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('India 30 Mission Hub 🇮🇳'),
+        title: Text(AppLocalizations.translateWithContext(context, 'mission_india30_title', defaultValue: 'India 30 Mission Hub 🇮🇳')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -66,9 +68,9 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    const Text(
-                      'INDIA 30 NATIONAL OBJECTIVES',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.translateWithContext(context, 'INDIA 30 NATIONAL OBJECTIVES', defaultValue: 'INDIA 30 NATIONAL OBJECTIVES'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF000080), // Ashoka Chakra Navy Blue
@@ -77,7 +79,11 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '30 foundational priority actions selected specifically to improve human capital, environmental security, and civic infrastructure in India. Earn Karma Multipliers for community-wide reach.',
+                      AppLocalizations.translateWithContext(
+                        context,
+                        '30 foundational priority actions selected specifically to improve human capital, environmental security, and civic infrastructure in India. Earn Karma Multipliers for community-wide reach.',
+                        defaultValue: '30 foundational priority actions selected specifically to improve human capital, environmental security, and civic infrastructure in India. Earn Karma Multipliers for community-wide reach.',
+                      ),
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.grey[800], fontSize: 12),
                     ),
@@ -93,7 +99,7 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
                 const Icon(Icons.show_chart_rounded, color: Color(0xFF128807)),
                 const SizedBox(width: 8),
                 Text(
-                  'National Progress Metrics (Live)',
+                  AppLocalizations.translateWithContext(context, 'National Progress Metrics (Live)', defaultValue: 'National Progress Metrics (Live)'),
                   style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
@@ -123,7 +129,7 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
 
             // Pillars Tab Selector
             Text(
-              'Select Impact Pillar',
+              AppLocalizations.translateWithContext(context, 'Select Impact Pillar', defaultValue: 'Select Impact Pillar'),
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
@@ -143,7 +149,7 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
                         children: [
                           Text(pillar.icon),
                           const SizedBox(width: 6),
-                          Text(pillar.label),
+                          Text(AppLocalizations.translateWithContext(context, pillar.label, defaultValue: pillar.label)),
                         ],
                       ),
                       selected: isSelected,
@@ -164,14 +170,14 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              _selectedPillar.description,
+              AppLocalizations.translateWithContext(context, _selectedPillar.description, defaultValue: _selectedPillar.description),
               style: const TextStyle(fontSize: 11, color: Colors.blueGrey, fontStyle: FontStyle.italic),
             ),
             const SizedBox(height: 16),
 
             // Pillar Priority Actions List
             Text(
-              'Pillar Priorities',
+              AppLocalizations.translateWithContext(context, 'Pillar Priorities', defaultValue: 'Pillar Priorities'),
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -202,11 +208,11 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
                       ),
                     ),
                     title: Text(
-                      preset.title,
+                      AppLocalizations.translateWithContext(context, preset.title, defaultValue: preset.title),
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                      preset.justification,
+                      AppLocalizations.translateWithContext(context, preset.justification, defaultValue: preset.justification),
                       style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
                     trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
@@ -246,7 +252,7 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        _selectedPresetDetail!.title,
+                        AppLocalizations.translateWithContext(context, _selectedPresetDetail!.title, defaultValue: _selectedPresetDetail!.title),
                         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       const SizedBox(height: 6),
@@ -279,7 +285,7 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
                           }
                         },
                         icon: const Icon(Icons.assignment_turned_in_rounded),
-                        label: const Text('Accept & Pre-fill Submit'),
+                        label: Text(AppLocalizations.translateWithContext(context, 'Accept & Pre-fill Submit', defaultValue: 'Accept & Pre-fill Submit')),
                       ),
                     ],
                   ),
@@ -293,33 +299,35 @@ class _IndiaMissionScreenState extends State<IndiaMissionScreen> {
   }
 
   Widget _buildTickerCard(String title, String count, Color color) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.blueGrey),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              count.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: color,
+    return Builder(builder: (context) {
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                AppLocalizations.translateWithContext(context, title, defaultValue: title),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.blueGrey),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                count.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},'),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

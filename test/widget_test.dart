@@ -44,10 +44,10 @@ void main() {
 
     // 1. Splash Screen boots, waits 2s, transitions to LoginScreen
     await tester.pumpAndSettle(const Duration(seconds: 2));
-    expect(find.text('Access Your Karma Passport'), findsOneWidget);
+    expect(find.text('Welcome to Karma Grid'), findsOneWidget);
 
-    // 2. Perform Login with Google / Gmail
-    final googleLoginBtn = find.text('Continue with Google / Gmail');
+    // 2. Perform Login with Google
+    final googleLoginBtn = find.text('Continue with Google');
     expect(googleLoginBtn, findsOneWidget);
     await tester.ensureVisible(googleLoginBtn);
     await tester.tap(googleLoginBtn);
@@ -90,6 +90,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // Should return to LoginScreen
-    expect(find.text('Access Your Karma Passport'), findsOneWidget);
+    expect(find.text('Welcome to Karma Grid'), findsOneWidget);
   });
 }

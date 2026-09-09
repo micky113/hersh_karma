@@ -51,7 +51,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search actions, problems, organizations...',
+                    hintText: AppLocalizations.translateWithContext(context, 'disc_search_hint', defaultValue: 'Search actions, problems, organizations...'),
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.mic, color: Color(0xFF00B074)),
@@ -86,12 +86,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: const Color(0xFF00B074),
                 indicatorWeight: 3,
-                tabs: const [
-                  Tab(text: '🌱 Actions'),
-                  Tab(text: '🚨 Problems'),
-                  Tab(text: '🏆 Challenges'),
-                  Tab(text: '🤝 Organizations'),
-                  Tab(text: '🇮🇳 Missions & AI'),
+                tabs: [
+                  Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_actions', defaultValue: '🌱 Actions')),
+                  Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_problems', defaultValue: '🚨 Problems')),
+                  Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_challenges', defaultValue: '🏆 Challenges')),
+                  Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_orgs', defaultValue: '🤝 Organizations')),
+                  Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_missions', defaultValue: '🇮🇳 Missions & AI')),
                 ],
               ),
             ],
@@ -168,7 +168,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
                       karmaProvider.prefilledPreset = activity;
                       Navigator.pushNamed(context, AppRoutes.uploadProof);
                     },
-                    child: const Text('Do This', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      AppLocalizations.translateWithContext(context, 'disc_do_this', defaultValue: 'Do This'),
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ],
@@ -188,11 +191,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
           children: [
             const Text('🎉', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 12),
-            const Text('No unresolved problems in your area!', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              AppLocalizations.translateWithContext(context, 'disc_no_problems', defaultValue: 'No unresolved problems in your area!'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => Navigator.pushNamed(context, AppRoutes.reportAbuse),
-              child: const Text('Report a new issue'),
+              child: Text(AppLocalizations.translateWithContext(context, 'disc_report_issue', defaultValue: 'Report a new issue')),
             ),
           ],
         ),
@@ -259,7 +265,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
                           );
                           Navigator.pushNamed(context, AppRoutes.uploadProof);
                         },
-                        child: const Text('Fix & Earn', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          AppLocalizations.translateWithContext(context, 'disc_fix_earn', defaultValue: 'Fix & Earn'),
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
                   ],
@@ -278,24 +287,24 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
       children: [
         _buildChallengeCard(
           context,
-          title: 'Global Plastic Recovery Drive 🌍',
-          description: 'Collect & photograph 5 items of plastic waste. 1.5x Multiplier today!',
+          title: AppLocalizations.translateWithContext(context, 'chal_plastic_title', defaultValue: 'Global Plastic Recovery Drive 🌍'),
+          description: AppLocalizations.translateWithContext(context, 'chal_plastic_desc', defaultValue: 'Collect & photograph 5 items of plastic waste. 1.5x Multiplier today!'),
           participants: '1,420 volunteers',
           reward: '+75 Karma Credits',
         ),
         const SizedBox(height: 12),
         _buildChallengeCard(
           context,
-          title: 'Delhi Tree Nurture Drive 🌳',
-          description: 'Water and mulch 3 young neighborhood saplings.',
+          title: AppLocalizations.translateWithContext(context, 'chal_tree_title', defaultValue: 'Delhi Tree Nurture Drive 🌳'),
+          description: AppLocalizations.translateWithContext(context, 'chal_tree_desc', defaultValue: 'Water and mulch 3 young neighborhood saplings.'),
           participants: '840 volunteers',
           reward: '+60 Karma Credits',
         ),
         const SizedBox(height: 12),
         _buildChallengeCard(
           context,
-          title: 'Stray Animal Winter Aid 🐾',
-          description: 'Set out clean water bowls and warm bedding for neighborhood strays.',
+          title: AppLocalizations.translateWithContext(context, 'chal_animal_title', defaultValue: 'Stray Animal Winter Aid 🐾'),
+          description: AppLocalizations.translateWithContext(context, 'chal_animal_desc', defaultValue: 'Set out clean water bowls and warm bedding for neighborhood strays.'),
           participants: '610 volunteers',
           reward: '+50 Karma Credits',
         ),
@@ -329,7 +338,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
-                  child: const Text('Join', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    AppLocalizations.translateWithContext(context, 'disc_join', defaultValue: 'Join'),
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -345,25 +357,25 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
       children: [
         _buildOrgTile(
           context,
-          name: 'Green Earth Foundation 🌍',
-          category: 'Environment & Forestry',
-          rating: '🛡️ Verified NGO • 98% Trust',
+          name: AppLocalizations.translateWithContext(context, 'org_green_earth', defaultValue: 'Green Earth Foundation 🌍'),
+          category: AppLocalizations.translateWithContext(context, 'org_green_earth_cat', defaultValue: 'Environment & Forestry'),
+          rating: AppLocalizations.translateWithContext(context, 'org_verified_ngo', defaultValue: '🛡️ Verified NGO • 98% Trust'),
           deedsCompleted: '14,200 Deeds',
         ),
         const SizedBox(height: 10),
         _buildOrgTile(
           context,
-          name: 'Apex Academy 🏫',
-          category: 'Civic Education & Youth',
-          rating: '🛡️ Verified School • 95% Trust',
+          name: AppLocalizations.translateWithContext(context, 'org_apex', defaultValue: 'Apex Academy 🏫'),
+          category: AppLocalizations.translateWithContext(context, 'org_apex_cat', defaultValue: 'Civic Education & Youth'),
+          rating: AppLocalizations.translateWithContext(context, 'org_verified_school', defaultValue: '🛡️ Verified School • 95% Trust'),
           deedsCompleted: '3,800 Deeds',
         ),
         const SizedBox(height: 10),
         _buildOrgTile(
           context,
-          name: 'Municipal Corporation Delhi 🏛️',
-          category: 'Civic Sanitation & Infrastructure',
-          rating: '🛡️ Verified Authority • 92% Trust',
+          name: AppLocalizations.translateWithContext(context, 'org_mcd', defaultValue: 'Municipal Corporation Delhi 🏛️'),
+          category: AppLocalizations.translateWithContext(context, 'org_mcd_cat', defaultValue: 'Civic Sanitation & Infrastructure'),
+          rating: AppLocalizations.translateWithContext(context, 'org_verified_muni', defaultValue: '🛡️ Verified Authority • 92% Trust'),
           deedsCompleted: '28,400 Deeds',
         ),
       ],
@@ -411,8 +423,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ListTile(
             leading: const Text('🇮🇳', style: TextStyle(fontSize: 32)),
-            title: const Text('India 30 Mission Hub', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: const Text('National targets for clean water, waste recovery, and education', style: TextStyle(fontSize: 11)),
+            title: Text(
+              AppLocalizations.translateWithContext(context, 'mission_india30_title', defaultValue: 'India 30 Mission Hub'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            subtitle: Text(
+              AppLocalizations.translateWithContext(context, 'mission_india30_sub', defaultValue: 'National targets for clean water, waste recovery, and education'),
+              style: const TextStyle(fontSize: 11),
+            ),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00B074)),
             onTap: () => Navigator.pushNamed(context, AppRoutes.indiaMission),
           ),
@@ -424,8 +442,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: ListTile(
             leading: const Text('🌐', style: TextStyle(fontSize: 32)),
-            title: const Text('Ecosystem Flywheel & AI Core', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            subtitle: const Text('YouTube Stories, Karma Graph, and Collective Intelligence Query Engine', style: TextStyle(fontSize: 11)),
+            title: Text(
+              AppLocalizations.translateWithContext(context, 'mission_flywheel_title', defaultValue: 'Ecosystem Flywheel & AI Core'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            subtitle: Text(
+              AppLocalizations.translateWithContext(context, 'mission_flywheel_sub', defaultValue: 'YouTube Stories, Karma Graph, and Collective Intelligence Query Engine'),
+              style: const TextStyle(fontSize: 11),
+            ),
             trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00B074)),
             onTap: () => Navigator.pushNamed(context, AppRoutes.ecosystemHub),
           ),

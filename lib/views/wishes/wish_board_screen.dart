@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../core/routes/app_routes.dart';
 import '../../models/wish.dart';
+import '../../core/localization/app_localizations.dart';
 
 class WishBoardScreen extends StatefulWidget {
   const WishBoardScreen({super.key});
@@ -58,7 +59,9 @@ class _WishBoardScreenState extends State<WishBoardScreen> with SingleTickerProv
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🌟 Wish Come True Hub'),
+        title: Text(
+          AppLocalizations.translateWithContext(context, 'wishes_title', defaultValue: '🌟 Wish Come True Hub'),
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,7 +75,7 @@ class _WishBoardScreenState extends State<WishBoardScreen> with SingleTickerProv
                 const Icon(Icons.star_rounded, color: Color(0xFFFF8F00)),
                 const SizedBox(width: 8),
                 Text(
-                  '${wishes.length + 1237} wishes waiting for sponsors',
+                  '${wishes.length + 1237} ${AppLocalizations.translateWithContext(context, 'wishes_waiting', defaultValue: 'wishes waiting for sponsors')}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.amber[900],
@@ -88,7 +91,10 @@ class _WishBoardScreenState extends State<WishBoardScreen> with SingleTickerProv
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
-              label: const Text('Make a Wish 💫', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+              label: Text(
+                AppLocalizations.translateWithContext(context, 'wishes_make_btn', defaultValue: 'Make a Wish 💫'),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFF8F00),
                 padding: const EdgeInsets.symmetric(vertical: 14),
@@ -121,10 +127,10 @@ class _WishBoardScreenState extends State<WishBoardScreen> with SingleTickerProv
             unselectedLabelColor: Colors.grey[600],
             indicatorColor: const Color(0xFFFF8F00),
             tabs: [
-              Tab(text: '✨ My Wishes (${myWishes.length})'),
-              Tab(text: '🌟 I Can Help (${helpWishes.length})'),
-              Tab(text: '❤️ Being Fulfilled (${activeFulfillmentWishes.length})'),
-              Tab(text: '✅ Made Possible (${madePossibleWishes.length})'),
+              Tab(text: '${AppLocalizations.translateWithContext(context, 'wishes_tab_my', defaultValue: '✨ My Wishes')} (${myWishes.length})'),
+              Tab(text: '${AppLocalizations.translateWithContext(context, 'wishes_tab_help', defaultValue: '🌟 I Can Help')} (${helpWishes.length})'),
+              Tab(text: '${AppLocalizations.translateWithContext(context, 'wishes_tab_fulfilling', defaultValue: '❤️ Being Fulfilled')} (${activeFulfillmentWishes.length})'),
+              Tab(text: '${AppLocalizations.translateWithContext(context, 'wishes_tab_made_possible', defaultValue: '✅ Made Possible')} (${madePossibleWishes.length})'),
             ],
           ),
 
@@ -133,10 +139,10 @@ class _WishBoardScreenState extends State<WishBoardScreen> with SingleTickerProv
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildWishList(myWishes, 'You haven\'t submitted any wishes yet.'),
-                _buildWishList(helpWishes, 'No wishes matching this category need help right now.'),
-                _buildWishList(activeFulfillmentWishes, 'No wishes are currently receiving active sponsorship.'),
-                _buildWishList(madePossibleWishes, 'No wishes have been fully completed in this category yet.'),
+                _buildWishList(myWishes, AppLocalizations.translateWithContext(context, 'wishes_empty_my', defaultValue: 'You haven\'t submitted any wishes yet.')),
+                _buildWishList(helpWishes, AppLocalizations.translateWithContext(context, 'wishes_empty_help', defaultValue: 'No wishes matching this category need help right now.')),
+                _buildWishList(activeFulfillmentWishes, AppLocalizations.translateWithContext(context, 'wishes_empty_fulfilling', defaultValue: 'No wishes are currently receiving active sponsorship.')),
+                _buildWishList(madePossibleWishes, AppLocalizations.translateWithContext(context, 'wishes_empty_completed', defaultValue: 'No wishes have been fully completed in this category yet.')),
               ],
             ),
           ),

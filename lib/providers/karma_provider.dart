@@ -3,12 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/karma_action.dart';
 import '../models/karma_category.dart';
 import '../models/karma_activity.dart';
 import '../models/challenge.dart';
 import '../models/wish.dart';
 import '../repositories/karma_repo.dart';
+import '../services/firebase/firebase_storage_service.dart';
 import 'auth_provider.dart';
 import '../models/app_feedback.dart';
 import '../models/community_problem.dart';
@@ -274,6 +276,8 @@ class KarmaProvider extends ChangeNotifier {
     int? wasteBeforeCount,
     int? wasteAfterCount,
     double? sceneMatchConfidence,
+    XFile? beforeImageFile,
+    XFile? afterImageFile,
   }) async {
     if (_activeUserId == null) return false;
     
@@ -282,15 +286,35 @@ class KarmaProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final deedId = 'deed_${const Uuid().v4()}';
+      String? finalBeforeUrl = beforeImageUrl;
+      String? finalAfterUrl = imageUrl;
+
+      // Upload actual captured files to Firebase Storage if provided
+      if (beforeImageFile != null || afterImageFile != null) {
+        final uploadResults = await FirebaseStorageService().uploadProofPair(
+          userId: _activeUserId!,
+          deedId: deedId,
+          beforeFile: beforeImageFile,
+          afterFile: afterImageFile,
+        );
+        if (uploadResults['beforeImageUrl'] != null) {
+          finalBeforeUrl = uploadResults['beforeImageUrl'];
+        }
+        if (uploadResults['afterImageUrl'] != null) {
+          finalAfterUrl = uploadResults['afterImageUrl'];
+        }
+      }
+
       final action = KarmaAction(
-        id: 'deed_${const Uuid().v4()}',
+        id: deedId,
         userId: _activeUserId!,
         userName: userName,
         title: title,
         description: description,
         category: category,
         timestamp: DateTime.now(),
-        imageUrl: imageUrl,
+        imageUrl: finalAfterUrl,
         latitude: latitude,
         longitude: longitude,
         witnessEmail: witnessEmail,
@@ -307,7 +331,7 @@ class KarmaProvider extends ChangeNotifier {
         anonymizedWitnessCode: anonymizedWitnessCode,
         capturedInApp: capturedInApp,
         evidenceScore: evidenceScore,
-        beforeImageUrl: beforeImageUrl,
+        beforeImageUrl: finalBeforeUrl,
         wasteBeforeCount: wasteBeforeCount,
         wasteAfterCount: wasteAfterCount,
         sceneMatchConfidence: sceneMatchConfidence,

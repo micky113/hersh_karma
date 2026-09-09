@@ -88,9 +88,9 @@ class _ReportAbuseScreenState extends State<ReportAbuseScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Flag garbage piles, animal issues, or public safety hazards immediately. NGOs can claim and resolve them.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+              Text(
+                AppLocalizations.translateWithContext(context, 'Flag garbage piles, animal issues, or public safety hazards immediately. NGOs can claim and resolve them.', defaultValue: 'Flag garbage piles, animal issues, or public safety hazards immediately. NGOs can claim and resolve them.'),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 24),
               DropdownButtonFormField<KarmaCategory>(
@@ -102,7 +102,7 @@ class _ReportAbuseScreenState extends State<ReportAbuseScreen> {
                 items: KarmaCategory.values.map((cat) {
                   return DropdownMenuItem(
                     value: cat,
-                    child: Text(cat.label),
+                    child: Text(AppLocalizations.translateWithContext(context, cat.label, defaultValue: cat.label)),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -116,12 +116,12 @@ class _ReportAbuseScreenState extends State<ReportAbuseScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Brief Title / Issue Name',
-                  hintText: 'e.g. Broken water pipe / Garbage pile',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Brief Title / Issue Name', defaultValue: 'Brief Title / Issue Name'),
+                  hintText: AppLocalizations.translateWithContext(context, 'e.g. Broken water pipe / Garbage pile', defaultValue: 'e.g. Broken water pipe / Garbage pile'),
+                  border: const OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Enter problem title' : null,
+                validator: (val) => val == null || val.isEmpty ? AppLocalizations.translateWithContext(context, 'Enter problem title', defaultValue: 'Enter problem title') : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -129,10 +129,10 @@ class _ReportAbuseScreenState extends State<ReportAbuseScreen> {
                 maxLines: 4,
                 decoration: InputDecoration(
                   labelText: AppLocalizations.translateWithContext(context, 'rep_details', defaultValue: 'Details (text or speak)'),
-                  hintText: 'Describe the issue...',
+                  hintText: AppLocalizations.translateWithContext(context, 'Describe the issue...', defaultValue: 'Describe the issue...'),
                   border: const OutlineInputBorder(),
                 ),
-                validator: (val) => val == null || val.isEmpty ? 'Please explain the issue' : null,
+                validator: (val) => val == null || val.isEmpty ? AppLocalizations.translateWithContext(context, 'Please explain the issue', defaultValue: 'Please explain the issue') : null,
               ),
               const SizedBox(height: 20),
 
@@ -151,13 +151,15 @@ class _ReportAbuseScreenState extends State<ReportAbuseScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _latitude != null ? 'GPS Coordinates Locked' : 'GPS Location Required',
+                              _latitude != null
+                                  ? AppLocalizations.translateWithContext(context, 'GPS Coordinates Locked', defaultValue: 'GPS Coordinates Locked')
+                                  : AppLocalizations.translateWithContext(context, 'GPS Location Required', defaultValue: 'GPS Location Required'),
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             if (_latitude != null)
                               Text('Lat: $_latitude, Lon: $_longitude', style: const TextStyle(fontSize: 12, color: Colors.grey))
                             else
-                              const Text('Click target below to lock coordinates', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                              Text(AppLocalizations.translateWithContext(context, 'Click target below to lock coordinates', defaultValue: 'Click target below to lock coordinates'), style: const TextStyle(fontSize: 12, color: Colors.grey)),
                           ],
                         ),
                       ),
@@ -181,11 +183,11 @@ class _ReportAbuseScreenState extends State<ReportAbuseScreen> {
                     _beforeImageUrl = 'captured_before_${DateTime.now().millisecondsSinceEpoch}.jpg';
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('📸 BEFORE photo attached successfully!')),
+                    SnackBar(content: Text(AppLocalizations.translateWithContext(context, '📸 BEFORE photo attached successfully!', defaultValue: '📸 BEFORE photo attached successfully!'))),
                   );
                 },
                 icon: const Icon(Icons.add_a_photo),
-                label: Text(_beforeImageUrl != null ? 'Change Attached Photo' : 'Attach Photo Evidence'),
+                label: Text(_beforeImageUrl != null ? AppLocalizations.translateWithContext(context, 'Change Attached Photo', defaultValue: 'Change Attached Photo') : AppLocalizations.translateWithContext(context, 'Attach Photo Evidence', defaultValue: 'Attach Photo Evidence')),
                 style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
               ),
               const SizedBox(height: 32),

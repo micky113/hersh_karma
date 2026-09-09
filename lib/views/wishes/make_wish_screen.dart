@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/wish.dart';
+import '../../core/localization/app_localizations.dart';
 
 class MakeWishScreen extends StatefulWidget {
   const MakeWishScreen({super.key});
@@ -88,7 +89,7 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('💫 Make a Wish'),
+        title: Text(AppLocalizations.translateWithContext(context, 'Make a Wish 💫', defaultValue: '💫 Make a Wish')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -98,12 +99,12 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Describe Your Wish',
+                AppLocalizations.translateWithContext(context, 'Describe Your Wish', defaultValue: 'Describe Your Wish'),
                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
-                'Wishes should be meaningful achievements. Direct cash transfers are disabled; funds are routed to verified providers.',
+                AppLocalizations.translateWithContext(context, 'Wishes should be meaningful achievements. Direct cash transfers are disabled; funds are routed to verified providers.', defaultValue: 'Wishes should be meaningful achievements. Direct cash transfers are disabled; funds are routed to verified providers.'),
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               const SizedBox(height: 24),
@@ -111,12 +112,12 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               // Title
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Wish Title',
-                  hintText: 'e.g. Learn guitar, Get clean drinking water...',
-                  prefixIcon: Icon(Icons.star_outline_rounded),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Wish Title', defaultValue: 'Wish Title'),
+                  hintText: AppLocalizations.translateWithContext(context, 'e.g. Learn guitar, Get clean drinking water...', defaultValue: 'e.g. Learn guitar, Get clean drinking water...'),
+                  prefixIcon: const Icon(Icons.star_outline_rounded),
                 ),
-                validator: (val) => val == null || val.trim().isEmpty ? 'Enter a title for your wish' : null,
+                validator: (val) => val == null || val.trim().isEmpty ? AppLocalizations.translateWithContext(context, 'Enter a title for your wish', defaultValue: 'Enter a title for your wish') : null,
               ),
               const SizedBox(height: 20),
 
@@ -124,17 +125,17 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               TextFormField(
                 controller: _descController,
                 maxLines: 4,
-                decoration: const InputDecoration(
-                  labelText: 'Why is this wish important to you?',
-                  hintText: 'Provide details. What do you need? Who will it help?',
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Why is this wish important to you?', defaultValue: 'Why is this wish important to you?'),
+                  hintText: AppLocalizations.translateWithContext(context, 'Provide details. What do you need? Who will it help?', defaultValue: 'Provide details. What do you need? Who will it help?'),
                   alignLabelWithHint: true,
-                  prefixIcon: Padding(
+                  prefixIcon: const Padding(
                     padding: EdgeInsets.only(bottom: 56.0),
                     child: Icon(Icons.description_outlined),
                   ),
                 ),
                 validator: (val) => val == null || val.trim().length < 15
-                    ? 'Provide a detailed description (min 15 characters)'
+                    ? AppLocalizations.translateWithContext(context, 'Provide a detailed description (min 15 characters)', defaultValue: 'Provide a detailed description (min 15 characters)')
                     : null,
               ),
               const SizedBox(height: 20),
@@ -142,9 +143,9 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               // Category dropdown
               DropdownButtonFormField<WishCategory>(
                 value: _selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  prefixIcon: Icon(Icons.category_outlined),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Category', defaultValue: 'Category'),
+                  prefixIcon: const Icon(Icons.category_outlined),
                 ),
                 items: WishCategory.values.map((cat) {
                   return DropdownMenuItem<WishCategory>(
@@ -153,7 +154,7 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
                       children: [
                         Text(cat.icon),
                         const SizedBox(width: 8),
-                        Text(cat.label),
+                        Text(AppLocalizations.translateWithContext(context, cat.label, defaultValue: cat.label)),
                       ],
                     ),
                   );
@@ -171,15 +172,15 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               // Verification Level dropdown
               DropdownButtonFormField<int>(
                 value: _verificationLevel,
-                decoration: const InputDecoration(
-                  labelText: 'Wish Verification Level',
-                  prefixIcon: Icon(Icons.verified_user_outlined),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Wish Verification Level', defaultValue: 'Wish Verification Level'),
+                  prefixIcon: const Icon(Icons.verified_user_outlined),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 1, child: Text('🟢 Level 1 — Personal/Experience')),
-                  DropdownMenuItem(value: 2, child: Text('🔵 Level 2 — Material (needs proof)')),
-                  DropdownMenuItem(value: 3, child: Text('🟠 Level 3 — High-Value (KYC required)')),
-                  DropdownMenuItem(value: 4, child: Text('🔴 Level 4 — Sensitive/High-Risk')),
+                items: [
+                  DropdownMenuItem(value: 1, child: Text(AppLocalizations.translateWithContext(context, '🟢 Level 1 — Personal/Experience', defaultValue: '🟢 Level 1 — Personal/Experience'))),
+                  DropdownMenuItem(value: 2, child: Text(AppLocalizations.translateWithContext(context, '🔵 Level 2 — Material (needs proof)', defaultValue: '🔵 Level 2 — Material (needs proof)'))),
+                  DropdownMenuItem(value: 3, child: Text(AppLocalizations.translateWithContext(context, '🟠 Level 3 — High-Value (KYC required)', defaultValue: '🟠 Level 3 — High-Value (KYC required)'))),
+                  DropdownMenuItem(value: 4, child: Text(AppLocalizations.translateWithContext(context, '🔴 Level 4 — Sensitive/High-Risk', defaultValue: '🔴 Level 4 — Sensitive/High-Risk'))),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -194,14 +195,14 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               // Privacy Level dropdown
               DropdownButtonFormField<PrivacyLevel>(
                 value: _privacyLevel,
-                decoration: const InputDecoration(
-                  labelText: 'Privacy Setting',
-                  prefixIcon: Icon(Icons.visibility_outlined),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Privacy Setting', defaultValue: 'Privacy Setting'),
+                  prefixIcon: const Icon(Icons.visibility_outlined),
                 ),
                 items: PrivacyLevel.values.map((level) {
                   return DropdownMenuItem(
                     value: level,
-                    child: Text(level.label),
+                    child: Text(AppLocalizations.translateWithContext(context, level.label, defaultValue: level.label)),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -217,14 +218,14 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               // Sponsorship Type dropdown
               DropdownButtonFormField<SponsorshipType>(
                 value: _sponsorshipType,
-                decoration: const InputDecoration(
-                  labelText: 'Fulfillment / Routing Type',
-                  prefixIcon: Icon(Icons.payment_outlined),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Fulfillment / Routing Type', defaultValue: 'Fulfillment / Routing Type'),
+                  prefixIcon: const Icon(Icons.payment_outlined),
                 ),
                 items: SponsorshipType.values.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(type.label),
+                    child: Text(AppLocalizations.translateWithContext(context, type.label, defaultValue: type.label)),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -241,13 +242,13 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               if (_sponsorshipType != SponsorshipType.volunteerService) ...[
                 TextFormField(
                   controller: _retailerController,
-                  decoration: const InputDecoration(
-                    labelText: 'Verified Retailer / Provider Name',
-                    hintText: 'e.g. Croma Music Store, Apex Academy, WaterAid NGO',
-                    prefixIcon: Icon(Icons.storefront_outlined),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.translateWithContext(context, 'Verified Retailer / Provider Name', defaultValue: 'Verified Retailer / Provider Name'),
+                    hintText: AppLocalizations.translateWithContext(context, 'e.g. Croma Music Store, Apex Academy, WaterAid NGO', defaultValue: 'e.g. Croma Music Store, Apex Academy, WaterAid NGO'),
+                    prefixIcon: const Icon(Icons.storefront_outlined),
                   ),
                   validator: (val) => val == null || val.trim().isEmpty
-                      ? 'Enter a verified provider to receive funds'
+                      ? AppLocalizations.translateWithContext(context, 'Enter a verified provider to receive funds', defaultValue: 'Enter a verified provider to receive funds')
                       : null,
                 ),
                 const SizedBox(height: 20),
@@ -256,15 +257,15 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
                 TextFormField(
                   controller: _targetController,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Desired Karma Crowdfund Target',
-                    hintText: 'e.g. 500, 1000, 2000',
-                    prefixIcon: Icon(Icons.favorite_border_rounded),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.translateWithContext(context, 'Desired Karma Crowdfund Target', defaultValue: 'Desired Karma Crowdfund Target'),
+                    hintText: AppLocalizations.translateWithContext(context, 'e.g. 500, 1000, 2000', defaultValue: 'e.g. 500, 1000, 2000'),
+                    prefixIcon: const Icon(Icons.favorite_border_rounded),
                   ),
                   validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Enter a Karma goal';
+                    if (val == null || val.trim().isEmpty) return AppLocalizations.translateWithContext(context, 'Enter a Karma goal', defaultValue: 'Enter a Karma goal');
                     final parsed = int.tryParse(val.trim());
-                    if (parsed == null || parsed <= 0) return 'Enter a valid positive number';
+                    if (parsed == null || parsed <= 0) return AppLocalizations.translateWithContext(context, 'Enter a valid positive number', defaultValue: 'Enter a valid positive number');
                     return null;
                   },
                 ),
@@ -274,24 +275,24 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               // Evidence documents input
               TextFormField(
                 controller: _evidenceController,
-                decoration: const InputDecoration(
-                  labelText: 'Evidence / Reference Documents (Optional URLs)',
-                  hintText: 'Comma separated links: e.g. admission_receipt.pdf',
-                  prefixIcon: Icon(Icons.attachment_outlined),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.translateWithContext(context, 'Evidence / Reference Documents (Optional URLs)', defaultValue: 'Evidence / Reference Documents (Optional URLs)'),
+                  hintText: AppLocalizations.translateWithContext(context, 'Comma separated links: e.g. admission_receipt.pdf', defaultValue: 'Comma separated links: e.g. admission_receipt.pdf'),
+                  prefixIcon: const Icon(Icons.attachment_outlined),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Trust & Safety Toggle simulations
               Text(
-                '🛡️ Safety Controls Verification',
+                AppLocalizations.translateWithContext(context, '🛡️ Safety Controls Verification', defaultValue: '🛡️ Safety Controls Verification'),
                 style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               
               SwitchListTile(
-                title: const Text('Simulate KYC Identity Verified Account', style: TextStyle(fontSize: 12)),
-                subtitle: const Text('Required for Level 3 and 4 wishes', style: TextStyle(fontSize: 10)),
+                title: Text(AppLocalizations.translateWithContext(context, 'Simulate KYC Identity Verified Account', defaultValue: 'Simulate KYC Identity Verified Account'), style: const TextStyle(fontSize: 12)),
+                subtitle: Text(AppLocalizations.translateWithContext(context, 'Required for Level 3 and 4 wishes', defaultValue: 'Required for Level 3 and 4 wishes'), style: const TextStyle(fontSize: 10)),
                 value: _isIdentityVerified,
                 onChanged: (val) {
                   setState(() {
@@ -301,7 +302,7 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
               ),
 
               SwitchListTile(
-                title: const Text('Underage minor account holder (under 18)', style: TextStyle(fontSize: 12)),
+                title: Text(AppLocalizations.translateWithContext(context, 'Underage minor account holder (under 18)', defaultValue: 'Underage minor account holder (under 18)'), style: const TextStyle(fontSize: 12)),
                 value: _isMinor,
                 onChanged: (val) {
                   setState(() {
@@ -313,7 +314,7 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
 
               if (_isMinor)
                 SwitchListTile(
-                  title: const Text('Verified Parent/Guardian consent document attached', style: TextStyle(fontSize: 12)),
+                  title: Text(AppLocalizations.translateWithContext(context, 'Verified Parent/Guardian consent document attached', defaultValue: 'Verified Parent/Guardian consent document attached'), style: const TextStyle(fontSize: 12)),
                   value: _ageConsentVerified,
                   onChanged: (val) {
                     setState(() {
@@ -341,13 +342,13 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              '🤖 AI Safety Verification Engine',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            Text(
+                              AppLocalizations.translateWithContext(context, '🤖 AI Safety Verification Engine', defaultValue: '🤖 AI Safety Verification Engine'),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Wishes undergo automated scans for prohibited activities, weapons, drug requests, begging phrases, and collision networks. Suspicious cases are routed to human review.',
+                              AppLocalizations.translateWithContext(context, 'Wishes undergo automated scans for prohibited activities, weapons, drug requests, begging phrases, and collision networks. Suspicious cases are routed to human review.', defaultValue: 'Wishes undergo automated scans for prohibited activities, weapons, drug requests, begging phrases, and collision networks. Suspicious cases are routed to human review.'),
                               style: TextStyle(color: Colors.grey[750], fontSize: 11, height: 1.4),
                             ),
                           ],
@@ -370,9 +371,9 @@ class _MakeWishScreenState extends State<MakeWishScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text(
-                    'Generate Wish Plan & Submit',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  child: Text(
+                    AppLocalizations.translateWithContext(context, 'Generate Wish Plan & Submit', defaultValue: 'Generate Wish Plan & Submit'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
             ],

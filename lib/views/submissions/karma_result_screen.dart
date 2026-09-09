@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/localization/app_localizations.dart';
 
 class KarmaResultScreen extends StatelessWidget {
   const KarmaResultScreen({super.key});
@@ -13,7 +14,7 @@ class KarmaResultScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('🎉 Karma Earned'),
+        title: Text(AppLocalizations.translateWithContext(context, '🎉 Karma Earned', defaultValue: '🎉 Karma Earned')),
         automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
@@ -39,10 +40,10 @@ class KarmaResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            const Text(
-              '🎉 YOU EARNED KARMA',
+            Text(
+              AppLocalizations.translateWithContext(context, '🎉 YOU EARNED KARMA', defaultValue: '🎉 YOU EARNED KARMA'),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
                 letterSpacing: 1.5,
@@ -51,7 +52,7 @@ class KarmaResultScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '+$creditsEarned Verified Karma',
+              '+$creditsEarned ${AppLocalizations.translateWithContext(context, 'Verified Karma', defaultValue: 'Verified Karma')}',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 36,
@@ -61,7 +62,7 @@ class KarmaResultScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             Text(
-              'What would you like to do with your Karma?',
+              AppLocalizations.translateWithContext(context, 'What would you like to do with your Karma?', defaultValue: 'What would you like to do with your Karma?'),
               textAlign: TextAlign.center,
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
@@ -72,8 +73,8 @@ class KarmaResultScreen extends StatelessWidget {
               context,
               icon: Icons.star_rounded,
               color: Colors.amber,
-              title: '✨ Make a Wish',
-              desc: 'Submit a personal or community wish and let the network coordinate to fulfill it.',
+              title: AppLocalizations.translateWithContext(context, '✨ Make a Wish', defaultValue: '✨ Make a Wish'),
+              desc: AppLocalizations.translateWithContext(context, 'Submit a personal or community wish and let the network coordinate to fulfill it.', defaultValue: 'Submit a personal or community wish and let the network coordinate to fulfill it.'),
               route: AppRoutes.createWish,
             ),
             const SizedBox(height: 12),
@@ -82,8 +83,8 @@ class KarmaResultScreen extends StatelessWidget {
               context,
               icon: Icons.waves_rounded,
               color: Colors.blue,
-              title: '🌊 Help Someone\'s Wish',
-              desc: 'Contribute your Karma, tools, goods, or mentorship to a community member\'s wish plan.',
+              title: AppLocalizations.translateWithContext(context, '🌊 Help Someone\'s Wish', defaultValue: '🌊 Help Someone\'s Wish'),
+              desc: AppLocalizations.translateWithContext(context, 'Contribute your Karma, tools, goods, or mentorship to a community member\'s wish plan.', defaultValue: 'Contribute your Karma, tools, goods, or mentorship to a community member\'s wish plan.'),
               route: AppRoutes.wishes,
             ),
             const SizedBox(height: 12),
@@ -92,8 +93,8 @@ class KarmaResultScreen extends StatelessWidget {
               context,
               icon: Icons.eco_rounded,
               color: Colors.green,
-              title: '🌱 Support Impact',
-              desc: 'Sponsor verified NGO projects, fund carbon offsets, or mint cryptocurrency tokens.',
+              title: AppLocalizations.translateWithContext(context, '🌱 Support Impact', defaultValue: '🌱 Support Impact'),
+              desc: AppLocalizations.translateWithContext(context, 'Sponsor verified NGO projects, fund carbon offsets, or mint cryptocurrency tokens.', defaultValue: 'Sponsor verified NGO projects, fund carbon offsets, or mint cryptocurrency tokens.'),
               route: AppRoutes.rewards,
             ),
             const SizedBox(height: 12),
@@ -102,8 +103,8 @@ class KarmaResultScreen extends StatelessWidget {
               context,
               icon: Icons.emoji_events_rounded,
               color: Colors.purple,
-              title: '🏆 Continue Your Impact',
-              desc: 'Complete active challenges and unlock development quest multipliers.',
+              title: AppLocalizations.translateWithContext(context, '🏆 Continue Your Impact', defaultValue: '🏆 Continue Your Impact'),
+              desc: AppLocalizations.translateWithContext(context, 'Complete active challenges and unlock development quest multipliers.', defaultValue: 'Complete active challenges and unlock development quest multipliers.'),
               route: AppRoutes.home,
               args: 0, // goes back to home dashboard
             ),

@@ -20,13 +20,13 @@ class CreateScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20.0),
         children: [
           Text(
-            'What would you like to contribute today?',
+            AppLocalizations.translateWithContext(context, 'create_heading', defaultValue: 'What would you like to contribute today?'),
             style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Choose how you want to create real-world positive change:',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+          Text(
+            AppLocalizations.translateWithContext(context, 'create_sub', defaultValue: 'Choose how you want to create real-world positive change:'),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
           ),
           const SizedBox(height: 20),
 
@@ -34,11 +34,11 @@ class CreateScreen extends StatelessWidget {
           _buildCreationCard(
             context,
             emoji: '🌱',
-            title: 'Do an Action',
-            subtitle: 'Take a positive deed from the taxonomy, capture Before/After photo evidence, and earn Karma.',
-            badge: 'Earn +20 to +100 Karma',
+            title: AppLocalizations.translateWithContext(context, 'create_do_action', defaultValue: 'Do an Action'),
+            subtitle: AppLocalizations.translateWithContext(context, 'create_do_action_sub', defaultValue: 'Take a positive deed from the taxonomy, capture Before/After photo evidence, and earn Karma.'),
+            badge: AppLocalizations.translateWithContext(context, 'create_badge_action', defaultValue: 'Earn +20 to +100 Karma'),
             badgeColor: const Color(0xFF00B074),
-            onTap: () => Navigator.pushNamed(context, AppRoutes.uploadProof),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.submitDeed),
           ),
           const SizedBox(height: 16),
 
@@ -46,9 +46,9 @@ class CreateScreen extends StatelessWidget {
           _buildCreationCard(
             context,
             emoji: '🔎',
-            title: 'Report a Problem',
-            subtitle: 'Photograph a visible issue (garbage dump, broken pipe, injured animal) with GPS verification.',
-            badge: 'Earn +20 Karma & +10 Trust',
+            title: AppLocalizations.translateWithContext(context, 'create_report_prob', defaultValue: 'Report a Problem'),
+            subtitle: AppLocalizations.translateWithContext(context, 'create_report_prob_sub', defaultValue: 'Photograph a visible issue (garbage dump, broken pipe, injured animal) with GPS verification.'),
+            badge: AppLocalizations.translateWithContext(context, 'create_badge_report', defaultValue: 'Earn +20 Karma & +10 Trust'),
             badgeColor: Colors.orange,
             onTap: () => Navigator.pushNamed(context, AppRoutes.reportAbuse),
           ),
@@ -58,9 +58,9 @@ class CreateScreen extends StatelessWidget {
           _buildCreationCard(
             context,
             emoji: '✨',
-            title: 'Make a Wish',
-            subtitle: 'Ask the community or NGOs for assistance with education, medical tools, or essential needs.',
-            badge: 'Community Supported',
+            title: AppLocalizations.translateWithContext(context, 'create_make_wish', defaultValue: 'Make a Wish'),
+            subtitle: AppLocalizations.translateWithContext(context, 'create_make_wish_sub', defaultValue: 'Ask the community or NGOs for assistance with education, medical tools, or essential needs.'),
+            badge: AppLocalizations.translateWithContext(context, 'create_badge_wish', defaultValue: 'Community Supported'),
             badgeColor: Colors.purple,
             onTap: () => Navigator.pushNamed(context, AppRoutes.createWish),
           ),
@@ -70,9 +70,9 @@ class CreateScreen extends StatelessWidget {
           _buildCreationCard(
             context,
             emoji: '💡',
-            title: 'Add an Action Proposal',
-            subtitle: 'Propose a brand new leap-year action to be added to the global Karma taxonomy.',
-            badge: 'Governance Consensus',
+            title: AppLocalizations.translateWithContext(context, 'create_propose', defaultValue: 'Add an Action Proposal'),
+            subtitle: AppLocalizations.translateWithContext(context, 'create_propose_sub', defaultValue: 'Propose a brand new leap-year action to be added to the global Karma taxonomy.'),
+            badge: AppLocalizations.translateWithContext(context, 'create_badge_propose', defaultValue: 'Governance Consensus'),
             badgeColor: Colors.blue,
             onTap: () => Navigator.pushNamed(context, AppRoutes.proposeAction),
           ),
@@ -82,9 +82,9 @@ class CreateScreen extends StatelessWidget {
           _buildCreationCard(
             context,
             emoji: '💬',
-            title: 'Suggest an Improvement',
-            subtitle: 'Help improve Karma Grid by submitting an idea, reporting a bug, or sharing local usability feedback.',
-            badge: 'App Improvement',
+            title: AppLocalizations.translateWithContext(context, 'create_suggest', defaultValue: 'Suggest an Improvement'),
+            subtitle: AppLocalizations.translateWithContext(context, 'create_suggest_sub', defaultValue: 'Help improve Karma Grid by submitting an idea, reporting a bug, or sharing local usability feedback.'),
+            badge: AppLocalizations.translateWithContext(context, 'create_badge_suggest', defaultValue: 'App Improvement'),
             badgeColor: Colors.teal,
             onTap: () => FeedbackModal.show(context, 'CreateScreen'),
           ),
