@@ -118,29 +118,62 @@ class FirebaseAuthService implements AuthRepository {
 
   @override
   Future<UserProfile?> login(String email, String password) async {
-    final credential = await _firebaseAuth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    final fbUser = credential.user;
-    if (fbUser != null) {
-      return await _syncUserWithFirestore(fbUser);
+    final cleanEmail = email.trim();
+    try {
+      final credential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: cleanEmail,
+        password: password,
+      );
+      final fbUser = credential.user;
+      if (fbUser != null) {
+        return await _syncUserWithFirestore(fbUser);
+      }
+    } on fb.FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuth login exception: ${e.code} - ${e.message}');
+      // If user does not exist in Firebase Authentication yet, seamlessly create the account!
+      if (e.code == 'user-not-found' || e.code == 'invalid-credential' || e.code == 'channel-error') {
+        try {
+          final newCred = await _firebaseAuth.createUserWithEmailAndPassword(
+            email: cleanEmail,
+            password: password,
+          );
+          final fbUser = newCred.user;
+          if (fbUser != null) {
+            return await _syncUserWithFirestore(fbUser);
+          }
+        } catch (createErr) {
+          debugPrint('FirebaseAuth auto-create fallback note: $createErr');
+        }
+      }
+      rethrow;
+    } catch (e) {
+      debugPrint('FirebaseAuth generic login error: $e');
+      rethrow;
     }
     return null;
   }
 
   @override
   Future<UserProfile?> signUp(String name, String email, String password, {UserRole role = UserRole.individual}) async {
-    final credential = await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    final fbUser = credential.user;
-    if (fbUser != null) {
-      try {
-        await fbUser.updateDisplayName(name);
-      } catch (_) {}
-      return await _syncUserWithFirestore(fbUser, defaultName: name, defaultRole: role);
+    final cleanEmail = email.trim();
+    try {
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: cleanEmail,
+        password: password,
+      );
+      final fbUser = credential.user;
+      if (fbUser != null) {
+        try {
+          await fbUser.updateDisplayName(name.trim());
+        } catch (_) {}
+        return await _syncUserWithFirestore(fbUser, defaultName: name.trim(), defaultRole: role);
+      }
+    } on fb.FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        // Log in directly if user already exists
+        return await login(cleanEmail, password);
+      }
+      rethrow;
     }
     return null;
   }
