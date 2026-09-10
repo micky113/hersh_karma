@@ -40,41 +40,23 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
   KarmaAction? _selectedAction;
   String? _selectedCategoryFilter;
 
-  Offset _projectCoordinates(double lat, double lng, Size canvasSize, List<KarmaAction> allPins) {
-    if (allPins.isEmpty) {
-      return Offset(canvasSize.width / 2, canvasSize.height / 2);
-    }
+  Offset _projectCoordinates(double lat, double lng, Size canvasSize) {
+    // Standard Global Equirectangular Projection
+    // Longitude: -180 to 180 -> X: 0 to canvasWidth
+    // Latitude: 80 (North) to -60 (South) -> Y: 0 to canvasHeight
+    final clampedLng = lng.clamp(-180.0, 180.0);
+    final clampedLat = lat.clamp(-60.0, 80.0);
 
-    double minLat = allPins.first.latitude!;
-    double maxLat = allPins.first.latitude!;
-    double minLng = allPins.first.longitude!;
-    double maxLng = allPins.first.longitude!;
+    final normalizedX = (clampedLng + 180.0) / 360.0;
+    // Map latitude with Mercator/Equirectangular compression for visual harmony
+    final normalizedY = (80.0 - clampedLat) / 140.0;
 
-    for (final pin in allPins) {
-      if (pin.latitude! < minLat) minLat = pin.latitude!;
-      if (pin.latitude! > maxLat) maxLat = pin.latitude!;
-      if (pin.longitude! < minLng) minLng = pin.longitude!;
-      if (pin.longitude! > maxLng) maxLng = pin.longitude!;
-    }
-
-    final latSpan = (maxLat - minLat).abs();
-    final lngSpan = (maxLng - minLng).abs();
-
-    final safeLatSpan = latSpan < 0.01 ? 0.03 : latSpan * 1.4;
-    final safeLngSpan = lngSpan < 0.01 ? 0.03 : lngSpan * 1.4;
-
-    final centerLat = (minLat + maxLat) / 2;
-    final centerLng = (minLng + maxLng) / 2;
-
-    final relativeX = (lng - centerLng) / (safeLngSpan / 2);
-    final relativeY = (lat - centerLat) / (safeLatSpan / 2);
-
-    final x = (canvasSize.width / 2) + (relativeX * (canvasSize.width * 0.40));
-    final y = (canvasSize.height / 2) - (relativeY * (canvasSize.height * 0.38));
+    final x = normalizedX * canvasSize.width;
+    final y = normalizedY * canvasSize.height;
 
     return Offset(
-      x.clamp(22.0, canvasSize.width - 22.0),
-      y.clamp(28.0, canvasSize.height - 28.0),
+      x.clamp(14.0, canvasSize.width - 14.0),
+      y.clamp(18.0, canvasSize.height - 18.0),
     );
   }
 
@@ -101,28 +83,28 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
         return Container(
           height: canvasHeight,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+            color: isDark ? const Color(0xFF0B132B) : const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? Colors.white12 : const Color(0xFF00B074).withOpacity(0.2),
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFF00B074).withOpacity(0.25),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
-                blurRadius: 10,
+                color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+                blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Stack(
             children: [
-              // 1. Digital Grid Radar Background
+              // 1. Vector World Map Silhouette & Grid Canvas
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: CustomPaint(
-                    painter: MapGridPainter(theme: theme),
+                    painter: WorldMapSilhouettePainter(theme: theme, isDark: isDark),
                   ),
                 ),
               ),
@@ -136,18 +118,19 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                       decoration: BoxDecoration(
-                        color: (isDark ? Colors.black87 : Colors.white).withOpacity(0.9),
+                        color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.92),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF00B074).withOpacity(0.3)),
+                        border: Border.all(color: const Color(0xFF00B074).withOpacity(0.4)),
+                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            width: 8,
-                            height: 8,
+                            width: 7,
+                            height: 7,
                             decoration: const BoxDecoration(
                               color: Color(0xFF00B074),
                               shape: BoxShape.circle,
@@ -155,7 +138,7 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Active Network: ${filteredPins.length} Nodes',
+                            'Global Ledger Nodes: ${filteredPins.length}',
                             style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -168,9 +151,9 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF00B074).withOpacity(0.12),
+                            color: const Color(0xFF00B074).withOpacity(0.14),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFF00B074).withOpacity(0.4)),
+                            border: Border.all(color: const Color(0xFF00B074).withOpacity(0.5)),
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -193,15 +176,15 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                 ),
               ),
 
-              // 3. Render Coordinate Pins
+              // 3. Render Coordinate Pins over Continents
               ...filteredPins.map((action) {
                 final size = Size(canvasWidth, canvasHeight);
-                final offset = _projectCoordinates(action.latitude!, action.longitude!, size, allPins);
+                final offset = _projectCoordinates(action.latitude!, action.longitude!, size);
                 final isSelected = _selectedAction?.id == action.id;
 
                 return Positioned(
-                  left: offset.dx - 18,
-                  top: offset.dy - 36,
+                  left: offset.dx - 16,
+                  top: offset.dy - 30,
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
@@ -209,14 +192,14 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                       });
                     },
                     child: AnimatedScale(
-                      scale: isSelected ? 1.3 : 1.0,
+                      scale: isSelected ? 1.35 : 1.0,
                       duration: const Duration(milliseconds: 200),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
                           Icon(
                             Icons.location_on_rounded,
-                            size: 34,
+                            size: 32,
                             color: action.status == DeedStatus.verified
                                 ? action.category.color
                                 : Colors.orangeAccent,
@@ -224,11 +207,11 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                           Positioned(
                             top: 5,
                             child: CircleAvatar(
-                              radius: 6.5,
+                              radius: 6,
                               backgroundColor: Colors.white,
                               child: Text(
                                 action.category.icon,
-                                style: const TextStyle(fontSize: 8),
+                                style: const TextStyle(fontSize: 7.5),
                               ),
                             ),
                           ),
@@ -392,47 +375,207 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
   }
 }
 
-// Custom Painter to draw a clean digital node grid
-class MapGridPainter extends CustomPainter {
+// Vector World Map Silhouette Painter
+class WorldMapSilhouettePainter extends CustomPainter {
   final ThemeData theme;
-  MapGridPainter({required this.theme});
+  final bool isDark;
+
+  WorldMapSilhouettePainter({required this.theme, required this.isDark});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paintGrid = Paint()
-      ..color = theme.dividerColor.withOpacity(0.04)
+    final double w = size.width;
+    final double h = size.height;
+
+    // 1. Dotted / Subtle Latitude & Longitude Coordinate Lines
+    final gridPaint = Paint()
+      ..color = (isDark ? Colors.cyanAccent : const Color(0xFF00B074)).withOpacity(0.06)
       ..strokeWidth = 1.0;
 
-    const double step = 20.0;
-    
-    // Draw vertical lines
-    for (double i = 0; i < size.width; i += step) {
-      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paintGrid);
-    }
-    // Draw horizontal lines
-    for (double i = 0; i < size.height; i += step) {
-      canvas.drawLine(Offset(0, i), Offset(size.width, i), paintGrid);
-    }
+    // Horizontal lines (Equator, Tropics, Arctic)
+    canvas.drawLine(Offset(0, h * 0.28), Offset(w, h * 0.28), gridPaint); // Tropic of Cancer ~23.5° N
+    canvas.drawLine(Offset(0, h * 0.44), Offset(w, h * 0.44), gridPaint..strokeWidth = 1.2); // Equator 0°
+    canvas.drawLine(Offset(0, h * 0.60), Offset(w, h * 0.60), gridPaint..strokeWidth = 1.0); // Tropic of Capricorn ~23.5° S
 
-    // Draw grid radar overlay center circle
-    final center = Offset(size.width / 2, size.height / 2);
-    final paintRadar = Paint()
-      ..color = theme.colorScheme.primary.withOpacity(0.05)
+    // Vertical lines (Prime Meridian, Pacific, Asia)
+    canvas.drawLine(Offset(w * 0.50, 0), Offset(w * 0.50, h), gridPaint); // Prime Meridian 0°
+    canvas.drawLine(Offset(w * 0.25, 0), Offset(w * 0.25, h), gridPaint); // -90° W
+    canvas.drawLine(Offset(w * 0.75, 0), Offset(w * 0.75, h), gridPaint); // +90° E
+
+    // 2. Continent Landmass Silhouette Path
+    final landPaint = Paint()
+      ..color = isDark
+          ? const Color(0xFF1E293B).withOpacity(0.9)
+          : const Color(0xFFCBD5E1).withOpacity(0.7)
+      ..style = PaintingStyle.fill;
+
+    final landBorderPaint = Paint()
+      ..color = (isDark ? const Color(0xFF00B074) : const Color(0xFF00B074)).withOpacity(isDark ? 0.35 : 0.4)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.2;
 
-    canvas.drawCircle(center, size.height * 0.25, paintRadar);
-    canvas.drawCircle(center, size.height * 0.40, paintRadar);
-    canvas.drawLine(
-      Offset(center.dx - 10, center.dy),
-      Offset(center.dx + 10, center.dy),
-      paintRadar..color = theme.colorScheme.primary.withOpacity(0.2),
-    );
-    canvas.drawLine(
-      Offset(center.dx, center.dy - 10),
-      Offset(center.dx, center.dy + 10),
-      paintRadar,
-    );
+    final Path worldPath = Path();
+
+    // NORTH AMERICA
+    final Path naPath = Path()
+      ..moveTo(w * 0.08, h * 0.16) // Alaska
+      ..lineTo(w * 0.14, h * 0.12)
+      ..lineTo(w * 0.24, h * 0.14) // Northern Canada
+      ..lineTo(w * 0.30, h * 0.18) // Hudson Bay
+      ..lineTo(w * 0.34, h * 0.24) // Newfoundland / East Coast
+      ..lineTo(w * 0.31, h * 0.34) // US East Coast
+      ..lineTo(w * 0.28, h * 0.39) // Florida
+      ..lineTo(w * 0.24, h * 0.39) // Gulf of Mexico
+      ..lineTo(w * 0.21, h * 0.46) // Mexico
+      ..lineTo(w * 0.24, h * 0.48) // Central America
+      ..lineTo(w * 0.20, h * 0.42) // Baja California
+      ..lineTo(w * 0.15, h * 0.32) // California West Coast
+      ..lineTo(w * 0.11, h * 0.22) // Pacific Northwest
+      ..close();
+    worldPath.addPath(naPath, Offset.zero);
+
+    // GREENLAND
+    final Path greenlandPath = Path()
+      ..moveTo(w * 0.35, h * 0.08)
+      ..lineTo(w * 0.41, h * 0.07)
+      ..lineTo(w * 0.43, h * 0.14)
+      ..lineTo(w * 0.38, h * 0.18)
+      ..close();
+    worldPath.addPath(greenlandPath, Offset.zero);
+
+    // SOUTH AMERICA
+    final Path saPath = Path()
+      ..moveTo(w * 0.25, h * 0.48) // Colombia / Venezuela
+      ..lineTo(w * 0.32, h * 0.49)
+      ..lineTo(w * 0.39, h * 0.56) // Brazil East Bulge
+      ..lineTo(w * 0.35, h * 0.72) // Argentina / Uruguay
+      ..lineTo(w * 0.30, h * 0.86) // Tierra del Fuego / Cape Horn
+      ..lineTo(w * 0.27, h * 0.76) // Chile
+      ..lineTo(w * 0.26, h * 0.60) // Peru
+      ..close();
+    worldPath.addPath(saPath, Offset.zero);
+
+    // EUROPE
+    final Path europePath = Path()
+      ..moveTo(w * 0.46, h * 0.32) // Iberian Peninsula (Spain/Portugal)
+      ..lineTo(w * 0.48, h * 0.24) // France / West Europe
+      ..lineTo(w * 0.53, h * 0.13) // Scandinavia
+      ..lineTo(w * 0.58, h * 0.14)
+      ..lineTo(w * 0.60, h * 0.22) // Eastern Europe / Baltic
+      ..lineTo(w * 0.56, h * 0.32) // Balkans / Greece
+      ..lineTo(w * 0.52, h * 0.34) // Italy
+      ..close();
+    worldPath.addPath(europePath, Offset.zero);
+
+    // BRITISH ISLES
+    final Path ukPath = Path()
+      ..moveTo(w * 0.47, h * 0.21)
+      ..lineTo(w * 0.49, h * 0.20)
+      ..lineTo(w * 0.49, h * 0.25)
+      ..lineTo(w * 0.47, h * 0.24)
+      ..close();
+    worldPath.addPath(ukPath, Offset.zero);
+
+    // AFRICA
+    final Path africaPath = Path()
+      ..moveTo(w * 0.45, h * 0.36) // Morocco / North Africa
+      ..lineTo(w * 0.58, h * 0.36) // Egypt / Suez
+      ..lineTo(w * 0.63, h * 0.48) // Horn of Africa (Somalia)
+      ..lineTo(w * 0.60, h * 0.65) // East Africa / Mozambique
+      ..lineTo(w * 0.54, h * 0.76) // South Africa
+      ..lineTo(w * 0.50, h * 0.66) // Namibia / Angola
+      ..lineTo(w * 0.46, h * 0.52) // Gulf of Guinea / West Africa
+      ..lineTo(w * 0.43, h * 0.44) // Senegal
+      ..close();
+    worldPath.addPath(africaPath, Offset.zero);
+
+    // MADAGASCAR
+    final Path madagascarPath = Path()
+      ..moveTo(w * 0.62, h * 0.65)
+      ..lineTo(w * 0.64, h * 0.65)
+      ..lineTo(w * 0.63, h * 0.73)
+      ..lineTo(w * 0.61, h * 0.72)
+      ..close();
+    worldPath.addPath(madagascarPath, Offset.zero);
+
+    // ASIA & SIBERIA
+    final Path asiaPath = Path()
+      ..moveTo(w * 0.59, h * 0.36) // Middle East / Turkey
+      ..lineTo(w * 0.63, h * 0.38) // Arabian Peninsula
+      ..lineTo(w * 0.61, h * 0.46) // Yemen / Oman
+      ..lineTo(w * 0.67, h * 0.40) // Iran / Pakistan
+      ..lineTo(w * 0.70, h * 0.44) // North India
+      ..lineTo(w * 0.72, h * 0.54) // South India (Cape Comorin)
+      ..lineTo(w * 0.75, h * 0.44) // Bay of Bengal / East India
+      ..lineTo(w * 0.78, h * 0.50) // Southeast Asia / Indochina
+      ..lineTo(w * 0.82, h * 0.44) // South China Coast
+      ..lineTo(w * 0.85, h * 0.35) // East China / Korea
+      ..lineTo(w * 0.89, h * 0.22) // Russian Far East / Kamchatka
+      ..lineTo(w * 0.82, h * 0.12) // Arctic Siberia
+      ..lineTo(w * 0.65, h * 0.12) // Ural Mountains
+      ..lineTo(w * 0.60, h * 0.24) // Central Asia / Caspian
+      ..close();
+    worldPath.addPath(asiaPath, Offset.zero);
+
+    // SRI LANKA
+    final Path sriLankaPath = Path()
+      ..moveTo(w * 0.72, h * 0.56)
+      ..lineTo(w * 0.73, h * 0.56)
+      ..lineTo(w * 0.725, h * 0.58)
+      ..close();
+    worldPath.addPath(sriLankaPath, Offset.zero);
+
+    // JAPAN
+    final Path japanPath = Path()
+      ..moveTo(w * 0.86, h * 0.28)
+      ..lineTo(w * 0.88, h * 0.31)
+      ..lineTo(w * 0.86, h * 0.36)
+      ..lineTo(w * 0.85, h * 0.33)
+      ..close();
+    worldPath.addPath(japanPath, Offset.zero);
+
+    // INDONESIA & PHILIPPINES
+    final Path seAsiaIslands = Path()
+      ..moveTo(w * 0.79, h * 0.56)
+      ..lineTo(w * 0.83, h * 0.56)
+      ..lineTo(w * 0.85, h * 0.59)
+      ..lineTo(w * 0.80, h * 0.58)
+      ..close();
+    worldPath.addPath(seAsiaIslands, Offset.zero);
+
+    // AUSTRALIA
+    final Path australiaPath = Path()
+      ..moveTo(w * 0.81, h * 0.69) // Northwest Australia
+      ..lineTo(w * 0.86, h * 0.67) // Darwin / North
+      ..lineTo(w * 0.89, h * 0.72) // Queensland / East Coast
+      ..lineTo(w * 0.88, h * 0.81) // Sydney / Melbourne
+      ..lineTo(w * 0.82, h * 0.80) // Adelaide / South Coast
+      ..lineTo(w * 0.79, h * 0.75) // Perth / West Coast
+      ..close();
+    worldPath.addPath(australiaPath, Offset.zero);
+
+    // NEW ZEALAND
+    final Path nzPath = Path()
+      ..moveTo(w * 0.92, h * 0.79)
+      ..lineTo(w * 0.94, h * 0.82)
+      ..lineTo(w * 0.93, h * 0.85)
+      ..lineTo(w * 0.91, h * 0.82)
+      ..close();
+    worldPath.addPath(nzPath, Offset.zero);
+
+    // 3. Draw Continents with Glow Effect
+    canvas.drawPath(worldPath, landPaint);
+    canvas.drawPath(worldPath, landBorderPaint);
+
+    // 4. Solarpunk / Cyber Radar Nodes Pulse
+    final radarPaint = Paint()
+      ..color = const Color(0xFF00B074).withOpacity(0.08)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    canvas.drawCircle(Offset(w * 0.72, h * 0.50), 22, radarPaint); // India node pulse
+    canvas.drawCircle(Offset(w * 0.20, h * 0.35), 22, radarPaint); // US node pulse
+    canvas.drawCircle(Offset(w * 0.51, h * 0.26), 18, radarPaint); // Europe node pulse
   }
 
   @override
