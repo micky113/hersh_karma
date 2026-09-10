@@ -8,6 +8,7 @@ import '../../core/localization/app_localizations.dart';
 import '../widgets/visual_journey_banner.dart';
 import '../widgets/universal_search_bar.dart';
 import '../widgets/demo_badge.dart';
+import '../map/impact_map_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -199,7 +200,30 @@ class DashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          // 6. LOCATION-AWARE INDIA-FIRST OPPORTUNITIES
+          // 6. LIVE GEOGRAPHIC IMPACT RADAR & NODE NETWORK
+          Row(
+            children: [
+              const Text('🌍 ', style: TextStyle(fontSize: 15)),
+              Text(
+                AppLocalizations.translateWithContext(context, 'dash_impact_map', defaultValue: 'Live Geographic Impact Radar'),
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                icon: const Icon(Icons.fullscreen_rounded, size: 14, color: Color(0xFF00B074)),
+                label: Text(
+                  AppLocalizations.translateWithContext(context, 'dash_view_full_map', defaultValue: 'Full Map'),
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF00B074), fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.impactMap),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const ImpactMapWidget(height: 240),
+          const SizedBox(height: 18),
+
+          // 7. LOCATION-AWARE INDIA-FIRST OPPORTUNITIES
           Row(
             children: [
               Text(

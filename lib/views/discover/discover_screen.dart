@@ -6,6 +6,7 @@ import '../../models/karma_category.dart';
 import '../../models/karma_activity.dart';
 import '../../data/karma_grid_presets.dart';
 import '../../core/localization/app_localizations.dart';
+import '../map/impact_map_screen.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({super.key});
@@ -22,7 +23,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -90,6 +91,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
                   Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_actions', defaultValue: '🌱 Actions')),
                   Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_problems', defaultValue: '🚨 Problems')),
                   Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_challenges', defaultValue: '🏆 Challenges')),
+                  Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_map', defaultValue: '🌍 Impact Map')),
                   Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_orgs', defaultValue: '🤝 Organizations')),
                   Tab(text: AppLocalizations.translateWithContext(context, 'disc_tab_missions', defaultValue: '🇮🇳 Missions & AI')),
                 ],
@@ -110,10 +112,13 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
           // 3. CHALLENGES
           _buildChallengesTab(context, karmaProvider),
 
-          // 4. ORGANIZATIONS
+          // 4. IMPACT MAP
+          const ImpactMapWidget(isFullScreen: true),
+
+          // 5. ORGANIZATIONS
           _buildOrganizationsTab(context),
 
-          // 5. MISSIONS & AI
+          // 6. MISSIONS & AI
           _buildMissionsTab(context),
         ],
       ),

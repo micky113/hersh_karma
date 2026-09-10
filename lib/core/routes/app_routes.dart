@@ -30,11 +30,13 @@ import '../../views/wishes/make_wish_screen.dart';
 import '../../views/wishes/wish_detail_screen.dart';
 import '../../views/ecosystem/ecosystem_hub_screen.dart';
 import '../../views/admin/admin_shell.dart';
+import '../../views/map/impact_map_screen.dart';
 import '../../models/karma_category.dart';
 
 class AppRoutes {
   static const String splash = '/';
   static const String ecosystemHub = '/ecosystem-hub';
+  static const String impactMap = '/impact-map';
   static const String admin = '/admin';
   static const String login = '/login';
   static const String createProfile = '/create-profile';
@@ -102,6 +104,7 @@ class AppRoutes {
       karmaResult: (_) => const KarmaResultScreen(),
       search: (_) => const UniversalSearchScreen(),
       ecosystemHub: (_) => const EcosystemHubScreen(),
+      impactMap: (_) => const ImpactMapScreen(),
       admin: (_) => const AdminShell(),
     };
   }
