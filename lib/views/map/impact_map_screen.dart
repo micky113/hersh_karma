@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../models/karma_action.dart';
+import '../../models/karma_category.dart';
+
+enum MapTileStyle {
+  dark,
+  street,
+  light,
+}
 
 class ImpactMapScreen extends StatelessWidget {
   const ImpactMapScreen({super.key});
@@ -13,9 +22,40 @@ class ImpactMapScreen extends StatelessWidget {
         title: const Row(
           children: [
             Text('🌍 ', style: TextStyle(fontSize: 20)),
-            Text('Live Impact Map & Node Radar', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              'Real Interactive Impact Map',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline_rounded),
+            tooltip: 'About Impact Map',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Row(
+                    children: [
+                      Text('🌍 ', style: TextStyle(fontSize: 20)),
+                      Text('Live Global Impact Map'),
+                    ],
+                  ),
+                  content: const Text(
+                    'Real interactive OpenStreetMap & CartoDB tiles rendering live cryptographic deed submissions from around the world. Pan, zoom, switch map themes, and tap on any deed pin to view real-time proof-of-good verifications.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Got it'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: const ImpactMapWidget(isFullScreen: true),
     );
@@ -37,27 +77,40 @@ class ImpactMapWidget extends StatefulWidget {
 }
 
 class _ImpactMapWidgetState extends State<ImpactMapWidget> {
+  final MapController _mapController = MapController();
   KarmaAction? _selectedAction;
   String? _selectedCategoryFilter;
+  MapTileStyle _tileStyle = MapTileStyle.dark;
 
-  Offset _projectCoordinates(double lat, double lng, Size canvasSize) {
-    // Standard Global Equirectangular Projection
-    // Longitude: -180 to 180 -> X: 0 to canvasWidth
-    // Latitude: 80 (North) to -60 (South) -> Y: 0 to canvasHeight
-    final clampedLng = lng.clamp(-180.0, 180.0);
-    final clampedLat = lat.clamp(-60.0, 80.0);
+  String _getTileUrl(MapTileStyle style) {
+    switch (style) {
+      case MapTileStyle.dark:
+        return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
+      case MapTileStyle.street:
+        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      case MapTileStyle.light:
+        return 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png';
+    }
+  }
 
-    final normalizedX = (clampedLng + 180.0) / 360.0;
-    // Map latitude with Mercator/Equirectangular compression for visual harmony
-    final normalizedY = (80.0 - clampedLat) / 140.0;
+  void _zoomIn() {
+    final currentZoom = _mapController.camera.zoom;
+    final currentCenter = _mapController.camera.center;
+    _mapController.move(currentCenter, (currentZoom + 1).clamp(2.0, 18.0));
+  }
 
-    final x = normalizedX * canvasSize.width;
-    final y = normalizedY * canvasSize.height;
+  void _zoomOut() {
+    final currentZoom = _mapController.camera.zoom;
+    final currentCenter = _mapController.camera.center;
+    _mapController.move(currentCenter, (currentZoom - 1).clamp(2.0, 18.0));
+  }
 
-    return Offset(
-      x.clamp(14.0, canvasSize.width - 14.0),
-      y.clamp(18.0, canvasSize.height - 18.0),
-    );
+  void _recenterIndia() {
+    _mapController.move(const LatLng(20.5937, 78.9629), 4.5);
+  }
+
+  void _recenterGlobal() {
+    _mapController.move(const LatLng(20.0, 0.0), 2.5);
   }
 
   @override
@@ -75,255 +128,445 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
         ? allPins
         : allPins.where((e) => e.category.name == _selectedCategoryFilter).toList();
 
-    final mapCanvas = LayoutBuilder(
-      builder: (context, constraints) {
-        final canvasWidth = constraints.maxWidth;
-        final canvasHeight = widget.isFullScreen ? 340.0 : widget.height;
+    final mapBoxHeight = widget.isFullScreen ? 400.0 : widget.height;
 
-        return Container(
-          height: canvasHeight,
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0B132B) : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? const Color(0xFF1E293B) : const Color(0xFF00B074).withOpacity(0.25),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
+    final mapWidget = Container(
+      height: mapBoxHeight,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0B132B) : const Color(0xFFE2E8F0),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? const Color(0xFF1E293B) : const Color(0xFF00B074).withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.4 : 0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          child: Stack(
-            children: [
-              // 1. Vector World Map Silhouette & Grid Canvas
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: CustomPaint(
-                    painter: WorldMapSilhouettePainter(theme: theme, isDark: isDark),
-                  ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(15),
+        child: Stack(
+          children: [
+            // 1. Real Interactive FlutterMap
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: const LatLng(20.5937, 78.9629), // Centered on India & Asia-Pacific
+                initialZoom: widget.isFullScreen ? 3.8 : 3.2,
+                minZoom: 2.0,
+                maxZoom: 18.0,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all,
                 ),
+                onTap: (_, __) {
+                  if (_selectedAction != null) {
+                    setState(() {
+                      _selectedAction = null;
+                    });
+                  }
+                },
               ),
+              children: [
+                TileLayer(
+                  urlTemplate: _getTileUrl(_tileStyle),
+                  subdomains: const ['a', 'b', 'c', 'd'],
+                  userAgentPackageName: 'com.hershkarma.app',
+                  maxZoom: 19,
+                ),
+                MarkerLayer(
+                  markers: filteredPins.map((action) {
+                    final isSelected = _selectedAction?.id == action.id;
+                    final isVerified = action.status == DeedStatus.verified;
 
-              // 2. Header Stats Overlay
-              Positioned(
-                top: 10,
-                left: 10,
-                right: 10,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.92),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF00B074).withOpacity(0.4)),
-                        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 7,
-                            height: 7,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF00B074),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Global Ledger Nodes: ${filteredPins.length}',
-                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!widget.isFullScreen)
-                      InkWell(
-                        onTap: () => Navigator.pushNamed(context, '/impact-map'),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00B074).withOpacity(0.14),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFF00B074).withOpacity(0.5)),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
+                    return Marker(
+                      point: LatLng(action.latitude!, action.longitude!),
+                      width: isSelected ? 50 : 38,
+                      height: isSelected ? 50 : 38,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedAction = action;
+                          });
+                          _mapController.move(
+                            LatLng(action.latitude!, action.longitude!),
+                            _mapController.camera.zoom < 6.0 ? 6.0 : _mapController.camera.zoom,
+                          );
+                        },
+                        child: AnimatedScale(
+                          scale: isSelected ? 1.25 : 1.0,
+                          duration: const Duration(milliseconds: 200),
+                          child: Stack(
+                            alignment: Alignment.center,
                             children: [
-                              Icon(Icons.fullscreen_rounded, size: 14, color: Color(0xFF00B074)),
-                              SizedBox(width: 4),
-                              Text(
-                                'Full Screen',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF00B074),
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (isVerified ? const Color(0xFF00B074) : Colors.orangeAccent)
+                                          .withOpacity(0.5),
+                                      blurRadius: isSelected ? 12 : 6,
+                                      spreadRadius: isSelected ? 4 : 2,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.location_on_rounded,
+                                  size: isSelected ? 44 : 34,
+                                  color: isVerified
+                                      ? (isSelected ? const Color(0xFF00FF9D) : action.category.color)
+                                      : Colors.orangeAccent,
+                                ),
+                              ),
+                              Positioned(
+                                top: isSelected ? 7 : 5,
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    action.category.icon,
+                                    style: TextStyle(fontSize: isSelected ? 11 : 8.5),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ),
-                  ],
+                    );
+                  }).toList(),
                 ),
-              ),
+              ],
+            ),
 
-              // 3. Render Coordinate Pins over Continents
-              ...filteredPins.map((action) {
-                final size = Size(canvasWidth, canvasHeight);
-                final offset = _projectCoordinates(action.latitude!, action.longitude!, size);
-                final isSelected = _selectedAction?.id == action.id;
-
-                return Positioned(
-                  left: offset.dx - 16,
-                  top: offset.dy - 30,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _selectedAction = action;
-                      });
-                    },
-                    child: AnimatedScale(
-                      scale: isSelected ? 1.35 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.location_on_rounded,
-                            size: 32,
-                            color: action.status == DeedStatus.verified
-                                ? action.category.color
-                                : Colors.orangeAccent,
+            // 2. Top Header Overlay (Active Node Count & Fullscreen Trigger)
+            Positioned(
+              top: 10,
+              left: 10,
+              right: 10,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.92),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF00B074).withOpacity(0.4)),
+                      boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF00B074),
+                            shape: BoxShape.circle,
                           ),
-                          Positioned(
-                            top: 5,
-                            child: CircleAvatar(
-                              radius: 6,
-                              backgroundColor: Colors.white,
-                              child: Text(
-                                action.category.icon,
-                                style: const TextStyle(fontSize: 7.5),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Live Ledger Nodes: ${filteredPins.length}',
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
                   ),
-                );
-              }),
-
-              // 4. Selected Pin Details Card
-              if (_selectedAction != null)
-                Positioned(
-                  bottom: 8,
-                  left: 8,
-                  right: 8,
-                  child: Card(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    elevation: 6,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: const Color(0xFF00B074).withOpacity(0.3)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _selectedAction!.title,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Map Tile Style Switcher
+                      Container(
+                        decoration: BoxDecoration(
+                          color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.92),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFF00B074).withOpacity(0.3)),
+                          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                Icons.dark_mode_rounded,
+                                size: 16,
+                                color: _tileStyle == MapTileStyle.dark ? const Color(0xFF00B074) : Colors.grey,
+                              ),
+                              tooltip: 'Dark Map Style',
+                              padding: const EdgeInsets.all(6),
+                              constraints: const BoxConstraints(),
+                              onPressed: () => setState(() => _tileStyle = MapTileStyle.dark),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.map_rounded,
+                                size: 16,
+                                color: _tileStyle == MapTileStyle.street ? const Color(0xFF00B074) : Colors.grey,
+                              ),
+                              tooltip: 'OpenStreetMap Style',
+                              padding: const EdgeInsets.all(6),
+                              constraints: const BoxConstraints(),
+                              onPressed: () => setState(() => _tileStyle = MapTileStyle.street),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.light_mode_rounded,
+                                size: 16,
+                                color: _tileStyle == MapTileStyle.light ? const Color(0xFF00B074) : Colors.grey,
+                              ),
+                              tooltip: 'Light Map Style',
+                              padding: const EdgeInsets.all(6),
+                              constraints: const BoxConstraints(),
+                              onPressed: () => setState(() => _tileStyle = MapTileStyle.light),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!widget.isFullScreen) ...[
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: () => Navigator.pushNamed(context, '/impact-map'),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00B074),
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.fullscreen_rounded, size: 15, color: Colors.white),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Full Map',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
-                              ),
-                              GestureDetector(
-                                onTap: () => setState(() => _selectedAction = null),
-                                child: const Icon(Icons.close_rounded, size: 16, color: Colors.grey),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              Text(
-                                '${_selectedAction!.category.icon} ${_selectedAction!.userName}',
-                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // 3. Zoom & Quick Pan Controls (Right Side)
+            Positioned(
+              right: 10,
+              bottom: _selectedAction != null ? 140 : 12,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildControlBtn(
+                    icon: Icons.add_rounded,
+                    tooltip: 'Zoom In',
+                    onTap: _zoomIn,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 6),
+                  _buildControlBtn(
+                    icon: Icons.remove_rounded,
+                    tooltip: 'Zoom Out',
+                    onTap: _zoomOut,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 6),
+                  _buildControlBtn(
+                    icon: Icons.my_location_rounded,
+                    tooltip: 'Center India',
+                    onTap: _recenterIndia,
+                    isDark: isDark,
+                    color: const Color(0xFF00B074),
+                  ),
+                  const SizedBox(height: 6),
+                  _buildControlBtn(
+                    icon: Icons.public_rounded,
+                    tooltip: 'Global View',
+                    onTap: _recenterGlobal,
+                    isDark: isDark,
+                  ),
+                ],
+              ),
+            ),
+
+            // 4. Interactive Selected Deed Modal Card
+            if (_selectedAction != null)
+              Positioned(
+                bottom: 10,
+                left: 10,
+                right: 56, // Leave room for side controls if needed
+                child: Card(
+                  color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.96),
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(color: const Color(0xFF00B074).withOpacity(0.4), width: 1.2),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              _selectedAction!.category.icon,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _selectedAction!.title,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const Spacer(),
-                              Text(
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF00B074).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
                                 '+${_selectedAction!.creditsAwarded} Karma',
                                 style: const TextStyle(
                                   color: Color(0xFF00B074),
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 10,
+                                  fontSize: 10.5,
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _selectedAction!.description,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: isDark ? Colors.white70 : Colors.black87,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedAction = null),
+                              child: const Icon(Icons.close_rounded, size: 18, color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _selectedAction!.description,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isDark ? Colors.white70 : Colors.black87,
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.gps_fixed_rounded, color: Color(0xFF00B074), size: 10),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Lat: ${_selectedAction!.latitude!.toStringAsFixed(4)}, Lon: ${_selectedAction!.longitude!.toStringAsFixed(4)}',
-                                style: const TextStyle(fontSize: 9, fontFamily: 'monospace', color: Colors.blueGrey),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(
+                              _selectedAction!.status == DeedStatus.verified
+                                  ? Icons.verified_rounded
+                                  : Icons.hourglass_top_rounded,
+                              color: _selectedAction!.status == DeedStatus.verified
+                                  ? const Color(0xFF00B074)
+                                  : Colors.orangeAccent,
+                              size: 13,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _selectedAction!.status == DeedStatus.verified
+                                  ? 'Consensus Verified by ${_selectedAction!.userName}'
+                                  : 'Submitted by ${_selectedAction!.userName} (Pending)',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: _selectedAction!.status == DeedStatus.verified
+                                    ? const Color(0xFF00B074)
+                                    : Colors.orangeAccent,
+                                fontWeight: FontWeight.w600,
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
+                            ),
+                            const Spacer(),
+                            const Icon(Icons.gps_fixed_rounded, color: Colors.blueGrey, size: 10),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${_selectedAction!.latitude!.toStringAsFixed(3)}, ${_selectedAction!.longitude!.toStringAsFixed(3)}',
+                              style: const TextStyle(fontSize: 9.5, fontFamily: 'monospace', color: Colors.blueGrey),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
-            ],
-          ),
-        );
-      },
+              ),
+          ],
+        ),
+      ),
     );
 
     if (!widget.isFullScreen) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          mapCanvas,
+          mapWidget,
         ],
       );
     }
 
-    // Full Screen Layout with Live Ticker Feed
+    // Full Screen View with Category Filters & Live Stream Feed
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          mapCanvas,
+          // Category Quick Selector Filter
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                FilterChip(
+                  label: const Text('All Categories', style: TextStyle(fontSize: 11)),
+                  selected: _selectedCategoryFilter == null,
+                  onSelected: (val) {
+                    setState(() {
+                      _selectedCategoryFilter = null;
+                    });
+                  },
+                ),
+                const SizedBox(width: 6),
+                ...KarmaCategory.values.map((cat) {
+                  final isSel = _selectedCategoryFilter == cat.name;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 6.0),
+                    child: FilterChip(
+                      avatar: Text(cat.icon, style: const TextStyle(fontSize: 11)),
+                      label: Text(cat.label, style: const TextStyle(fontSize: 11)),
+                      selected: isSel,
+                      onSelected: (val) {
+                        setState(() {
+                          _selectedCategoryFilter = val ? cat.name : null;
+                        });
+                      },
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          mapWidget,
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -332,7 +575,7 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                 const Icon(Icons.sensors_rounded, color: Colors.redAccent, size: 16),
                 const SizedBox(width: 6),
                 Text(
-                  'GLOBAL ACTION TICKER (LIVE)',
+                  'GLOBAL ACTION TICKER (LIVE STREAM)',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.0,
@@ -349,9 +592,20 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
                 dense: true,
+                onTap: () {
+                  if (action.latitude != null && action.longitude != null) {
+                    setState(() {
+                      _selectedAction = action;
+                    });
+                    _mapController.move(
+                      LatLng(action.latitude!, action.longitude!),
+                      7.0,
+                    );
+                  }
+                },
                 leading: CircleAvatar(
                   radius: 14,
-                  backgroundColor: action.category.color.withOpacity(0.12),
+                  backgroundColor: action.category.color.withOpacity(0.15),
                   child: Text(action.category.icon, style: const TextStyle(fontSize: 12)),
                 ),
                 title: Text(
@@ -360,11 +614,18 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                 ),
                 subtitle: Text(
                   isVerified ? 'Geotagged & Consensus Verified' : 'Awaiting Validator Consensus',
-                  style: TextStyle(fontSize: 9.5, color: isVerified ? const Color(0xFF00B074) : Colors.orange),
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    color: isVerified ? const Color(0xFF00B074) : Colors.orange,
+                  ),
                 ),
                 trailing: Text(
                   '+${action.creditsAwarded} CR',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF00B074), fontSize: 11),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF00B074),
+                    fontSize: 11,
+                  ),
                 ),
               ),
             );
@@ -373,211 +634,28 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
       ),
     );
   }
-}
 
-// Vector World Map Silhouette Painter
-class WorldMapSilhouettePainter extends CustomPainter {
-  final ThemeData theme;
-  final bool isDark;
-
-  WorldMapSilhouettePainter({required this.theme, required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double w = size.width;
-    final double h = size.height;
-
-    // 1. Dotted / Subtle Latitude & Longitude Coordinate Lines
-    final gridPaint = Paint()
-      ..color = (isDark ? Colors.cyanAccent : const Color(0xFF00B074)).withOpacity(0.06)
-      ..strokeWidth = 1.0;
-
-    // Horizontal lines (Equator, Tropics, Arctic)
-    canvas.drawLine(Offset(0, h * 0.28), Offset(w, h * 0.28), gridPaint); // Tropic of Cancer ~23.5° N
-    canvas.drawLine(Offset(0, h * 0.44), Offset(w, h * 0.44), gridPaint..strokeWidth = 1.2); // Equator 0°
-    canvas.drawLine(Offset(0, h * 0.60), Offset(w, h * 0.60), gridPaint..strokeWidth = 1.0); // Tropic of Capricorn ~23.5° S
-
-    // Vertical lines (Prime Meridian, Pacific, Asia)
-    canvas.drawLine(Offset(w * 0.50, 0), Offset(w * 0.50, h), gridPaint); // Prime Meridian 0°
-    canvas.drawLine(Offset(w * 0.25, 0), Offset(w * 0.25, h), gridPaint); // -90° W
-    canvas.drawLine(Offset(w * 0.75, 0), Offset(w * 0.75, h), gridPaint); // +90° E
-
-    // 2. Continent Landmass Silhouette Path
-    final landPaint = Paint()
-      ..color = isDark
-          ? const Color(0xFF1E293B).withOpacity(0.9)
-          : const Color(0xFFCBD5E1).withOpacity(0.7)
-      ..style = PaintingStyle.fill;
-
-    final landBorderPaint = Paint()
-      ..color = (isDark ? const Color(0xFF00B074) : const Color(0xFF00B074)).withOpacity(isDark ? 0.35 : 0.4)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
-
-    final Path worldPath = Path();
-
-    // NORTH AMERICA
-    final Path naPath = Path()
-      ..moveTo(w * 0.08, h * 0.16) // Alaska
-      ..lineTo(w * 0.14, h * 0.12)
-      ..lineTo(w * 0.24, h * 0.14) // Northern Canada
-      ..lineTo(w * 0.30, h * 0.18) // Hudson Bay
-      ..lineTo(w * 0.34, h * 0.24) // Newfoundland / East Coast
-      ..lineTo(w * 0.31, h * 0.34) // US East Coast
-      ..lineTo(w * 0.28, h * 0.39) // Florida
-      ..lineTo(w * 0.24, h * 0.39) // Gulf of Mexico
-      ..lineTo(w * 0.21, h * 0.46) // Mexico
-      ..lineTo(w * 0.24, h * 0.48) // Central America
-      ..lineTo(w * 0.20, h * 0.42) // Baja California
-      ..lineTo(w * 0.15, h * 0.32) // California West Coast
-      ..lineTo(w * 0.11, h * 0.22) // Pacific Northwest
-      ..close();
-    worldPath.addPath(naPath, Offset.zero);
-
-    // GREENLAND
-    final Path greenlandPath = Path()
-      ..moveTo(w * 0.35, h * 0.08)
-      ..lineTo(w * 0.41, h * 0.07)
-      ..lineTo(w * 0.43, h * 0.14)
-      ..lineTo(w * 0.38, h * 0.18)
-      ..close();
-    worldPath.addPath(greenlandPath, Offset.zero);
-
-    // SOUTH AMERICA
-    final Path saPath = Path()
-      ..moveTo(w * 0.25, h * 0.48) // Colombia / Venezuela
-      ..lineTo(w * 0.32, h * 0.49)
-      ..lineTo(w * 0.39, h * 0.56) // Brazil East Bulge
-      ..lineTo(w * 0.35, h * 0.72) // Argentina / Uruguay
-      ..lineTo(w * 0.30, h * 0.86) // Tierra del Fuego / Cape Horn
-      ..lineTo(w * 0.27, h * 0.76) // Chile
-      ..lineTo(w * 0.26, h * 0.60) // Peru
-      ..close();
-    worldPath.addPath(saPath, Offset.zero);
-
-    // EUROPE
-    final Path europePath = Path()
-      ..moveTo(w * 0.46, h * 0.32) // Iberian Peninsula (Spain/Portugal)
-      ..lineTo(w * 0.48, h * 0.24) // France / West Europe
-      ..lineTo(w * 0.53, h * 0.13) // Scandinavia
-      ..lineTo(w * 0.58, h * 0.14)
-      ..lineTo(w * 0.60, h * 0.22) // Eastern Europe / Baltic
-      ..lineTo(w * 0.56, h * 0.32) // Balkans / Greece
-      ..lineTo(w * 0.52, h * 0.34) // Italy
-      ..close();
-    worldPath.addPath(europePath, Offset.zero);
-
-    // BRITISH ISLES
-    final Path ukPath = Path()
-      ..moveTo(w * 0.47, h * 0.21)
-      ..lineTo(w * 0.49, h * 0.20)
-      ..lineTo(w * 0.49, h * 0.25)
-      ..lineTo(w * 0.47, h * 0.24)
-      ..close();
-    worldPath.addPath(ukPath, Offset.zero);
-
-    // AFRICA
-    final Path africaPath = Path()
-      ..moveTo(w * 0.45, h * 0.36) // Morocco / North Africa
-      ..lineTo(w * 0.58, h * 0.36) // Egypt / Suez
-      ..lineTo(w * 0.63, h * 0.48) // Horn of Africa (Somalia)
-      ..lineTo(w * 0.60, h * 0.65) // East Africa / Mozambique
-      ..lineTo(w * 0.54, h * 0.76) // South Africa
-      ..lineTo(w * 0.50, h * 0.66) // Namibia / Angola
-      ..lineTo(w * 0.46, h * 0.52) // Gulf of Guinea / West Africa
-      ..lineTo(w * 0.43, h * 0.44) // Senegal
-      ..close();
-    worldPath.addPath(africaPath, Offset.zero);
-
-    // MADAGASCAR
-    final Path madagascarPath = Path()
-      ..moveTo(w * 0.62, h * 0.65)
-      ..lineTo(w * 0.64, h * 0.65)
-      ..lineTo(w * 0.63, h * 0.73)
-      ..lineTo(w * 0.61, h * 0.72)
-      ..close();
-    worldPath.addPath(madagascarPath, Offset.zero);
-
-    // ASIA & SIBERIA
-    final Path asiaPath = Path()
-      ..moveTo(w * 0.59, h * 0.36) // Middle East / Turkey
-      ..lineTo(w * 0.63, h * 0.38) // Arabian Peninsula
-      ..lineTo(w * 0.61, h * 0.46) // Yemen / Oman
-      ..lineTo(w * 0.67, h * 0.40) // Iran / Pakistan
-      ..lineTo(w * 0.70, h * 0.44) // North India
-      ..lineTo(w * 0.72, h * 0.54) // South India (Cape Comorin)
-      ..lineTo(w * 0.75, h * 0.44) // Bay of Bengal / East India
-      ..lineTo(w * 0.78, h * 0.50) // Southeast Asia / Indochina
-      ..lineTo(w * 0.82, h * 0.44) // South China Coast
-      ..lineTo(w * 0.85, h * 0.35) // East China / Korea
-      ..lineTo(w * 0.89, h * 0.22) // Russian Far East / Kamchatka
-      ..lineTo(w * 0.82, h * 0.12) // Arctic Siberia
-      ..lineTo(w * 0.65, h * 0.12) // Ural Mountains
-      ..lineTo(w * 0.60, h * 0.24) // Central Asia / Caspian
-      ..close();
-    worldPath.addPath(asiaPath, Offset.zero);
-
-    // SRI LANKA
-    final Path sriLankaPath = Path()
-      ..moveTo(w * 0.72, h * 0.56)
-      ..lineTo(w * 0.73, h * 0.56)
-      ..lineTo(w * 0.725, h * 0.58)
-      ..close();
-    worldPath.addPath(sriLankaPath, Offset.zero);
-
-    // JAPAN
-    final Path japanPath = Path()
-      ..moveTo(w * 0.86, h * 0.28)
-      ..lineTo(w * 0.88, h * 0.31)
-      ..lineTo(w * 0.86, h * 0.36)
-      ..lineTo(w * 0.85, h * 0.33)
-      ..close();
-    worldPath.addPath(japanPath, Offset.zero);
-
-    // INDONESIA & PHILIPPINES
-    final Path seAsiaIslands = Path()
-      ..moveTo(w * 0.79, h * 0.56)
-      ..lineTo(w * 0.83, h * 0.56)
-      ..lineTo(w * 0.85, h * 0.59)
-      ..lineTo(w * 0.80, h * 0.58)
-      ..close();
-    worldPath.addPath(seAsiaIslands, Offset.zero);
-
-    // AUSTRALIA
-    final Path australiaPath = Path()
-      ..moveTo(w * 0.81, h * 0.69) // Northwest Australia
-      ..lineTo(w * 0.86, h * 0.67) // Darwin / North
-      ..lineTo(w * 0.89, h * 0.72) // Queensland / East Coast
-      ..lineTo(w * 0.88, h * 0.81) // Sydney / Melbourne
-      ..lineTo(w * 0.82, h * 0.80) // Adelaide / South Coast
-      ..lineTo(w * 0.79, h * 0.75) // Perth / West Coast
-      ..close();
-    worldPath.addPath(australiaPath, Offset.zero);
-
-    // NEW ZEALAND
-    final Path nzPath = Path()
-      ..moveTo(w * 0.92, h * 0.79)
-      ..lineTo(w * 0.94, h * 0.82)
-      ..lineTo(w * 0.93, h * 0.85)
-      ..lineTo(w * 0.91, h * 0.82)
-      ..close();
-    worldPath.addPath(nzPath, Offset.zero);
-
-    // 3. Draw Continents with Glow Effect
-    canvas.drawPath(worldPath, landPaint);
-    canvas.drawPath(worldPath, landBorderPaint);
-
-    // 4. Solarpunk / Cyber Radar Nodes Pulse
-    final radarPaint = Paint()
-      ..color = const Color(0xFF00B074).withOpacity(0.08)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    canvas.drawCircle(Offset(w * 0.72, h * 0.50), 22, radarPaint); // India node pulse
-    canvas.drawCircle(Offset(w * 0.20, h * 0.35), 22, radarPaint); // US node pulse
-    canvas.drawCircle(Offset(w * 0.51, h * 0.26), 18, radarPaint); // Europe node pulse
+  Widget _buildControlBtn({
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    required bool isDark,
+    Color? color,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.92),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFF00B074).withOpacity(0.35)),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
+      ),
+      child: IconButton(
+        icon: Icon(icon, size: 18, color: color ?? (isDark ? Colors.white : Colors.black87)),
+        tooltip: tooltip,
+        padding: const EdgeInsets.all(8),
+        constraints: const BoxConstraints(),
+        onPressed: onTap,
+      ),
+    );
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
