@@ -7,9 +7,55 @@ import '../../models/karma_action.dart';
 import '../../models/karma_category.dart';
 
 enum MapTileStyle {
-  dark,
-  street,
-  light,
+  googleRoadmap(
+    label: 'Google Streets',
+    shortLabel: 'Streets',
+    icon: '🗺️',
+    urlTemplate: 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+    subdomains: ['0', '1', '2', '3'],
+  ),
+  googleSatellite(
+    label: 'Google Satellite',
+    shortLabel: 'Satellite',
+    icon: '🛰️',
+    urlTemplate: 'https://mt{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
+    subdomains: ['0', '1', '2', '3'],
+  ),
+  googleHybrid(
+    label: 'Google Hybrid',
+    shortLabel: 'Hybrid',
+    icon: '🌍',
+    urlTemplate: 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+    subdomains: ['0', '1', '2', '3'],
+  ),
+  googleTerrain(
+    label: 'Google Terrain',
+    shortLabel: 'Terrain',
+    icon: '🏔️',
+    urlTemplate: 'https://mt{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',
+    subdomains: ['0', '1', '2', '3'],
+  ),
+  darkMatter(
+    label: 'Dark Mode',
+    shortLabel: 'Dark',
+    icon: '🌙',
+    urlTemplate: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+    subdomains: ['a', 'b', 'c', 'd'],
+  );
+
+  final String label;
+  final String shortLabel;
+  final String icon;
+  final String urlTemplate;
+  final List<String> subdomains;
+
+  const MapTileStyle({
+    required this.label,
+    required this.shortLabel,
+    required this.icon,
+    required this.urlTemplate,
+    required this.subdomains,
+  });
 }
 
 class ImpactMapScreen extends StatelessWidget {
@@ -23,7 +69,7 @@ class ImpactMapScreen extends StatelessWidget {
           children: [
             Text('🌍 ', style: TextStyle(fontSize: 20)),
             Text(
-              'Real Interactive Impact Map',
+              'Google Maps Live Impact Radar',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ],
@@ -39,11 +85,11 @@ class ImpactMapScreen extends StatelessWidget {
                   title: const Row(
                     children: [
                       Text('🌍 ', style: TextStyle(fontSize: 20)),
-                      Text('Live Global Impact Map'),
+                      Text('Google Maps Impact Radar'),
                     ],
                   ),
                   content: const Text(
-                    'Real interactive OpenStreetMap & CartoDB tiles rendering live cryptographic deed submissions from around the world. Pan, zoom, switch map themes, and tap on any deed pin to view real-time proof-of-good verifications.',
+                    'Real interactive Google Maps Roadmap, Satellite, and Hybrid imagery rendering live cryptographic deed submissions from around the world. Pan, zoom, toggle between Google Satellite & Street layers, and tap on any deed pin to view real-time proof-of-good verifications.',
                   ),
                   actions: [
                     TextButton(
@@ -80,33 +126,22 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
   final MapController _mapController = MapController();
   KarmaAction? _selectedAction;
   String? _selectedCategoryFilter;
-  MapTileStyle _tileStyle = MapTileStyle.dark;
-
-  String _getTileUrl(MapTileStyle style) {
-    switch (style) {
-      case MapTileStyle.dark:
-        return 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png';
-      case MapTileStyle.street:
-        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      case MapTileStyle.light:
-        return 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}@2x.png';
-    }
-  }
+  MapTileStyle _tileStyle = MapTileStyle.googleHybrid;
 
   void _zoomIn() {
     final currentZoom = _mapController.camera.zoom;
     final currentCenter = _mapController.camera.center;
-    _mapController.move(currentCenter, (currentZoom + 1).clamp(2.0, 18.0));
+    _mapController.move(currentCenter, (currentZoom + 1).clamp(2.0, 19.0));
   }
 
   void _zoomOut() {
     final currentZoom = _mapController.camera.zoom;
     final currentCenter = _mapController.camera.center;
-    _mapController.move(currentCenter, (currentZoom - 1).clamp(2.0, 18.0));
+    _mapController.move(currentCenter, (currentZoom - 1).clamp(2.0, 19.0));
   }
 
   void _recenterIndia() {
-    _mapController.move(const LatLng(20.5937, 78.9629), 4.5);
+    _mapController.move(const LatLng(20.5937, 78.9629), 4.8);
   }
 
   void _recenterGlobal() {
@@ -128,7 +163,7 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
         ? allPins
         : allPins.where((e) => e.category.name == _selectedCategoryFilter).toList();
 
-    final mapBoxHeight = widget.isFullScreen ? 400.0 : widget.height;
+    final mapBoxHeight = widget.isFullScreen ? 440.0 : widget.height;
 
     final mapWidget = Container(
       height: mapBoxHeight,
@@ -151,14 +186,14 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
         borderRadius: BorderRadius.circular(15),
         child: Stack(
           children: [
-            // 1. Real Interactive FlutterMap
+            // 1. Google Maps FlutterMap Instance
             FlutterMap(
               mapController: _mapController,
               options: MapOptions(
                 initialCenter: const LatLng(20.5937, 78.9629), // Centered on India & Asia-Pacific
-                initialZoom: widget.isFullScreen ? 3.8 : 3.2,
+                initialZoom: widget.isFullScreen ? 4.0 : 3.4,
                 minZoom: 2.0,
-                maxZoom: 18.0,
+                maxZoom: 19.0,
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.all,
                 ),
@@ -172,10 +207,12 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: _getTileUrl(_tileStyle),
-                  subdomains: const ['a', 'b', 'c', 'd'],
+                  key: ValueKey(_tileStyle),
+                  urlTemplate: _tileStyle.urlTemplate,
+                  subdomains: _tileStyle.subdomains,
                   userAgentPackageName: 'com.hershkarma.app',
-                  maxZoom: 19,
+                  maxZoom: 20,
+                  tileProvider: NetworkTileProvider(),
                 ),
                 MarkerLayer(
                   markers: filteredPins.map((action) {
@@ -184,8 +221,8 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
 
                     return Marker(
                       point: LatLng(action.latitude!, action.longitude!),
-                      width: isSelected ? 50 : 38,
-                      height: isSelected ? 50 : 38,
+                      width: isSelected ? 52 : 38,
+                      height: isSelected ? 52 : 38,
                       child: GestureDetector(
                         onTap: () {
                           setState(() {
@@ -193,7 +230,7 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                           });
                           _mapController.move(
                             LatLng(action.latitude!, action.longitude!),
-                            _mapController.camera.zoom < 6.0 ? 6.0 : _mapController.camera.zoom,
+                            _mapController.camera.zoom < 7.0 ? 7.0 : _mapController.camera.zoom,
                           );
                         },
                         child: AnimatedScale(
@@ -207,28 +244,29 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (isVerified ? const Color(0xFF00B074) : Colors.orangeAccent)
-                                          .withOpacity(0.5),
-                                      blurRadius: isSelected ? 12 : 6,
+                                      color: (isVerified ? const Color(0xFF00FF9D) : Colors.orangeAccent)
+                                          .withOpacity(0.6),
+                                      blurRadius: isSelected ? 14 : 6,
                                       spreadRadius: isSelected ? 4 : 2,
                                     ),
                                   ],
                                 ),
                                 child: Icon(
                                   Icons.location_on_rounded,
-                                  size: isSelected ? 44 : 34,
+                                  size: isSelected ? 46 : 34,
                                   color: isVerified
                                       ? (isSelected ? const Color(0xFF00FF9D) : action.category.color)
                                       : Colors.orangeAccent,
                                 ),
                               ),
                               Positioned(
-                                top: isSelected ? 7 : 5,
+                                top: isSelected ? 8 : 5,
                                 child: Container(
                                   padding: const EdgeInsets.all(2),
                                   decoration: const BoxDecoration(
                                     color: Colors.white,
                                     shape: BoxShape.circle,
+                                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 2)],
                                   ),
                                   child: Text(
                                     action.category.icon,
@@ -246,7 +284,7 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
               ],
             ),
 
-            // 2. Top Header Overlay (Active Node Count & Fullscreen Trigger)
+            // 2. Top Header Overlay (Active Node Count & Google Maps Layer Switcher)
             Positioned(
               top: 10,
               left: 10,
@@ -254,10 +292,11 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Active Node Count Badge
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.92),
+                      color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.94),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFF00B074).withOpacity(0.4)),
                       boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
@@ -275,60 +314,59 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Live Ledger Nodes: ${filteredPins.length}',
+                          'Google Maps Nodes: ${filteredPins.length}',
                           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                   ),
+
+                  // Google Maps Style Selector Dropdown / Row
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Map Tile Style Switcher
                       Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.92),
+                          color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.94),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFF00B074).withOpacity(0.3)),
+                          border: Border.all(color: const Color(0xFF00B074).withOpacity(0.35)),
                           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                Icons.dark_mode_rounded,
-                                size: 16,
-                                color: _tileStyle == MapTileStyle.dark ? const Color(0xFF00B074) : Colors.grey,
+                          children: MapTileStyle.values.map((style) {
+                            final isSel = _tileStyle == style;
+                            return InkWell(
+                              onTap: () => setState(() => _tileStyle = style),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isSel ? const Color(0xFF00B074).withOpacity(0.2) : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: isSel ? Border.all(color: const Color(0xFF00B074), width: 1) : null,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(style.icon, style: const TextStyle(fontSize: 12)),
+                                    if (isSel) ...[
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        style.shortLabel,
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF00B074),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
                               ),
-                              tooltip: 'Dark Map Style',
-                              padding: const EdgeInsets.all(6),
-                              constraints: const BoxConstraints(),
-                              onPressed: () => setState(() => _tileStyle = MapTileStyle.dark),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.map_rounded,
-                                size: 16,
-                                color: _tileStyle == MapTileStyle.street ? const Color(0xFF00B074) : Colors.grey,
-                              ),
-                              tooltip: 'OpenStreetMap Style',
-                              padding: const EdgeInsets.all(6),
-                              constraints: const BoxConstraints(),
-                              onPressed: () => setState(() => _tileStyle = MapTileStyle.street),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.light_mode_rounded,
-                                size: 16,
-                                color: _tileStyle == MapTileStyle.light ? const Color(0xFF00B074) : Colors.grey,
-                              ),
-                              tooltip: 'Light Map Style',
-                              padding: const EdgeInsets.all(6),
-                              constraints: const BoxConstraints(),
-                              onPressed: () => setState(() => _tileStyle = MapTileStyle.light),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
                       ),
                       if (!widget.isFullScreen) ...[
@@ -411,7 +449,7 @@ class _ImpactMapWidgetState extends State<ImpactMapWidget> {
               Positioned(
                 bottom: 10,
                 left: 10,
-                right: 56, // Leave room for side controls if needed
+                right: 56, // Leave room for side controls
                 child: Card(
                   color: (isDark ? const Color(0xFF0F172A) : Colors.white).withOpacity(0.96),
                   elevation: 8,
