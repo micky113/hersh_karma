@@ -63,7 +63,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Profile Detail screen loaded
-    expect(find.text('Karma Legacy Profile'), findsOneWidget);
+    expect(find.text('Karma Passport'), findsOneWidget);
 
     // Go back
     await tester.pageBack();
