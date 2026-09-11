@@ -360,6 +360,26 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Business Portal Launcher
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: const Color(0xFF00B074).withOpacity(0.08),
+          child: ListTile(
+            leading: const Text('🏢', style: TextStyle(fontSize: 28)),
+            title: const Text(
+              'Organizations & CSR Enterprise Hub',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Color(0xFF00B074)),
+            ),
+            subtitle: const Text(
+              'For Companies (ESG/CSR), Schools & NGOs • Challenges, Dashboards & Ethics',
+              style: TextStyle(fontSize: 10.5),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00B074)),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.businessPortal),
+          ),
+        ),
+        const SizedBox(height: 14),
+
         _buildOrgTile(
           context,
           name: AppLocalizations.translateWithContext(context, 'org_green_earth', defaultValue: 'Green Earth Foundation 🌍'),
@@ -423,6 +443,25 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Impact Marketplace Card
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ListTile(
+            leading: const Text('🛍️', style: TextStyle(fontSize: 32)),
+            title: const Text(
+              'Impact Marketplace & Opportunities',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            subtitle: const Text(
+              'Verified eco products, student mentoring, fellowships, and social internships',
+              style: TextStyle(fontSize: 11),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00B074)),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.marketplace),
+          ),
+        ),
+        const SizedBox(height: 12),
+
         // India 30 Hub Card
         Card(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

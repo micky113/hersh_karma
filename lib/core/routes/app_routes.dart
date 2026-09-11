@@ -31,12 +31,16 @@ import '../../views/wishes/wish_detail_screen.dart';
 import '../../views/ecosystem/ecosystem_hub_screen.dart';
 import '../../views/admin/admin_shell.dart';
 import '../../views/map/impact_map_screen.dart';
+import '../../views/business/business_portal_screen.dart';
+import '../../views/marketplace/impact_marketplace_screen.dart';
 import '../../models/karma_category.dart';
 
 class AppRoutes {
   static const String splash = '/';
   static const String ecosystemHub = '/ecosystem-hub';
   static const String impactMap = '/impact-map';
+  static const String businessPortal = '/business-portal';
+  static const String marketplace = '/marketplace';
   static const String admin = '/admin';
   static const String login = '/login';
   static const String createProfile = '/create-profile';
@@ -105,6 +109,8 @@ class AppRoutes {
       search: (_) => const UniversalSearchScreen(),
       ecosystemHub: (_) => const EcosystemHubScreen(),
       impactMap: (_) => const ImpactMapScreen(),
+      businessPortal: (_) => const BusinessPortalScreen(),
+      marketplace: (_) => const ImpactMarketplaceScreen(),
       admin: (_) => const AdminShell(),
     };
   }
