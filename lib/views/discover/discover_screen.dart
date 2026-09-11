@@ -378,6 +378,26 @@ class _DiscoverScreenState extends State<DiscoverScreen> with SingleTickerProvid
             onTap: () => Navigator.pushNamed(context, AppRoutes.businessPortal),
           ),
         ),
+        const SizedBox(height: 10),
+
+        // Role & Governance Hierarchy Launcher
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: Colors.purple.withOpacity(0.07),
+          child: ListTile(
+            leading: const Text('👑', style: TextStyle(fontSize: 28)),
+            title: const Text(
+              'Role & Governance Hierarchy',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Colors.purple),
+            ),
+            subtitle: const Text(
+              'Role-Based Authority • Community Track • Organizations • Platform Governance',
+              style: TextStyle(fontSize: 10.5),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.purple),
+            onTap: () => Navigator.pushNamed(context, AppRoutes.roleHierarchy),
+          ),
+        ),
         const SizedBox(height: 14),
 
         _buildOrgTile(

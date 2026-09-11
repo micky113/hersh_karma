@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../models/user_profile.dart';
 import '../../models/karma_action.dart';
+import '../../core/routes/app_routes.dart';
 import '../../core/localization/app_localizations.dart';
 
 class ProfileDetailScreen extends StatelessWidget {
@@ -154,6 +155,56 @@ class ProfileDetailScreen extends StatelessWidget {
                         _buildMetricBadge('🌍 IMPACT', '${user.verifiedSubmissions}', 'Outcomes', Colors.blue),
                         Container(height: 32, width: 1, color: isDark ? Colors.white12 : Colors.grey.shade300),
                         _buildMetricBadge('🛡️ TRUST', '${(user.trustScore * 100).toInt()}%', 'Reliability', Colors.purple),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // 1b. THREE INDEPENDENT DIMENSIONS & GOVERNANCE BANNER
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              color: Colors.purple.withOpacity(0.06),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('⚖️ ', style: TextStyle(fontSize: 18)),
+                        const Expanded(
+                          child: Text(
+                            'Three Independent Identity Dimensions',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pushNamed(context, AppRoutes.roleHierarchy),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: const Text('Explore Roles ➔', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.purple)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Karma records recognition • Trust measures evidence fidelity (0-100%) • Authority is role-based. High Karma never automatically grants authority over others.',
+                      style: TextStyle(fontSize: 11, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _buildDimensionChip('⭐ Karma', '${user.karmaCredits} Credits', const Color(0xFF00B074)),
+                        _buildDimensionChip('🛡️ Trust', '${(user.trustScore * 100).toInt()}% Reliability', Colors.purple),
+                        _buildDimensionChip('👑 Role', user.communityRole.label, Colors.blue),
                       ],
                     ),
                   ],
@@ -358,6 +409,24 @@ class ProfileDetailScreen extends StatelessWidget {
         const SizedBox(height: 2),
         Text(label, style: const TextStyle(fontSize: 9, color: Colors.grey)),
       ],
+    );
+  }
+
+  Widget _buildDimensionChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$label: ', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: color)),
+          Text(value, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }

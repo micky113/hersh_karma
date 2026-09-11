@@ -22,6 +22,31 @@ extension UserRoleExtension on UserRole {
   }
 }
 
+enum CommunityRole {
+  member,
+  contributor,
+  trustedContributor,
+  communityLeader;
+
+  String get label {
+    switch (this) {
+      case CommunityRole.member: return 'Member 👤';
+      case CommunityRole.contributor: return 'Contributor 🌱';
+      case CommunityRole.trustedContributor: return 'Trusted Contributor 🛡️';
+      case CommunityRole.communityLeader: return 'Community Leader 🤝';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case CommunityRole.member: return 'Default member • Can do good, report problems & make wishes';
+      case CommunityRole.contributor: return 'Has verified deeds • Proven real-world impact recognition';
+      case CommunityRole.trustedContributor: return 'High trust score • Community peer verification permissions';
+      case CommunityRole.communityLeader: return 'Coordinates community initiatives, volunteers & local projects';
+    }
+  }
+}
+
 enum AppInterfaceMode {
   simple,
   standard,
@@ -80,6 +105,32 @@ class UserProfile {
     this.karmaRipplesCount = 0,
     this.isOrgVerified = false,
   });
+
+  CommunityRole get communityRole {
+    if (role == UserRole.communityGroup) return CommunityRole.communityLeader;
+    if (verifiedSubmissions >= 5 && trustScore >= 0.85) return CommunityRole.trustedContributor;
+    if (verifiedSubmissions > 0) return CommunityRole.contributor;
+    return CommunityRole.member;
+  }
+
+  bool get canVerifyPeerDeeds =>
+      communityRole == CommunityRole.trustedContributor ||
+      communityRole == CommunityRole.communityLeader ||
+      isOrgVerified ||
+      role == UserRole.ngo ||
+      role == UserRole.institution;
+
+  bool get canCoordinateCommunityProjects =>
+      communityRole == CommunityRole.communityLeader ||
+      role == UserRole.communityGroup ||
+      role == UserRole.ngo ||
+      isOrgVerified;
+
+  bool get canManageChallenges =>
+      role == UserRole.institution ||
+      role == UserRole.corporate ||
+      role == UserRole.ngo ||
+      communityRole == CommunityRole.communityLeader;
 
   UserProfile copyWith({
     String? id,

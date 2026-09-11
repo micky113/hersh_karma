@@ -33,6 +33,7 @@ import '../../views/admin/admin_shell.dart';
 import '../../views/map/impact_map_screen.dart';
 import '../../views/business/business_portal_screen.dart';
 import '../../views/marketplace/impact_marketplace_screen.dart';
+import '../../views/governance/role_hierarchy_screen.dart';
 import '../../models/karma_category.dart';
 
 class AppRoutes {
@@ -41,6 +42,7 @@ class AppRoutes {
   static const String impactMap = '/impact-map';
   static const String businessPortal = '/business-portal';
   static const String marketplace = '/marketplace';
+  static const String roleHierarchy = '/role-hierarchy';
   static const String admin = '/admin';
   static const String login = '/login';
   static const String createProfile = '/create-profile';
@@ -111,6 +113,7 @@ class AppRoutes {
       impactMap: (_) => const ImpactMapScreen(),
       businessPortal: (_) => const BusinessPortalScreen(),
       marketplace: (_) => const ImpactMarketplaceScreen(),
+      roleHierarchy: (_) => const RoleHierarchyScreen(),
       admin: (_) => const AdminShell(),
     };
   }

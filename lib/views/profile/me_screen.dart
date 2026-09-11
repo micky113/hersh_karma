@@ -73,6 +73,10 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
 
             // 3. KARMA PASSPORT CERTIFICATE CARD
             _buildPassportCard(context, user, theme),
+            const SizedBox(height: 12),
+
+            // 3b. ROLE & GOVERNANCE HIERARCHY CARD
+            _buildRoleHierarchyCard(context, user, theme),
             const SizedBox(height: 24),
 
             // 4. MY HISTORY (My Actions & My Reports)
@@ -113,16 +117,33 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
                   const SizedBox(height: 2),
                   Text(user.email, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                   const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00B074).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _getReputationBadge(context, user.reputationScore),
-                      style: const TextStyle(color: Color(0xFF00B074), fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00B074).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          _getReputationBadge(context, user.reputationScore),
+                          style: const TextStyle(color: Color(0xFF00B074), fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.purple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          user.communityRole.label,
+                          style: const TextStyle(color: Colors.purple, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -226,6 +247,29 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF00B074)),
         onTap: () => Navigator.pushNamed(context, AppRoutes.profileDetail),
+      ),
+    );
+  }
+
+  Widget _buildRoleHierarchyCard(BuildContext context, UserProfile user, ThemeData theme) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: Colors.purple.withOpacity(0.04),
+      child: ListTile(
+        leading: const CircleAvatar(
+          backgroundColor: Colors.purple,
+          child: Icon(Icons.account_tree_rounded, color: Colors.white),
+        ),
+        title: const Text(
+          '👑 Role & Governance Hierarchy',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          'Role-based authority • Karma vs Trust vs Authority • Platform Governance',
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+        ),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.purple),
+        onTap: () => Navigator.pushNamed(context, AppRoutes.roleHierarchy),
       ),
     );
   }

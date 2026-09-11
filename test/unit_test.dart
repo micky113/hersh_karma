@@ -1131,5 +1131,70 @@ void main() {
       expect(AppLocalizations.translate('app_title', lang: 'xyz'), equals('Karma Grid'));
     });
   });
+
+  group('Proof of Good - Role-Based Hierarchy & Governance Dimensions Tests', () {
+    test('Should assign CommunityRole.member for new user with zero verified deeds', () {
+      final user = UserProfile(
+        id: 'u-1',
+        name: 'New Member',
+        email: 'member@karma.org',
+        verifiedSubmissions: 0,
+        trustScore: 1.0,
+      );
+      expect(user.communityRole, equals(CommunityRole.member));
+      expect(user.canVerifyPeerDeeds, isFalse);
+      expect(user.canCoordinateCommunityProjects, isFalse);
+    });
+
+    test('Should assign CommunityRole.contributor once user has at least 1 verified submission', () {
+      final user = UserProfile(
+        id: 'u-2',
+        name: 'Active Contributor',
+        email: 'contributor@karma.org',
+        verifiedSubmissions: 1,
+        trustScore: 0.80,
+      );
+      expect(user.communityRole, equals(CommunityRole.contributor));
+      expect(user.canVerifyPeerDeeds, isFalse);
+    });
+
+    test('Should elevate to CommunityRole.trustedContributor when >= 5 verified deeds and >= 85% trust score', () {
+      final user = UserProfile(
+        id: 'u-3',
+        name: 'Trusted Contributor',
+        email: 'trusted@karma.org',
+        verifiedSubmissions: 5,
+        trustScore: 0.85,
+      );
+      expect(user.communityRole, equals(CommunityRole.trustedContributor));
+      expect(user.canVerifyPeerDeeds, isTrue);
+    });
+
+    test('Should assign CommunityRole.communityLeader for community group user with project coordination rights', () {
+      final leader = UserProfile(
+        id: 'u-4',
+        name: 'Green Delhi Lead',
+        email: 'lead@greendelhi.org',
+        role: UserRole.communityGroup,
+      );
+      expect(leader.communityRole, equals(CommunityRole.communityLeader));
+      expect(leader.canVerifyPeerDeeds, isTrue);
+      expect(leader.canCoordinateCommunityProjects, isTrue);
+      expect(leader.canManageChallenges, isTrue);
+    });
+
+    test('Institutional and NGO roles should have verified organization capabilities', () {
+      final ngoUser = UserProfile(
+        id: 'ngo-1',
+        name: 'Goonj Foundation',
+        email: 'impact@goonj.org',
+        role: UserRole.ngo,
+        isOrgVerified: true,
+      );
+      expect(ngoUser.canVerifyPeerDeeds, isTrue);
+      expect(ngoUser.canCoordinateCommunityProjects, isTrue);
+      expect(ngoUser.canManageChallenges, isTrue);
+    });
+  });
 }
 
