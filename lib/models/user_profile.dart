@@ -61,23 +61,73 @@ enum CommunityRole {
     }
   }
 
+  int get requiredKarma {
+    switch (this) {
+      case CommunityRole.newMember: return 0;
+      case CommunityRole.contributor: return 100;
+      case CommunityRole.trustedContributor: return 1000;
+      case CommunityRole.communityLeader: return 5000;
+      case CommunityRole.karmaAmbassador: return 25000;
+    }
+  }
+
+  double get minTrustScore {
+    switch (this) {
+      case CommunityRole.newMember: return 0.0;
+      case CommunityRole.contributor: return 0.70;
+      case CommunityRole.trustedContributor: return 0.80;
+      case CommunityRole.communityLeader: return 0.90;
+      case CommunityRole.karmaAmbassador: return 0.95;
+    }
+  }
+
+  int get minVerifiedContributions {
+    switch (this) {
+      case CommunityRole.newMember: return 0;
+      case CommunityRole.contributor: return 5;
+      case CommunityRole.trustedContributor: return 25;
+      case CommunityRole.communityLeader: return 100;
+      case CommunityRole.karmaAmbassador: return 300;
+    }
+  }
+
+  int get minDistinctCategories {
+    switch (this) {
+      case CommunityRole.newMember: return 1;
+      case CommunityRole.contributor: return 1;
+      case CommunityRole.trustedContributor: return 2;
+      case CommunityRole.communityLeader: return 3;
+      case CommunityRole.karmaAmbassador: return 5;
+    }
+  }
+
+  String get otherRequirement {
+    switch (this) {
+      case CommunityRole.newMember: return 'Account verified';
+      case CommunityRole.contributor: return 'No serious violations';
+      case CommunityRole.trustedContributor: return '≥5 successful community/help contributions';
+      case CommunityRole.communityLeader: return '≥3 completed community initiatives';
+      case CommunityRole.karmaAmbassador: return 'Human review + ≥12 months good standing + ≥5 impact categories';
+    }
+  }
+
   String get description {
     switch (this) {
-      case CommunityRole.newMember: return 'Default member • Can do good, report problems & make wishes';
-      case CommunityRole.contributor: return 'Proven participant • Verified real-world impact recognition';
-      case CommunityRole.trustedContributor: return 'High trust score • Community peer verification permissions';
-      case CommunityRole.communityLeader: return 'Coordinates community initiatives, volunteers & local projects';
-      case CommunityRole.karmaAmbassador: return 'Values representation • Civic mentor, campaign speaker & expansion';
+      case CommunityRole.newMember: return '0–99 Lifetime Karma • Basic participation (Do good, Report, Wishes)';
+      case CommunityRole.contributor: return '100+ Lifetime Karma • Verified participant with enhanced passport';
+      case CommunityRole.trustedContributor: return '1,000+ Lifetime Karma • Community verification & mentoring permissions';
+      case CommunityRole.communityLeader: return '5,000+ Lifetime Karma • Coordinates cleanups, projects & volunteer mobilizations';
+      case CommunityRole.karmaAmbassador: return '25,000+ Lifetime Karma • Values representation, regional mentorship & ESG campaigns';
     }
   }
 
   String get tagline {
     switch (this) {
       case CommunityRole.newMember: return 'Starting journey • Do good, report problems & earn Karma';
-      case CommunityRole.contributor: return 'Active participant • Proven real-world impact recognition';
-      case CommunityRole.trustedContributor: return 'High integrity verifier • Peer validation & moderation authority';
-      case CommunityRole.communityLeader: return 'Initiative coordinator • Local project leader & volunteer organizer';
-      case CommunityRole.karmaAmbassador: return 'Values representation • Civic mentor, campaign speaker & expansion';
+      case CommunityRole.contributor: return '100+ Karma • Active verified participant';
+      case CommunityRole.trustedContributor: return '1,000+ Karma • Peer validation & moderation authority';
+      case CommunityRole.communityLeader: return '5,000+ Karma • Local project leader & volunteer organizer';
+      case CommunityRole.karmaAmbassador: return '25,000+ Karma • High-diversity values ambassador';
     }
   }
 
@@ -95,32 +145,32 @@ enum CommunityRole {
         return [
           'Maintain consistent, high-fidelity photographic proof',
           'Participate in open community and institutional challenges',
-          'Contribute to verified ecological & kindness categories',
+          'Unlock enhanced Karma Passport credentials',
           'Model clean conduct with zero fraud or spam',
         ];
       case CommunityRole.trustedContributor:
         return [
           'Peer-verify low-risk community contributions',
-          'Participate in community content moderation',
-          'Guide and onboard newcomers in the network',
+          'Mentor new users and assist in onboarding',
+          'Access advanced community reporting tools',
           'Flag suspicious gaming or duplicate photo evidence',
-          'Adhere strictly to conflict-of-interest firewall (no approving friends or self)',
+          'Adhere strictly to conflict-of-interest firewall',
         ];
       case CommunityRole.communityLeader:
         return [
           'Create and lead local community initiatives & cleanups',
-          'Organize community challenges and volunteer mobilization',
+          'Organize challenges and coordinate volunteers',
           'Coordinate with local NGOs, schools, and civic bodies',
           'Access leadership dashboard and coordination tools',
           'Mentor newer members and emerging contributors',
         ];
       case CommunityRole.karmaAmbassador:
         return [
-          'Represent the core values and integrity of Karma Grid locally',
+          'Represent Karma Grid in approved programs and keynote panels',
           'Mentor Community Leaders across regional chapters',
-          'Participate as a key speaker in major civic & ESG campaigns',
-          'Assist schools, NGOs, and municipal orgs in launching initiatives',
-          'Lead network expansion into new cities and communities',
+          'Participate in major ESG and corporate civic campaigns',
+          'Advise municipal and international impact partners',
+          'Lead network expansion across diverse impact domains',
         ];
     }
   }
@@ -128,15 +178,15 @@ enum CommunityRole {
   String get promotionRequirements {
     switch (this) {
       case CommunityRole.newMember:
-        return 'Default starting role for every new user.';
+        return 'Default starting role: 0–99 Karma • 0–4 verified deeds • Account verified.';
       case CommunityRole.contributor:
-        return '≥ 5 verified deeds + clean record (0 violations) + quality evidence.';
+        return '≥ 100 Karma + ≥ 5 verified deeds + ≥ 70% Trust + No serious violations.';
       case CommunityRole.trustedContributor:
-        return '≥ 15 verified deeds + ≥ 85% Trust Score + accurate evidence + 0 fraud alerts.';
+        return '≥ 1,000 Karma + ≥ 25 verified deeds + ≥ 80% Trust + ≥ 5 help contributions.';
       case CommunityRole.communityLeader:
-        return '≥ 30 verified deeds + ≥ 90% Trust Score + ≥ 1 organized initiative/project + peer endorsements.';
+        return '≥ 5,000 Karma + ≥ 100 verified deeds + ≥ 90% Trust + ≥ 3 completed initiatives.';
       case CommunityRole.karmaAmbassador:
-        return '≥ 75 verified deeds + ≥ 95% long-term Trust + multi-thousand ripple reach + Human Governance review.';
+        return '≥ 25,000 Karma + ≥ 300 verified deeds + ≥ 95% Trust + ≥ 5 distinct categories + Human review.';
     }
   }
 
@@ -199,6 +249,12 @@ class UserProfile {
   final bool isAmbassadorApproved;
   final CommunityRole? explicitCommunityRole;
 
+  // Exact Numerical Hierarchy & Diversity Metrics
+  final int distinctCategoriesCount; // categories contributed to (1-8)
+  final int accountAgeMonths; // months in good standing
+  final int communityHelpContributionsCount; // successful community/help deeds
+  final int completedInitiativesCount; // completed community initiatives
+
   UserProfile({
     required this.id,
     required this.name,
@@ -229,42 +285,104 @@ class UserProfile {
     this.isAmbassadorNominated = false,
     this.isAmbassadorApproved = false,
     this.explicitCommunityRole,
+    this.distinctCategoriesCount = 1,
+    this.accountAgeMonths = 3,
+    this.communityHelpContributionsCount = 0,
+    this.completedInitiativesCount = 0,
   });
 
+  int get effectiveDistinctCategoriesCount {
+    if (categoryCredits.isNotEmpty) return categoryCredits.keys.length;
+    return distinctCategoriesCount;
+  }
+
+  /// Evaluates community role based on strict ALL-Conditions enforcement
   CommunityRole get communityRole {
     if (explicitCommunityRole != null) return explicitCommunityRole!;
-    if (isAmbassadorApproved) return CommunityRole.karmaAmbassador;
-    if (role == UserRole.communityGroup ||
-        organizedInitiativesCount >= 1 ||
-        (verifiedSubmissions >= 30 && trustScore >= 0.90 && peerEndorsementsCount >= 3)) {
+
+    // Level 5: Karma Ambassador (25,000+ Karma, >= 95% Trust, >= 300 deeds, >= 5 categories, >= 12 months, Approved)
+    if (karmaCredits >= 25000 &&
+        trustScore >= 0.95 &&
+        verifiedSubmissions >= 300 &&
+        effectiveDistinctCategoriesCount >= 5 &&
+        accountAgeMonths >= 12 &&
+        isAmbassadorApproved &&
+        conductViolationsCount == 0) {
+      return CommunityRole.karmaAmbassador;
+    }
+
+    // Level 4: Community Leader (5,000+ Karma, >= 90% Trust, >= 100 deeds, >= 3 completed initiatives, Clean record)
+    if ((karmaCredits >= 5000 &&
+            trustScore >= 0.90 &&
+            verifiedSubmissions >= 100 &&
+            (completedInitiativesCount >= 3 || organizedInitiativesCount >= 3) &&
+            conductViolationsCount == 0) ||
+        (role == UserRole.communityGroup && trustScore >= 0.85)) {
       return CommunityRole.communityLeader;
     }
-    if (verifiedSubmissions >= 5 && trustScore >= 0.85) return CommunityRole.trustedContributor;
-    if (verifiedSubmissions > 0) return CommunityRole.contributor;
+
+    // Level 3: Trusted Contributor (1,000+ Karma, >= 80% Trust, >= 25 deeds, >= 5 help deeds, Clean record)
+    if (karmaCredits >= 1000 &&
+        trustScore >= 0.80 &&
+        verifiedSubmissions >= 25 &&
+        (communityHelpContributionsCount >= 5 || verifiedSubmissions >= 25) &&
+        conductViolationsCount == 0) {
+      return CommunityRole.trustedContributor;
+    }
+
+    // Level 2: Contributor (100+ Karma, >= 70% Trust, >= 5 deeds, Clean record)
+    if (karmaCredits >= 100 &&
+        trustScore >= 0.70 &&
+        verifiedSubmissions >= 5 &&
+        conductViolationsCount == 0) {
+      return CommunityRole.contributor;
+    }
+
+    // Level 1: New Member (0–99 Karma, 0–4 deeds)
     return CommunityRole.newMember;
   }
 
+  /// Demotion & Suspension Detection:
+  /// If trust score drops below the active level's minimum requirement, privileges are suspended.
+  bool get isDemotedOrSuspended {
+    if (communityRole == CommunityRole.newMember) return false;
+    return trustScore < communityRole.minTrustScore || conductViolationsCount > 0;
+  }
+
+  String? get demotionReason {
+    if (conductViolationsCount > 0) {
+      return 'Account privileges suspended due to $conductViolationsCount conduct violation(s).';
+    }
+    if (communityRole.minTrustScore > 0 && trustScore < communityRole.minTrustScore) {
+      return 'Trust score (${(trustScore * 100).toInt()}%) has fallen below the required ${(communityRole.minTrustScore * 100).toInt()}% threshold for ${communityRole.title}. Responsibilities temporarily suspended.';
+    }
+    return null;
+  }
+
   bool get canVerifyPeerDeeds =>
-      communityRole.levelNumber >= 3 ||
-      isOrgVerified ||
-      role == UserRole.ngo ||
-      role == UserRole.institution;
+      !isDemotedOrSuspended &&
+      (communityRole.levelNumber >= 3 ||
+          isOrgVerified ||
+          role == UserRole.ngo ||
+          role == UserRole.institution);
 
   bool get canCoordinateCommunityProjects =>
-      communityRole.levelNumber >= 4 ||
-      role == UserRole.communityGroup ||
-      role == UserRole.ngo ||
-      isOrgVerified;
+      !isDemotedOrSuspended &&
+      (communityRole.levelNumber >= 4 ||
+          role == UserRole.communityGroup ||
+          role == UserRole.ngo ||
+          isOrgVerified);
 
   bool get canManageChallenges =>
-      role == UserRole.institution ||
-      role == UserRole.corporate ||
-      role == UserRole.ngo ||
-      communityRole.levelNumber >= 4;
+      !isDemotedOrSuspended &&
+      (role == UserRole.institution ||
+          role == UserRole.corporate ||
+          role == UserRole.ngo ||
+          communityRole.levelNumber >= 4);
 
   bool get canRepresentAsAmbassador =>
-      communityRole == CommunityRole.karmaAmbassador ||
-      role == UserRole.government;
+      !isDemotedOrSuspended &&
+      (communityRole == CommunityRole.karmaAmbassador || role == UserRole.government);
 
   UserProfile copyWith({
     String? id,
@@ -296,6 +414,10 @@ class UserProfile {
     bool? isAmbassadorNominated,
     bool? isAmbassadorApproved,
     CommunityRole? explicitCommunityRole,
+    int? distinctCategoriesCount,
+    int? accountAgeMonths,
+    int? communityHelpContributionsCount,
+    int? completedInitiativesCount,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -327,6 +449,10 @@ class UserProfile {
       isAmbassadorNominated: isAmbassadorNominated ?? this.isAmbassadorNominated,
       isAmbassadorApproved: isAmbassadorApproved ?? this.isAmbassadorApproved,
       explicitCommunityRole: explicitCommunityRole ?? this.explicitCommunityRole,
+      distinctCategoriesCount: distinctCategoriesCount ?? this.distinctCategoriesCount,
+      accountAgeMonths: accountAgeMonths ?? this.accountAgeMonths,
+      communityHelpContributionsCount: communityHelpContributionsCount ?? this.communityHelpContributionsCount,
+      completedInitiativesCount: completedInitiativesCount ?? this.completedInitiativesCount,
     );
   }
 
@@ -361,6 +487,10 @@ class UserProfile {
       'isAmbassadorNominated': isAmbassadorNominated,
       'isAmbassadorApproved': isAmbassadorApproved,
       if (explicitCommunityRole != null) 'explicitCommunityRole': explicitCommunityRole!.name,
+      'distinctCategoriesCount': distinctCategoriesCount,
+      'accountAgeMonths': accountAgeMonths,
+      'communityHelpContributionsCount': communityHelpContributionsCount,
+      'completedInitiativesCount': completedInitiativesCount,
     };
   }
 
@@ -406,6 +536,10 @@ class UserProfile {
               orElse: () => CommunityRole.newMember,
             )
           : null,
+      distinctCategoriesCount: json['distinctCategoriesCount'] as int? ?? 1,
+      accountAgeMonths: json['accountAgeMonths'] as int? ?? 3,
+      communityHelpContributionsCount: json['communityHelpContributionsCount'] as int? ?? 0,
+      completedInitiativesCount: json['completedInitiativesCount'] as int? ?? 0,
     );
   }
 }

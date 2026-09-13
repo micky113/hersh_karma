@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../core/routes/app_routes.dart';
 import '../../models/user_profile.dart';
+import '../../models/promotion/promotion_engine.dart';
 import '../../core/localization/app_localizations.dart';
 
 class MeScreen extends StatefulWidget {
@@ -252,27 +253,90 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
   }
 
   Widget _buildRoleHierarchyCard(BuildContext context, UserProfile user, ThemeData theme) {
+    final gateResult = PromotionEngine.evaluateNextLevelGates(user);
+    final demotionRisk = PromotionEngine.evaluateDemotionRisk(user);
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
       color: Colors.purple.withOpacity(0.04),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.purple,
-          child: Text(
-            'L${user.communityRole.levelNumber}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.pushNamed(context, AppRoutes.roleHierarchy),
+        child: Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: demotionRisk.isCurrentlySuspended ? Colors.redAccent : Colors.purple,
+                    child: Text(
+                      'L${user.communityRole.levelNumber}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Level ${user.communityRole.levelNumber}: ${user.communityRole.title}',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                        if (demotionRisk.isCurrentlySuspended)
+                          const Text(
+                            '⚠️ Privileges suspended due to trust score',
+                            style: TextStyle(fontSize: 10, color: Colors.redAccent, fontWeight: FontWeight.bold),
+                          )
+                        else
+                          Text(
+                            user.communityRole.tagline,
+                            style: TextStyle(fontSize: 10.5, color: Colors.grey.shade700),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.purple),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Your next level: ${gateResult.targetRole.title}',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5, color: Color(0xFF00B074)),
+                  ),
+                  Text(
+                    '${(gateResult.overallProgress * 100).toInt()}% ready',
+                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.grey),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: gateResult.overallProgress,
+                  minHeight: 6,
+                  backgroundColor: Colors.grey.shade200,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00B074)),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${gateResult.karmaDetail} • ${gateResult.verificationDetail} • Trust: ${(user.trustScore * 100).toInt()}% ${gateResult.trustPassed ? "✓" : ""}',
+                style: const TextStyle(fontSize: 9.5, color: Colors.grey),
+              ),
+            ],
           ),
         ),
-        title: Text(
-          '👑 Level ${user.communityRole.levelNumber}: ${user.communityRole.title}',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-        ),
-        subtitle: Text(
-          '${user.communityRole.tagline} • 4 Promotion Gates & 2D Matrix',
-          style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
-        ),
-        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.purple),
-        onTap: () => Navigator.pushNamed(context, AppRoutes.roleHierarchy),
       ),
     );
   }

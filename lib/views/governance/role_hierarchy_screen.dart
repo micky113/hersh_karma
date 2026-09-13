@@ -195,10 +195,10 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
           indicatorColor: const Color(0xFF00B074),
           indicatorWeight: 3,
           tabs: const [
-            Tab(text: '🌱 5 Community Levels'),
-            Tab(text: '🧠 2D Karma vs Trust'),
-            Tab(text: '⭐ 4 Promotion Gates'),
-            Tab(text: '🏢 Organization Track'),
+            Tab(text: '🏆 Numerical Hierarchy'),
+            Tab(text: '🔥 Impact Diversity & 2D'),
+            Tab(text: '⭐ "Your Next Level" Gates'),
+            Tab(text: '🛡️ Demotion Rules'),
             Tab(text: '🧑‍⚖️ Platform Governance'),
           ],
         ),
@@ -209,14 +209,63 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
           _buildCommunityLevelsView(context, user, isDark),
           _buildTwoDimensionalView(context, user, isDark),
           _buildPromotionGatesView(context, user, isDark),
-          _buildOrganizationTrackView(context, user, isDark),
+          _buildDemotionRulesView(context, user, isDark),
           _buildPlatformGovernanceView(context, isDark),
         ],
       ),
     );
   }
 
-  // 1. THE 5 COMMUNITY RESPONSIBILITY LEVELS
+  Widget _buildTrinityBanner(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF00B074), Color(0xFF0288D1)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00B074).withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '🌟 RESPONSIBILITY IS EARNED, NOT BOUGHT',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 10.5,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Transparent, Numerical & Anti-Gaming',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'Anyone can earn Karma. Community governance responsibility requires proven Trust fidelity, verified deeds across multiple categories, and clean conduct.',
+            style: TextStyle(color: Colors.white, fontSize: 12, height: 1.35),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 1. THE 5 COMMUNITY RESPONSIBILITY LEVELS + NUMERICAL TABLE
   Widget _buildCommunityLevelsView(BuildContext context, UserProfile? user, bool isDark) {
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -225,10 +274,38 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
         _buildTrinityBanner(isDark),
         const SizedBox(height: 16),
 
+        // Numerical Hierarchy Table Card
+        _buildNumericalHierarchyTable(isDark),
+        const SizedBox(height: 16),
+
+        // Strict Rule Banner
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.amber.withOpacity(isDark ? 0.2 : 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.amber.shade700.withOpacity(0.4)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.rule_rounded, color: Colors.amber.shade800, size: 20),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'THE MANDATORY RULE: ALL conditions must be met simultaneously. Someone with 10,000 Karma + 65% Trust is blocked from promotion. Someone with 6,000 Karma + 94% Trust + 120 verified deeds qualifies for Community Leader.',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, height: 1.3),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
         _buildRoleStep(
           role: '👤 Level 1: New Member',
-          subtitle: 'Starting Status for Everyone',
-          desc: 'Everyone starts here. You can do actions, report hazards, make wishes, earn Karma, and build Trust.',
+          subtitle: '0–99 Lifetime Karma • 0–4 Verified Deeds',
+          desc: 'Starting status for everyone. Can do actions, report civic hazards, make wishes, earn Karma, and build baseline Trust.',
           responsibilities: CommunityRole.newMember.responsibilities,
           requirements: CommunityRole.newMember.promotionRequirements,
           reviewType: CommunityRole.newMember.reviewType,
@@ -239,8 +316,8 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
         _buildRoleStep(
           role: '🌱 Level 2: Contributor',
-          subtitle: 'Demonstrated Active Participation',
-          desc: 'Awarded once you prove consistent real-world contribution with high-fidelity photo proof and clean conduct.',
+          subtitle: '100+ Lifetime Karma • ≥70% Trust • ≥5 Verified Deeds',
+          desc: 'Demonstrated active participation with verified photo proof and clean conduct record (0 violations). Unlocks enhanced passport.',
           responsibilities: CommunityRole.contributor.responsibilities,
           requirements: CommunityRole.contributor.promotionRequirements,
           reviewType: CommunityRole.contributor.reviewType,
@@ -251,8 +328,8 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
         _buildRoleStep(
           role: '🛡️ Level 3: Trusted Contributor',
-          subtitle: 'Peer Verifier & Moderate Authority',
-          desc: 'High Trust score unlocks limited peer verification of low-risk community deeds. Governed by anti-collusion firewall.',
+          subtitle: '1,000+ Lifetime Karma • ≥80% Trust • ≥25 Verified Deeds',
+          desc: 'High Trust score unlocks low-risk peer verification and mentoring assistance. Requires at least 5 successful community/help contributions.',
           responsibilities: CommunityRole.trustedContributor.responsibilities,
           requirements: CommunityRole.trustedContributor.promotionRequirements,
           reviewType: CommunityRole.trustedContributor.reviewType,
@@ -263,8 +340,8 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
         _buildRoleStep(
           role: '🤝 Level 4: Community Leader',
-          subtitle: 'Initiative & Project Coordinator',
-          desc: 'Demonstrated leadership: organizes cleanups, mobilizes volunteers, and coordinates local NGO partnerships.',
+          subtitle: '5,000+ Lifetime Karma • ≥90% Trust • ≥100 Verified Deeds',
+          desc: 'Initiative coordinator: creates local cleanups, organizes challenges, coordinates volunteers, and completes ≥3 community initiatives.',
           responsibilities: CommunityRole.communityLeader.responsibilities,
           requirements: CommunityRole.communityLeader.promotionRequirements,
           reviewType: CommunityRole.communityLeader.reviewType,
@@ -275,23 +352,200 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
         _buildRoleStep(
           role: '🌟 Level 5: Karma Ambassador',
-          subtitle: 'Highest Honor & Values Representation',
-          desc: 'Rare, prestigious responsibility representing the values of Karma Grid. Mentors leaders and leads regional civic expansions.',
+          subtitle: '25,000+ Lifetime Karma • ≥95% Trust • ≥300 Verified Deeds',
+          desc: 'Highest honor of values representation. Requires ≥5 distinct impact categories, ≥12 months standing, and Human Governance Board review.',
           responsibilities: CommunityRole.karmaAmbassador.responsibilities,
           requirements: CommunityRole.karmaAmbassador.promotionRequirements,
           reviewType: CommunityRole.karmaAmbassador.reviewType,
           isCurrent: user?.communityRole == CommunityRole.karmaAmbassador,
           color: Colors.amber.shade800,
         ),
-        const SizedBox(height: 20),
-
-        // Aarav vs Maya Showcase
-        _buildProfileComparisonCard(isDark),
       ],
     );
   }
 
-  // 2. 2D KARMA VS TRUST MATRIX VIEW
+  Widget _buildNumericalHierarchyTable(bool isDark) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.table_chart_rounded, size: 18, color: Color(0xFF00B074)),
+                SizedBox(width: 8),
+                Text(
+                  '🏆 Karma Grid Individual Hierarchy',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 36,
+                dataRowMinHeight: 38,
+                dataRowMaxHeight: 46,
+                columnSpacing: 14,
+                headingTextStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF00B074)),
+                columns: const [
+                  DataColumn(label: Text('Lvl')),
+                  DataColumn(label: Text('Position')),
+                  DataColumn(label: Text('Karma')),
+                  DataColumn(label: Text('Trust')),
+                  DataColumn(label: Text('Verified')),
+                  DataColumn(label: Text('Other Requirements')),
+                ],
+                rows: const [
+                  DataRow(cells: [
+                    DataCell(Text('1', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text('👤 New Member')),
+                    DataCell(Text('0–99')),
+                    DataCell(Text('—')),
+                    DataCell(Text('0–4')),
+                    DataCell(Text('Account verified')),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(Text('2', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text('🌱 Contributor')),
+                    DataCell(Text('100+')),
+                    DataCell(Text('≥70%')),
+                    DataCell(Text('≥5')),
+                    DataCell(Text('No serious violations')),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(Text('3', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text('🛡️ Trusted Contributor')),
+                    DataCell(Text('1,000+')),
+                    DataCell(Text('≥80%')),
+                    DataCell(Text('≥25')),
+                    DataCell(Text('≥5 help contributions')),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(Text('4', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text('🤝 Community Leader')),
+                    DataCell(Text('5,000+')),
+                    DataCell(Text('≥90%')),
+                    DataCell(Text('≥100')),
+                    DataCell(Text('≥3 completed initiatives')),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(Text('5', style: TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text('🌟 Karma Ambassador')),
+                    DataCell(Text('25,000+')),
+                    DataCell(Text('≥95%')),
+                    DataCell(Text('≥300')),
+                    DataCell(Text('Human review + ≥12 mo + ≥5 cats')),
+                  ]),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleStep({
+    required String role,
+    required String subtitle,
+    required String desc,
+    required List<String> responsibilities,
+    required String requirements,
+    required String reviewType,
+    required bool isCurrent,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isCurrent ? color.withOpacity(0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCurrent ? color : Colors.grey.withOpacity(0.25),
+          width: isCurrent ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      role,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isCurrent ? color : null),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+                    ),
+                  ],
+                ),
+              ),
+              if (isCurrent)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    'CURRENT RANK',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9.5),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(desc, style: const TextStyle(fontSize: 12, color: Colors.grey, height: 1.35)),
+          const SizedBox(height: 10),
+          const Text('Unlocked Responsibilities:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+          const SizedBox(height: 4),
+          ...responsibilities.map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('• ', style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+                    Expanded(child: Text(r, style: const TextStyle(fontSize: 11.5, height: 1.25))),
+                  ],
+                ),
+              )),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_user_outlined, size: 14, color: Colors.grey),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Promotion Review: $reviewType',
+                    style: const TextStyle(fontSize: 10.5, color: Colors.grey, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 2. 2D KARMA VS TRUST MATRIX VIEW + IMPACT DIVERSITY
   Widget _buildTwoDimensionalView(BuildContext context, UserProfile? user, bool isDark) {
     final quadrant = user != null ? PromotionEngine.evaluateQuadrant(user) : KarmaTrustQuadrant.lowKarmaLowTrust;
 
@@ -316,16 +570,49 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
             child: const Column(
               children: [
                 Text(
-                  '🧠 Two-Dimensional Progression Model',
+                  '🔥 Impact Diversity & Anti-Gaming Engine',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.purple),
                 ),
                 SizedBox(height: 6),
                 Text(
-                  'Karma is NOT Rank. High Karma with low Trust means questionable reliability—and results in NO promotion. Low Karma with high Trust enables steady responsibility progression.',
+                  'Don\'t let anyone achieve 25,000 Karma through hundreds of tiny micro-actions. Impact Diversity requires contributions spanning at least 5 distinct domains to qualify for Ambassador.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 11.5, height: 1.3),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 8 Impact Categories Showcase
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '🌐 8 RECOGNIZED IMPACT CATEGORIES',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 1),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildCategoryChip('🌱 Environment', Colors.green),
+                      _buildCategoryChip('📚 Education', Colors.blue),
+                      _buildCategoryChip('🤝 Community', Colors.purple),
+                      _buildCategoryChip('🐾 Animals', Colors.orange),
+                      _buildCategoryChip('💧 Water Conservation', Colors.cyan),
+                      _buildCategoryChip('🏥 Healthcare', Colors.redAccent),
+                      _buildCategoryChip('💼 Employment & Skills', Colors.teal),
+                      _buildCategoryChip('🏙️ Civic Improvement', Colors.indigo),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -384,8 +671,8 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
               Expanded(
                 child: _buildQuadrantBox(
                   title: '⚠️ High Karma • Low Trust',
-                  subtitle: 'High Volume / Unverified',
-                  verdict: '❌ NO PROMOTION',
+                  subtitle: 'High Volume / Questionable Proof',
+                  verdict: '❌ NO PROMOTION (BLOCKED)',
                   color: Colors.redAccent,
                   isDark: isDark,
                   isUserHere: quadrant == KarmaTrustQuadrant.highKarmaLowTrust,
@@ -395,7 +682,7 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
               Expanded(
                 child: _buildQuadrantBox(
                   title: '🌟 High Karma • High Trust',
-                  subtitle: 'Pillars of Impact',
+                  subtitle: 'Pillars of Impact (≥80% Trust)',
                   verdict: '👑 LEADER / AMBASSADOR',
                   color: Colors.amber.shade800,
                   isDark: isDark,
@@ -423,8 +710,8 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
               Expanded(
                 child: _buildQuadrantBox(
                   title: '🛡️ Low Karma • High Trust',
-                  subtitle: 'High-Integrity Contributor',
-                  verdict: '✅ PROGRESSION PATH ACTIVE',
+                  subtitle: 'High-Integrity Emerging',
+                  verdict: '✅ PROGRESSION ACTIVE',
                   color: const Color(0xFF00B074),
                   isDark: isDark,
                   isUserHere: quadrant == KarmaTrustQuadrant.lowKarmaHighTrust,
@@ -436,12 +723,208 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
           // Anti-Gaming Charter
           _buildAntiGamingCharter(isDark),
+          const SizedBox(height: 16),
+
+          // Aarav vs Maya Showcase
+          _buildProfileComparisonCard(isDark),
         ],
       ),
     );
   }
 
-  // 3. THE 4 PROMOTION GATES VIEW
+  Widget _buildCategoryChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+    );
+  }
+
+  Widget _buildQuadrantBox({
+    required String title,
+    required String subtitle,
+    required String verdict,
+    required Color color,
+    required bool isDark,
+    required bool isUserHere,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isUserHere
+            ? color.withOpacity(isDark ? 0.25 : 0.12)
+            : (isDark ? const Color(0xFF1E293B) : Colors.white),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isUserHere ? color : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+          width: isUserHere ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11.5,
+                    color: color,
+                  ),
+                ),
+              ),
+              if (isUserHere)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'YOU',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 9),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 10.5, color: Colors.grey),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              verdict,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 9.5,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAntiGamingCharter(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(isDark ? 0.2 : 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withOpacity(0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.shield_outlined, color: Colors.orange, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Anti-Gaming & Farming Prevention',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.orange),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Karma measures impact volume, but Trust measures fidelity. A user submitting 500 low-quality actions in a single category cannot reach Ambassador or Leader rank without diverse domain contributions and pristine community verification.',
+            style: TextStyle(fontSize: 11.5, height: 1.4, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileComparisonCard(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'CASE STUDY: WHY ALL-CONDITIONS MATTER',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 1),
+          ),
+          const SizedBox(height: 12),
+          // User A
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withOpacity(0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.redAccent.withOpacity(0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.cancel_outlined, color: Colors.redAccent, size: 16),
+                    SizedBox(width: 6),
+                    Text('Aarav: 10,000 Karma + 65% Trust', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.redAccent)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Blocked from Trusted Contributor (requires ≥80% Trust). High volume cannot override low evidence fidelity.',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          // User B
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00B074).withOpacity(0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF00B074).withOpacity(0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.check_circle_outline, color: Color(0xFF00B074), size: 16),
+                    SizedBox(width: 6),
+                    Text('Maya: 6,000 Karma + 94% Trust + 120 Deeds', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF00B074))),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Promoted to Community Leader! Meets all 4 gates (Karma ≥5k, Trust ≥90%, Deeds ≥100, Initiatives ≥3).',
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade700, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. THE "YOUR NEXT LEVEL" PROMOTION GATES VIEW
   Widget _buildPromotionGatesView(BuildContext context, UserProfile? user, bool isDark) {
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
@@ -454,13 +937,15 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Current Status & Target Card
+          // Your Next Level Summary Card
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            elevation: 3,
+            color: const Color(0xFF00B074).withOpacity(isDark ? 0.2 : 0.06),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -468,28 +953,42 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('CURRENT LEVEL', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                          const Text('YOUR NEXT LEVEL', style: TextStyle(fontSize: 10.5, color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1)),
                           const SizedBox(height: 2),
-                          Text(user.communityRole.label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(gateResult.targetRole.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF00B074))),
                         ],
                       ),
-                      const Icon(Icons.arrow_forward_rounded, color: Color(0xFF00B074)),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('TARGET LEVEL', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 2),
-                          Text(gateResult.targetRole.label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF00B074))),
-                        ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00B074),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Level ${gateResult.targetRole.levelNumber}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
+                  // Progress metrics row
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 6,
+                    children: [
+                      _buildMetricSummaryPill('⭐ Karma', gateResult.karmaDetail, gateResult.karmaPassed),
+                      _buildMetricSummaryPill('🌍 Deeds', gateResult.verificationDetail, gateResult.verificationPassed),
+                      _buildMetricSummaryPill('🛡️ Trust', gateResult.trustDetail, gateResult.trustPassed),
+                      _buildMetricSummaryPill('🌐 Diversity', gateResult.categoryDiversityDetail, gateResult.categoryDiversityPassed),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
                       value: gateResult.overallProgress,
-                      minHeight: 8,
+                      minHeight: 10,
                       backgroundColor: Colors.grey.shade200,
                       valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00B074)),
                     ),
@@ -497,7 +996,7 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
                   const SizedBox(height: 6),
                   Text(
                     'Overall Gate Readiness: ${(gateResult.overallProgress * 100).toInt()}%',
-                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.grey),
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
                   ),
                 ],
               ),
@@ -513,19 +1012,19 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
           _buildGateTile(
             gateNum: 1,
-            title: '① Contribution Gate',
-            desc: 'What have you actually done? Real-world deeds, actions, and projects.',
-            status: gateResult.contributionDetail,
-            progress: gateResult.contributionProgress,
-            passed: gateResult.contributionPassed,
+            title: '① Lifetime Karma Gate (Cumulative)',
+            desc: 'Karma is not reset on promotion (0 → 100 → 1,000 → 5,000 → 25,000 ⭐).',
+            status: gateResult.karmaDetail,
+            progress: gateResult.karmaProgress,
+            passed: gateResult.karmaPassed,
             color: const Color(0xFF00B074),
           ),
           const SizedBox(height: 10),
 
           _buildGateTile(
             gateNum: 2,
-            title: '② Verification Gate',
-            desc: 'How much is independently verified by AI & consensus peers?',
+            title: '② Verified Contributions Gate',
+            desc: 'Real-world actions verified through before/after proof & community consensus.',
             status: gateResult.verificationDetail,
             progress: gateResult.verificationProgress,
             passed: gateResult.verificationPassed,
@@ -535,8 +1034,8 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
           _buildGateTile(
             gateNum: 3,
-            title: '③ Trust Gate',
-            desc: 'How reliable is your evidence and past verification accuracy?',
+            title: '③ Mandatory Trust Gate',
+            desc: 'Evidence fidelity & zero false reporting. Trust is a non-negotiable prerequisite.',
             status: gateResult.trustDetail,
             progress: gateResult.trustProgress,
             passed: gateResult.trustPassed,
@@ -546,12 +1045,23 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
 
           _buildGateTile(
             gateNum: 4,
-            title: '④ Conduct Gate',
-            desc: 'Have you behaved responsibly toward the community without gaming or spam?',
+            title: '④ Role-Specific & Conduct Gate',
+            desc: 'Clean record (0 violations), help contributions, initiatives led, or human review.',
             status: gateResult.conductDetail,
             progress: gateResult.conductProgress,
             passed: gateResult.conductPassed,
             color: Colors.orange,
+          ),
+          const SizedBox(height: 10),
+
+          _buildGateTile(
+            gateNum: 5,
+            title: '🔥 Impact Diversity Gate',
+            desc: 'Must span cross-domain categories to prevent tiny repetitive micro-spam.',
+            status: gateResult.categoryDiversityDetail,
+            progress: gateResult.categoryDiversityProgress,
+            passed: gateResult.categoryDiversityPassed,
+            color: Colors.teal,
           ),
           const SizedBox(height: 20),
 
@@ -617,18 +1127,262 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
     );
   }
 
-  // 4. ORGANIZATION TRACK VIEW
-  Widget _buildOrganizationTrackView(BuildContext context, UserProfile? user, bool isDark) {
+  Widget _buildGateTile({
+    required int gateNum,
+    required String title,
+    required String desc,
+    required String status,
+    required double progress,
+    required bool passed,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: passed ? color.withOpacity(0.06) : Colors.grey.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: passed ? color.withOpacity(0.4) : Colors.grey.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: passed ? color : Colors.grey.shade400,
+                ),
+                child: Icon(
+                  passed ? Icons.check : Icons.lock_outline_rounded,
+                  size: 12,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: passed ? color : Colors.grey.shade700,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: (passed ? color : Colors.grey).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                    color: passed ? color : Colors.grey.shade700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            desc,
+            style: const TextStyle(fontSize: 11, color: Colors.grey, height: 1.3),
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.grey.withOpacity(0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(passed ? color : Colors.grey),
+              minHeight: 5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricSummaryPill(String title, String value, bool passed) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(passed ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded, size: 12, color: passed ? const Color(0xFF00B074) : Colors.grey),
+        const SizedBox(width: 4),
+        Text(
+          '$title: $value',
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: passed ? const Color(0xFF00B074) : Colors.grey.shade700),
+        ),
+      ],
+    );
+  }
+
+  // 4. DEMOTION RULES & TRUST LOSS CENTER
+  Widget _buildDemotionRulesView(BuildContext context, UserProfile? user, bool isDark) {
+    final demotionRisk = user != null
+        ? PromotionEngine.evaluateDemotionRisk(user)
+        : const DemotionRiskResult(isAtRisk: false, isCurrentlySuspended: false, currentTrust: 1.0, requiredTrust: 0.0, violationCount: 0);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        _buildOrgCard('🏫 School / College', 'Creates student challenges (e.g. 1,000 students → 10,000 hours), oversees student certificates, and manages campus volunteer credits.', Colors.blue),
-        const SizedBox(height: 12),
-        _buildOrgCard('🤝 NGO / Impact Organization', 'Mobilizes volunteers, verifies eligible problem solutions, manages wish fulfillment pipelines, and exports audit-ready impact reports.', Colors.purple),
-        const SizedBox(height: 12),
-        _buildOrgCard('🏢 Company & CSR Partner', 'Drives employee volunteering, funds corporate-sponsored challenges (e.g. Clean India), and accesses audit-ready ESG/BRSR compliance reports.', const Color(0xFF00B074)),
-        const SizedBox(height: 12),
-        _buildOrgCard('🏛️ Civic Authority & City Department', 'Receives verified geotagged problem reports (potholes, garbage, broken infrastructure) and approves municipal repairs.', Colors.orange),
+        // Demotion Banner
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.redAccent.withOpacity(isDark ? 0.2 : 0.08),
+            border: Border.all(color: Colors.redAccent.withOpacity(0.35)),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    '🛡️ Status Isn\'t Permanent: Demotion Rules',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.redAccent),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              Text(
+                'The system works downward as well as upward. Earned responsibility can be lost if trust is lost.',
+                style: TextStyle(fontSize: 11.5, height: 1.3),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Live User Demotion Risk Status
+        if (demotionRisk.isCurrentlySuspended) ...[
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            color: Colors.redAccent.withOpacity(0.12),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    backgroundColor: Colors.redAccent,
+                    child: Icon(Icons.block_rounded, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '⚠️ RESPONSIBILITY PRIVILEGES SUSPENDED',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Colors.redAccent),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          demotionRisk.warningMessage ?? 'Your privileges are currently paused.',
+                          style: const TextStyle(fontSize: 11, color: Colors.black87),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ] else ...[
+          Card(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            color: const Color(0xFF00B074).withOpacity(0.08),
+            child: const Padding(
+              padding: EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Color(0xFF00B074),
+                    child: Icon(Icons.verified_user_rounded, color: Colors.white, size: 20),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '✅ Account In Good Standing',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF00B074)),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Zero conduct violations and trust score meets or exceeds current responsibility tier.',
+                          style: TextStyle(fontSize: 10.5, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Demotion Rules Table Card
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '📋 DEMOTION & PENALTY MATRIX',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 1),
+                ),
+                const SizedBox(height: 10),
+                _buildDemotionRow('Trust falls below required threshold', 'Promotion locked & responsibilities suspended', Colors.orange),
+                const Divider(height: 16),
+                _buildDemotionRow('Repeated false claims / blurry photos', 'Trust score reduction (–5% to –20%)', Colors.orange),
+                const Divider(height: 16),
+                _buildDemotionRow('Serious fraud / duplicate photo sybil attack', 'Immediate suspension & Trust Center investigation', Colors.redAccent),
+                const Divider(height: 16),
+                _buildDemotionRow('Proven manipulation / fake witnesses', 'Karma reversal + Trust reset + penalty log', Colors.redAccent),
+                const Divider(height: 16),
+                _buildDemotionRow('Abuse of leadership / peer verification', 'Permanent loss of leadership & verification privileges', Colors.red.shade900),
+                const Divider(height: 16),
+                _buildDemotionRow('Account suspension', 'All status suspended across network', Colors.red.shade900),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDemotionRow(String event, String consequence, Color color) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.remove_circle_outline_rounded, size: 14, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 2,
+          child: Text(event, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11.5)),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 3,
+          child: Text(consequence, style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+        ),
       ],
     );
   }
@@ -667,368 +1421,6 @@ class _RoleHierarchyScreenState extends State<RoleHierarchyScreen> with SingleTi
         const SizedBox(height: 10),
         _buildGovCard('👑 Super Admin / Platform Governance', 'Oversees platform configuration, verification policy, dispute resolution, and immutable cryptographic audit trails.', Colors.amber.shade800),
       ],
-    );
-  }
-
-  // HELPER WIDGETS
-  Widget _buildTrinityBanner(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF00B074).withOpacity(isDark ? 0.25 : 0.12),
-            Colors.blue.withOpacity(isDark ? 0.15 : 0.05),
-          ],
-        ),
-        border: Border.all(color: const Color(0xFF00B074).withOpacity(0.35)),
-      ),
-      child: const Column(
-        children: [
-          Text(
-            '🌟 The Core Trinity Principle',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF00B074)),
-          ),
-          SizedBox(height: 8),
-          Text(
-            '• Karma shows what you\'ve contributed.\n• Trust shows how reliably you\'ve contributed.\n• Status shows what responsibility you\'ve earned.',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, height: 1.4),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoleStep({
-    required String role,
-    required String subtitle,
-    required String desc,
-    required List<String> responsibilities,
-    required String requirements,
-    required String reviewType,
-    required bool isCurrent,
-    required Color color,
-  }) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: isCurrent ? BorderSide(color: color, width: 2) : BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(role, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: isCurrent ? color : null)),
-                      Text(subtitle, style: const TextStyle(fontSize: 10.5, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isCurrent ? color : color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    isCurrent ? 'Your Current Role' : 'Level',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: isCurrent ? Colors.white : color,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(desc, style: const TextStyle(fontSize: 11.5, height: 1.3)),
-            const SizedBox(height: 10),
-
-            // Responsibilities
-            const Text('RESPONSIBILITIES:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey)),
-            const SizedBox(height: 4),
-            ...responsibilities.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 3.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.check_circle_rounded, size: 12, color: color),
-                      const SizedBox(width: 6),
-                      Expanded(child: Text(r, style: const TextStyle(fontSize: 10.5))),
-                    ],
-                  ),
-                )),
-            const SizedBox(height: 8),
-
-            // Promotion criteria footer
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.shield_outlined, size: 14, color: color),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Requirements: $requirements ($reviewType)',
-                      style: TextStyle(fontSize: 9.5, color: color, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuadrantBox({
-    required String title,
-    required String subtitle,
-    required String verdict,
-    required Color color,
-    required bool isDark,
-    required bool isUserHere,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isUserHere ? color.withOpacity(isDark ? 0.3 : 0.15) : color.withOpacity(isDark ? 0.12 : 0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isUserHere ? color : color.withOpacity(0.3), width: isUserHere ? 2 : 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: color))),
-              if (isUserHere)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
-                  child: const Text('YOU', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.bold)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 9.5, color: Colors.grey)),
-          const SizedBox(height: 8),
-          Text(verdict, style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: color)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGateTile({
-    required int gateNum,
-    required String title,
-    required String desc,
-    required String status,
-    required double progress,
-    required bool passed,
-    required Color color,
-  }) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: passed ? color.withOpacity(0.5) : Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: passed ? color : Colors.grey.shade300,
-                  child: Icon(passed ? Icons.check : Icons.hourglass_empty_rounded, size: 14, color: Colors.white),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: passed ? color : null)),
-                ),
-                Text(status, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: passed ? color : Colors.grey)),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(desc, style: const TextStyle(fontSize: 10.5, color: Colors.grey)),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress,
-                minHeight: 5,
-                backgroundColor: Colors.grey.shade200,
-                valueColor: AlwaysStoppedAnimation<Color>(passed ? color : Colors.grey),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAntiGamingCharter(bool isDark) {
-    final rules = [
-      'Having money, wealth, or high donations',
-      'Having high follower counts or social media fame',
-      'Purchasing PoG crypto tokens or premium tiers',
-      'Friend networks / collusion (Conflict-of-Interest Firewall)',
-      'Spamming low-value actions or repetitive problem reports',
-      'Accumulating Karma through gaming the automated verification score',
-    ];
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.redAccent.withOpacity(isDark ? 0.15 : 0.05),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.block_flipped, color: Colors.redAccent, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  '🚫 What NEVER Qualifies for Promotion',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: Colors.redAccent),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'To protect the integrity of the platform, the following never grant responsibility:',
-              style: TextStyle(fontSize: 10.5, color: Colors.grey),
-            ),
-            const SizedBox(height: 10),
-            ...rules.map((rule) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('✕ ', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 11)),
-                      Expanded(child: Text(rule, style: const TextStyle(fontSize: 10.5))),
-                    ],
-                  ),
-                )),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProfileComparisonCard(bool isDark) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '🌍 REAL COMMUNITY PROFILE COMPARISON',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.grey, letterSpacing: 1),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSampleUser(
-                    name: 'Aarav',
-                    karma: '18,420',
-                    impact: '1,240',
-                    trust: '96%',
-                    role: 'Community Leader 🤝',
-                    ripple: '3,800 reached',
-                    color: Colors.purple,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildSampleUser(
-                    name: 'Maya',
-                    karma: '4,200',
-                    impact: '680',
-                    trust: '99%',
-                    role: 'Trusted Contributor 🛡️',
-                    ripple: '1,420 reached',
-                    color: Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Maya isn\'t "less important" because she has less Karma than Aarav. She simply has a different, well-earned level of responsibility.',
-              style: TextStyle(fontSize: 10.5, fontStyle: FontStyle.italic, color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSampleUser({
-    required String name,
-    required String karma,
-    required String impact,
-    required String trust,
-    required String role,
-    required String ripple,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
-          const SizedBox(height: 4),
-          Text('⭐ Karma: $karma', style: const TextStyle(fontSize: 10)),
-          Text('🌍 Impact: $impact', style: const TextStyle(fontSize: 10)),
-          Text('🛡️ Trust: $trust', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
-          Text('🏅 Role: $role', style: TextStyle(fontSize: 9.5, color: color, fontWeight: FontWeight.bold)),
-          Text('🌊 Ripple: $ripple', style: const TextStyle(fontSize: 9.5, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrgCard(String title, String desc, Color color) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
-            const SizedBox(height: 6),
-            Text(desc, style: const TextStyle(fontSize: 11, color: Colors.grey, height: 1.3)),
-          ],
-        ),
-      ),
     );
   }
 
