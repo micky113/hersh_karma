@@ -32,6 +32,69 @@ class AdminShell extends StatefulWidget {
 class _AdminShellState extends State<AdminShell> {
   int _selectedTabIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isUnlocked = false;
+
+  void _showPasscodeDialog(BuildContext context) {
+    final passController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF00B074)),
+            SizedBox(width: 8),
+            Text('Admin Passcode', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter administrator access code (e.g. 1234, admin, karma):',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: passController,
+              obscureText: true,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Passcode (e.g. 1234)',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00B074),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              final val = passController.text.trim().toLowerCase();
+              if (val == '1234' || val == 'admin' || val == 'karma') {
+                Navigator.pop(ctx);
+                setState(() => _isUnlocked = true);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Invalid passcode. Use 1234, admin, or karma.'), backgroundColor: Colors.red),
+                );
+              }
+            },
+            child: const Text('Unlock'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,12 +106,12 @@ class _AdminShellState extends State<AdminShell> {
     final auth = Provider.of<AuthProvider>(context);
     final user = auth.currentUser;
 
-    final isAdmin = user != null &&
+    final isAdmin = _isUnlocked || (user != null &&
         (user.role == UserRole.ngo ||
             user.role == UserRole.institution ||
             user.role == UserRole.government ||
             user.email == 'governance@karma.org' ||
-            user.email.contains('admin'));
+            user.email.contains('admin')));
 
     if (!auth.isAuthenticated || user == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,32 +124,72 @@ class _AdminShellState extends State<AdminShell> {
 
     if (!isAdmin) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Access Restricted')),
+        appBar: AppBar(title: const Text('Admin & Trust Center')),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.shield_outlined, size: 64, color: Colors.orange),
-                const SizedBox(height: 16),
-                const Text(
-                  'Admin Authorization Required',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.shield_outlined, size: 60, color: Color(0xFF00B074)),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Admin Authorization Required',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Logged in as ${user.email} (${user.role.label}).\nTo access the Trust & Governance Center, enter the admin passcode or switch to an authorized organization account.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.key_rounded, size: 18),
+                          label: const Text('Unlock with Passcode (1234)', style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00B074),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () => _showPasscodeDialog(context),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                          label: const Text('Switch to Admin (Jane NGO)'),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          onPressed: () async {
+                            await auth.login('jane@karma.com', 'password123');
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextButton.icon(
+                        icon: const Icon(Icons.arrow_back_rounded, size: 16),
+                        label: const Text('Return to Home'),
+                        onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Your account does not have verified administrative or governance authority to view the Trust Center.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.arrow_back_rounded),
-                  label: const Text('Return to Home'),
-                  onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.home),
-                ),
-              ],
+              ),
             ),
           ),
         ),
