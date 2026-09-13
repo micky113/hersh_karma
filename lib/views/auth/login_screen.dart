@@ -544,7 +544,46 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 14),
+
+                          // QUICK 1-TAP DEMO & ADMIN LOGINS
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00B074).withOpacity(isDark ? 0.12 : 0.06),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF00B074).withOpacity(0.2)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Text('⚡ ', style: TextStyle(fontSize: 14)),
+                                    Expanded(
+                                      child: Text(
+                                        'Quick Demo & Admin 1-Tap Logins:',
+                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: [
+                                    _buildQuickLoginChip('👑 Super Admin', 'governance@karma.org', 'password123'),
+                                    _buildQuickLoginChip('🤝 Jane (NGO)', 'jane@karma.com', 'password123'),
+                                    _buildQuickLoginChip('🏫 Apex School', 'school@karma.com', 'password123'),
+                                    _buildQuickLoginChip('🏢 CSR TechCorp', 'corp@karma.com', 'password123'),
+                                    _buildQuickLoginChip('👤 John Doe', 'john@karma.com', 'password123'),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
 
                           // TOGGLE LOGIN / SIGN UP
                           Wrap(
@@ -607,6 +646,23 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickLoginChip(String label, String email, String password) {
+    return ActionChip(
+      visualDensity: VisualDensity.compact,
+      label: Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+      backgroundColor: Colors.white.withOpacity(0.9),
+      side: BorderSide(color: const Color(0xFF00B074).withOpacity(0.35)),
+      onPressed: () {
+        setState(() {
+          _isSignUp = false;
+          _emailController.text = email;
+          _passwordController.text = password;
+        });
+        _submit();
+      },
     );
   }
 }

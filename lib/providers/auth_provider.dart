@@ -29,9 +29,7 @@ class AuthProvider extends ChangeNotifier {
 
   void _listenToAuthChanges() {
     _authSubscription = _authRepository.authStateChanges.listen((user) {
-      if (user != null) {
-        _currentUser = user;
-      }
+      _currentUser = user;
       _isLoading = false;
       notifyListeners();
     });
