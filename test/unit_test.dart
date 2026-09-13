@@ -17,6 +17,7 @@ import 'package:hersh_karma/providers/governance_provider.dart';
 import 'package:hersh_karma/services/mock/mock_auth_service.dart';
 import 'package:hersh_karma/services/mock/mock_karma_service.dart';
 import 'package:hersh_karma/services/mock/mock_wallet_service.dart';
+import 'package:hersh_karma/models/promotion/promotion_engine.dart';
 import 'package:hersh_karma/core/localization/app_localizations.dart';
 
 void main() {
@@ -1133,7 +1134,7 @@ void main() {
   });
 
   group('Proof of Good - Role-Based Hierarchy & Governance Dimensions Tests', () {
-    test('Should assign CommunityRole.member for new user with zero verified deeds', () {
+    test('Should assign CommunityRole.newMember (Level 1) for new user with zero verified deeds', () {
       final user = UserProfile(
         id: 'u-1',
         name: 'New Member',
@@ -1141,12 +1142,13 @@ void main() {
         verifiedSubmissions: 0,
         trustScore: 1.0,
       );
-      expect(user.communityRole, equals(CommunityRole.member));
+      expect(user.communityRole, equals(CommunityRole.newMember));
+      expect(user.communityRole.levelNumber, equals(1));
       expect(user.canVerifyPeerDeeds, isFalse);
       expect(user.canCoordinateCommunityProjects, isFalse);
     });
 
-    test('Should assign CommunityRole.contributor once user has at least 1 verified submission', () {
+    test('Should assign CommunityRole.contributor (Level 2) once user has at least 1 verified submission', () {
       final user = UserProfile(
         id: 'u-2',
         name: 'Active Contributor',
@@ -1155,10 +1157,11 @@ void main() {
         trustScore: 0.80,
       );
       expect(user.communityRole, equals(CommunityRole.contributor));
+      expect(user.communityRole.levelNumber, equals(2));
       expect(user.canVerifyPeerDeeds, isFalse);
     });
 
-    test('Should elevate to CommunityRole.trustedContributor when >= 5 verified deeds and >= 85% trust score', () {
+    test('Should elevate to CommunityRole.trustedContributor (Level 3) when >= 5 verified deeds and >= 85% trust score', () {
       final user = UserProfile(
         id: 'u-3',
         name: 'Trusted Contributor',
@@ -1167,10 +1170,11 @@ void main() {
         trustScore: 0.85,
       );
       expect(user.communityRole, equals(CommunityRole.trustedContributor));
+      expect(user.communityRole.levelNumber, equals(3));
       expect(user.canVerifyPeerDeeds, isTrue);
     });
 
-    test('Should assign CommunityRole.communityLeader for community group user with project coordination rights', () {
+    test('Should assign CommunityRole.communityLeader (Level 4) for community group user with project coordination rights', () {
       final leader = UserProfile(
         id: 'u-4',
         name: 'Green Delhi Lead',
@@ -1178,6 +1182,7 @@ void main() {
         role: UserRole.communityGroup,
       );
       expect(leader.communityRole, equals(CommunityRole.communityLeader));
+      expect(leader.communityRole.levelNumber, equals(4));
       expect(leader.canVerifyPeerDeeds, isTrue);
       expect(leader.canCoordinateCommunityProjects, isTrue);
       expect(leader.canManageChallenges, isTrue);
@@ -1194,6 +1199,150 @@ void main() {
       expect(ngoUser.canVerifyPeerDeeds, isTrue);
       expect(ngoUser.canCoordinateCommunityProjects, isTrue);
       expect(ngoUser.canManageChallenges, isTrue);
+    });
+  });
+
+  group('Proof of Good - 5-Tier Earned Progression & 2D Matrix (Karma vs Trust) Tests', () {
+    test('All 5 community levels should have explicit level numbers, titles, and review types', () {
+      expect(CommunityRole.newMember.levelNumber, equals(1));
+      expect(CommunityRole.newMember.title, equals('New Member'));
+      expect(CommunityRole.newMember.reviewType, equals('None (Automatic)'));
+
+      expect(CommunityRole.contributor.levelNumber, equals(2));
+      expect(CommunityRole.contributor.title, equals('Contributor'));
+      expect(CommunityRole.contributor.reviewType, equals('Automated Contribution & Verification Screening'));
+
+      expect(CommunityRole.trustedContributor.levelNumber, equals(3));
+      expect(CommunityRole.trustedContributor.title, equals('Trusted Contributor'));
+      expect(CommunityRole.trustedContributor.reviewType, equals('Automated Trust & Evidence Screening'));
+
+      expect(CommunityRole.communityLeader.levelNumber, equals(4));
+      expect(CommunityRole.communityLeader.title, equals('Community Leader'));
+      expect(CommunityRole.communityLeader.reviewType, equals('Portfolio & Peer Community Review'));
+
+      expect(CommunityRole.karmaAmbassador.levelNumber, equals(5));
+      expect(CommunityRole.karmaAmbassador.title, equals('Karma Ambassador'));
+      expect(CommunityRole.karmaAmbassador.reviewType, equals('Human Governance Board Review (Trust Center)'));
+    });
+
+    test('2D Matrix: High Karma + Low Trust should be blocked from responsibility promotion', () {
+      // Aarav: 15,000 Karma but 52% Trust due to repeated blurry/unverified photos
+      final aarav = UserProfile(
+        id: 'aarav-1',
+        name: 'Aarav Patel',
+        email: 'aarav@karma.org',
+        karmaCredits: 15000,
+        verifiedSubmissions: 50,
+        trustScore: 0.52,
+        evidenceAccuracyRate: 0.52,
+      );
+
+      final quadrant = PromotionEngine.evaluateQuadrant(aarav);
+      expect(quadrant, equals(KarmaTrustQuadrant.highKarmaLowTrust));
+      expect(quadrant.isPromotionEligible, isFalse);
+    });
+
+    test('2D Matrix: Low Karma + High Trust should be eligible for progressive responsibility', () {
+      // Maya: 350 Karma with 98% Trust score and pristine evidence
+      final maya = UserProfile(
+        id: 'maya-1',
+        name: 'Maya Sen',
+        email: 'maya@karma.org',
+        karmaCredits: 350,
+        verifiedSubmissions: 8,
+        trustScore: 0.98,
+        evidenceAccuracyRate: 0.98,
+      );
+
+      final quadrant = PromotionEngine.evaluateQuadrant(maya);
+      expect(quadrant, equals(KarmaTrustQuadrant.lowKarmaHighTrust));
+      expect(quadrant.isPromotionEligible, isTrue);
+    });
+
+    test('2D Matrix: High Karma + High Trust represents Pillar of Impact', () {
+      final pillar = UserProfile(
+        id: 'pillar-1',
+        name: 'Pillar User',
+        email: 'pillar@karma.org',
+        karmaCredits: 5000,
+        verifiedSubmissions: 45,
+        trustScore: 0.96,
+        evidenceAccuracyRate: 0.96,
+      );
+
+      final quadrant = PromotionEngine.evaluateQuadrant(pillar);
+      expect(quadrant, equals(KarmaTrustQuadrant.highKarmaHighTrust));
+      expect(quadrant.isPromotionEligible, isTrue);
+    });
+
+    test('4-Gate Evaluation: New Member progressing to Contributor', () {
+      // User with 5 submissions, 1 verified deed, 85% trust, 0 conduct violations
+      final candidate = UserProfile(
+        id: 'cand-1',
+        name: 'Ready Contributor',
+        email: 'cand@karma.org',
+        explicitCommunityRole: CommunityRole.newMember,
+        totalSubmissions: 5,
+        verifiedSubmissions: 1,
+        trustScore: 0.85,
+        conductViolationsCount: 0,
+      );
+
+      final gateResult = PromotionEngine.evaluateNextLevelGates(candidate);
+      expect(gateResult.contributionPassed, isTrue);
+      expect(gateResult.verificationPassed, isTrue);
+      expect(gateResult.trustPassed, isTrue);
+      expect(gateResult.conductPassed, isTrue);
+      expect(gateResult.isEligibleForNextLevel, isTrue);
+      expect(gateResult.targetRole, equals(CommunityRole.contributor));
+    });
+
+    test('4-Gate Evaluation: Conduct violation blocks promotion at conduct gate', () {
+      final abusiveUser = UserProfile(
+        id: 'cand-bad',
+        name: 'Abusive Contributor',
+        email: 'bad@karma.org',
+        explicitCommunityRole: CommunityRole.newMember,
+        totalSubmissions: 10,
+        verifiedSubmissions: 5,
+        trustScore: 0.90,
+        conductViolationsCount: 2, // 2 violations
+      );
+
+      final gateResult = PromotionEngine.evaluateNextLevelGates(abusiveUser);
+      expect(gateResult.contributionPassed, isTrue);
+      expect(gateResult.conductPassed, isFalse);
+      expect(gateResult.isEligibleForNextLevel, isFalse);
+    });
+
+    test('4-Gate Evaluation: Karma Ambassador requires Governance Board approval', () {
+      final leaderNominee = UserProfile(
+        id: 'leader-1',
+        name: 'Leader Nominee',
+        email: 'nominee@karma.org',
+        explicitCommunityRole: CommunityRole.communityLeader,
+        verifiedSubmissions: 80,
+        karmaCredits: 6000,
+        karmaRipplesCount: 15,
+        peopleReached: 1200,
+        trustScore: 0.96,
+        conductViolationsCount: 0,
+        isAmbassadorNominated: true,
+        isAmbassadorApproved: false, // Not yet approved by human board
+      );
+
+      final unapprovedResult = PromotionEngine.evaluateNextLevelGates(leaderNominee);
+      expect(unapprovedResult.contributionPassed, isTrue);
+      expect(unapprovedResult.verificationPassed, isTrue);
+      expect(unapprovedResult.trustPassed, isTrue);
+      expect(unapprovedResult.conductPassed, isFalse); // awaits human approval
+      expect(unapprovedResult.isEligibleForNextLevel, isFalse);
+
+      final approvedLeader = leaderNominee.copyWith(isAmbassadorApproved: true);
+      final approvedResult = PromotionEngine.evaluateNextLevelGates(approvedLeader);
+      expect(approvedResult.conductPassed, isTrue);
+      expect(approvedResult.isEligibleForNextLevel, isTrue);
+      expect(approvedResult.targetRole, equals(CommunityRole.karmaAmbassador));
     });
   });
 }

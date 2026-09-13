@@ -256,16 +256,19 @@ class _MeScreenState extends State<MeScreen> with SingleTickerProviderStateMixin
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: Colors.purple.withOpacity(0.04),
       child: ListTile(
-        leading: const CircleAvatar(
+        leading: CircleAvatar(
           backgroundColor: Colors.purple,
-          child: Icon(Icons.account_tree_rounded, color: Colors.white),
+          child: Text(
+            'L${user.communityRole.levelNumber}',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+          ),
         ),
-        title: const Text(
-          '👑 Role & Governance Hierarchy',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        title: Text(
+          '👑 Level ${user.communityRole.levelNumber}: ${user.communityRole.title}',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         subtitle: Text(
-          'Role-based authority • Karma vs Trust vs Authority • Platform Governance',
+          '${user.communityRole.tagline} • 4 Promotion Gates & 2D Matrix',
           style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
         ),
         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.purple),

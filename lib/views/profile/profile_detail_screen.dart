@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/karma_provider.dart';
 import '../../models/user_profile.dart';
 import '../../models/karma_action.dart';
+import '../../models/promotion/promotion_engine.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/localization/app_localizations.dart';
 
@@ -188,7 +189,7 @@ class ProfileDetailScreen extends StatelessWidget {
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text('Explore Roles ➔', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.purple)),
+                          child: const Text('Promotion Gates ➔', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.purple)),
                         ),
                       ],
                     ),
@@ -204,8 +205,28 @@ class ProfileDetailScreen extends StatelessWidget {
                       children: [
                         _buildDimensionChip('⭐ Karma', '${user.karmaCredits} Credits', const Color(0xFF00B074)),
                         _buildDimensionChip('🛡️ Trust', '${(user.trustScore * 100).toInt()}% Reliability', Colors.purple),
-                        _buildDimensionChip('👑 Role', user.communityRole.label, Colors.blue),
+                        _buildDimensionChip('👑 Level ${user.communityRole.levelNumber}', user.communityRole.title, Colors.blue),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.grid_view_rounded, size: 14, color: Colors.purple),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '2D Matrix: ${PromotionEngine.evaluateQuadrant(user).label}',
+                              style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.purple),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

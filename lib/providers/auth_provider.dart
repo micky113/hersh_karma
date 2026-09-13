@@ -175,6 +175,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateUserProfile(UserProfile updatedProfile) async {
+    await updateLocalUserProfile(updatedProfile);
+  }
+
   Future<void> addCredits(int creditsToAdd, {bool isVerified = false}) async {
     if (_currentUser == null) return;
     final updated = _currentUser!.copyWith(
