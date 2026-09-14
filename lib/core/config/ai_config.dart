@@ -18,12 +18,19 @@ class AiConfig {
     }
   }
 
+  // Deployed GCP Vertex AI Cloud Function proxy endpoint
+  static const String defaultVertexAiProxyUrl = 'https://analyzeproofofgood-q2sdanz2aq-uc.a.run.app';
+
   static const String defaultModel = 'gemini-flash-latest';
 
+  static String _cachedVertexAiProxyUrl = defaultVertexAiProxyUrl;
   static String _cachedApiKey = '';
   static String _cachedModel = defaultModel;
   static bool _cachedAutoAiEnabled = true;
   static bool _isInitialized = false;
+
+  /// Deployed Google Cloud Vertex AI proxy endpoint
+  static String get vertexAiProxyUrl => _cachedVertexAiProxyUrl;
 
   /// Initializes AI config from SharedPreferences or environment
   static Future<void> initialize() async {

@@ -154,7 +154,48 @@ class GeminiVerificationResult {
 class GeminiVisionService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-  /// Performs a detailed diagnostic test on the provided Gemini API key
+  /// Tests the live GCP Vertex AI backend connectivity
+  static Future<Map<String, dynamic>> testVertexBackend() async {
+    try {
+      final proxyUrl = Uri.parse(AiConfig.vertexAiProxyUrl);
+      final dummyPng = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      );
+      final body = jsonEncode({
+        'beforeImage': base64Encode(dummyPng),
+        'afterImage': base64Encode(dummyPng),
+        'deedTitle': 'Connectivity Test',
+        'category': 'Diagnostics',
+      });
+      final response = await http.post(
+        proxyUrl,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      ).timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': '✅ Connected! Google Cloud Vertex AI (gemini-2.5-flash) is live.',
+          'statusCode': 200,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': '⚠️ Vertex AI returned status ${response.statusCode}',
+          'statusCode': response.statusCode,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': '⚠️ Connection error: $e',
+        'statusCode': 0,
+      };
+    }
+  }
+
+  /// Performs a detailed diagnostic test on the provided Gemini API key or GCP Vertex AI backend
   static Future<Map<String, dynamic>> testApiKeyDetailed(String apiKey) async {
     final key = apiKey.trim().replaceAll('"', '').replaceAll("'", "");
     if (key.isEmpty) {
@@ -282,10 +323,58 @@ class GeminiVisionService {
       }
     }
 
+    // 2. Guard for null images or disabled AI
+    if (beforeImageBytes == null || afterImageBytes == null || !AiConfig.isAutoAiEnabled) {
+      return _generateSmartFallback(
+        beforeImageBytes: beforeImageBytes,
+        afterImageBytes: afterImageBytes,
+        deedTitle: deedTitle,
+        category: category,
+        latitude: latitude,
+        longitude: longitude,
+        capturedInApp: capturedInApp,
+      );
+    }
+
+    // 3. Call GCP Vertex AI Cloud Function Backend (Primary)
+    if (AiConfig.vertexAiProxyUrl.isNotEmpty) {
+      try {
+        final base64Before = base64Encode(beforeImageBytes);
+        final base64After = base64Encode(afterImageBytes);
+
+        final proxyUrl = Uri.parse(AiConfig.vertexAiProxyUrl);
+        final proxyBody = jsonEncode({
+          'beforeImage': base64Before,
+          'afterImage': base64After,
+          'deedTitle': deedTitle,
+          'category': category,
+          'description': description ?? '',
+          'latitude': latitude,
+          'longitude': longitude,
+        });
+
+        final proxyResponse = await http.post(
+          proxyUrl,
+          headers: {'Content-Type': 'application/json'},
+          body: proxyBody,
+        ).timeout(const Duration(seconds: 25));
+
+        if (proxyResponse.statusCode == 200) {
+          final decoded = jsonDecode(proxyResponse.body) as Map<String, dynamic>;
+          if (decoded['success'] == true && decoded['result'] != null) {
+            final resultJson = decoded['result'] as Map<String, dynamic>;
+            return GeminiVerificationResult.fromJson(resultJson, isLive: true);
+          }
+        }
+      } catch (_) {
+        // Continue to direct API or local fallback
+      }
+    }
+
     final apiKey = AiConfig.apiKey;
 
-    // Fallback if no images or auto AI disabled or no key
-    if (beforeImageBytes == null || afterImageBytes == null || !AiConfig.isAutoAiEnabled || apiKey.isEmpty) {
+    // Fallback if no direct key
+    if (apiKey.isEmpty) {
       return _generateSmartFallback(
         beforeImageBytes: beforeImageBytes,
         afterImageBytes: afterImageBytes,
