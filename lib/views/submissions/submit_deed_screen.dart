@@ -615,38 +615,54 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
           : (score >= 70 ? '🛡️ PENDING VALIDATORS (3 Consensus Votes Needed)' : '⚠️ LOW CONFIDENCE EVIDENCE');
 
       return Container(
-        margin: const EdgeInsets.only(top: 10, bottom: 6),
+        margin: const EdgeInsets.only(top: 12, bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: scoreColor.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: scoreColor.withOpacity(0.4), width: 1.5),
+          color: scoreColor.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: scoreColor.withOpacity(0.35), width: 1.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.auto_awesome, color: scoreColor, size: 18),
-                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: scoreColor.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.auto_awesome, color: scoreColor, size: 16),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    isLive ? '✨ Gemini Multimodal Vision Verified' : '🛡️ Proof-of-Good Engine Verified',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: scoreColor),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isLive ? '✨ Gemini Multimodal Vision AI' : '🛡️ Proof-of-Good Engine Analysis',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: scoreColor),
+                      ),
+                      Text(
+                        routingText,
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: scoreColor),
+                      ),
+                    ],
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: scoreColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(6),
+                    color: scoreColor,
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$score / 100',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: scoreColor),
+                    'Score: $score/100',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white),
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.refresh_rounded, size: 18, color: Colors.grey),
                   tooltip: 'Re-analyze with Gemini Vision',
@@ -656,31 +672,138 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              routingText,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: scoreColor),
+            const Divider(height: 18, thickness: 0.8),
+            // AI Detection Brief Header
+            Row(
+              children: const [
+                Icon(Icons.psychology_outlined, size: 16, color: Color(0xFF5E35B1)),
+                SizedBox(width: 6),
+                Text(
+                  'AI Detection Brief',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF311B92)),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
-            Text(
-              '• Transformation: ${res.changeSummary}',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.90),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    res.changeSummary,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2D3748), height: 1.3),
+                  ),
+                  if (res.measurableBefore.isNotEmpty || res.measurableAfter.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '📸 Before: ${res.measurableBefore}',
+                              style: TextStyle(fontSize: 10.5, color: Colors.red.shade900, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00B074).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '✨ After: ${res.measurableAfter}',
+                              style: const TextStyle(fontSize: 10.5, color: Color(0xFF007A50), fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (res.reasoning.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      '🔍 ${res.reasoning}',
+                      style: TextStyle(fontSize: 10.5, fontStyle: FontStyle.italic, color: Colors.grey.shade700),
+                    ),
+                  ],
+                ],
+              ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 8),
+            // Badges for Scene Match and Anti-Tamper Authenticity
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    '• Scene Match: ${(res.sceneMatchConfidence * 100).toInt()}% Alignment',
-                    style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.blue.withOpacity(0.25)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.compare_arrows_rounded, size: 13, color: Colors.blue),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Scene Match: ${(res.sceneMatchConfidence * 100).toInt()}%',
+                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.blue),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                Text(
-                  res.isTampered ? '❌ Suspected Digital Copy' : '✅ Verified Authentic Capture',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: res.isTampered ? Colors.red : const Color(0xFF00B074),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: res.isTampered ? Colors.red.withOpacity(0.08) : const Color(0xFF00B074).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: (res.isTampered ? Colors.red : const Color(0xFF00B074)).withOpacity(0.25)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          res.isTampered ? Icons.warning_amber_rounded : Icons.verified_user_rounded,
+                          size: 13,
+                          color: res.isTampered ? Colors.red : const Color(0xFF00B074),
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            res.isTampered ? 'Tampering Flagged' : 'Authentic Media',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: res.isTampered ? Colors.red : const Color(0xFF00B074),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
