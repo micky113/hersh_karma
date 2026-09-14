@@ -11,6 +11,8 @@ import '../../models/karma_category.dart';
 import '../../models/karma_activity.dart';
 import '../../data/karma_grid_presets.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../services/gemini_vision_service.dart';
+import '../../core/config/ai_config.dart';
 
 class SubmitDeedScreen extends StatefulWidget {
   const SubmitDeedScreen({super.key});
@@ -64,6 +66,10 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
   int? _beforeImageBytesCount;
   int? _afterImageBytesCount;
   bool _isCompressing = false;
+
+  // Real-time Gemini Multimodal AI Verification Fields
+  bool _isAnalyzingWithGemini = false;
+  GeminiVerificationResult? _geminiAnalysisResult;
 
   @override
   void dispose() {
@@ -285,6 +291,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
               duration: const Duration(seconds: 2),
             ),
           );
+          _checkAndRunAiAnalysis();
         }
       }
     } catch (e) {
@@ -305,6 +312,53 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
     }
   }
 
+  void _checkAndRunAiAnalysis() {
+    final bool hasBefore = _beforeImageBytes != null || (_beforeImageUrl != null && _beforeImageUrl!.isNotEmpty);
+    final bool hasAfter = _afterImageBytes != null || (_mockImagePath != null && _mockImagePath!.isNotEmpty);
+    if (hasBefore && hasAfter) {
+      _runGeminiMultimodalAnalysis();
+    }
+  }
+
+  Future<void> _runGeminiMultimodalAnalysis() async {
+    final bool hasBefore = _beforeImageBytes != null || (_beforeImageUrl != null && _beforeImageUrl!.isNotEmpty);
+    final bool hasAfter = _afterImageBytes != null || (_mockImagePath != null && _mockImagePath!.isNotEmpty);
+
+    if (!hasBefore || !hasAfter) return;
+
+    setState(() {
+      _isAnalyzingWithGemini = true;
+    });
+
+    try {
+      final result = await GeminiVisionService.analyzeEvidence(
+        beforeImageBytes: _beforeImageBytes,
+        afterImageBytes: _afterImageBytes,
+        deedTitle: _titleController.text.trim().isNotEmpty ? _titleController.text.trim() : 'Community Impact Deed',
+        category: _selectedCategory.name,
+        description: _descController.text.trim().isNotEmpty ? _descController.text.trim() : null,
+        latitude: _latitude,
+        longitude: _longitude,
+        capturedInApp: _capturedInApp,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isAnalyzingWithGemini = false;
+          _geminiAnalysisResult = result;
+          _evidenceScore = result.evidenceScore;
+          _sceneMatchConfidence = result.sceneMatchConfidence;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isAnalyzingWithGemini = false;
+        });
+      }
+    }
+  }
+
   void _removePhoto(bool isBefore) {
     setState(() {
       if (isBefore) {
@@ -318,6 +372,9 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
         _afterImageBytesCount = null;
         _mockImagePath = null;
       }
+      _geminiAnalysisResult = null;
+      _evidenceScore = 0;
+      _sceneMatchConfidence = null;
     });
   }
 
@@ -334,6 +391,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
         backgroundColor: Color(0xFF00B074),
       ),
     );
+    _checkAndRunAiAnalysis();
   }
 
   void _simulateAfterPhotoPick() {
@@ -348,6 +406,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
         backgroundColor: Color(0xFF00B074),
       ),
     );
+    _checkAndRunAiAnalysis();
   }
 
   // Fetch or simulate GPS location
@@ -498,6 +557,173 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildRealtimeGeminiAnalysisCard(ThemeData theme) {
+    final bool hasBefore = _beforeImageBytes != null || (_beforeImageUrl != null && _beforeImageUrl!.isNotEmpty);
+    final bool hasAfter = _afterImageBytes != null || (_mockImagePath != null && _mockImagePath!.isNotEmpty);
+
+    if (_isAnalyzingWithGemini) {
+      return Container(
+        margin: const EdgeInsets.only(top: 10, bottom: 6),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.purple.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.purple.withOpacity(0.3), width: 1.5),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.purple),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '⚡ Gemini Vision AI Scanning Evidence (${AiConfig.modelName})...',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.purple),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const LinearProgressIndicator(
+              backgroundColor: Color(0xFFF3E5F5),
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Evaluating Before/After scene perspective, object transformation, and media authenticity in real-time...',
+              style: TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_geminiAnalysisResult != null) {
+      final res = _geminiAnalysisResult!;
+      final isLive = res.isLiveAiResult;
+      final score = res.evidenceScore;
+      final Color scoreColor = score >= 90 ? const Color(0xFF00B074) : (score >= 70 ? Colors.amber.shade800 : Colors.redAccent);
+      final String routingText = score >= 90
+          ? '⚡ AUTO-VERIFIED (Instant Karma Credited)'
+          : (score >= 70 ? '🛡️ PENDING VALIDATORS (3 Consensus Votes Needed)' : '⚠️ LOW CONFIDENCE EVIDENCE');
+
+      return Container(
+        margin: const EdgeInsets.only(top: 10, bottom: 6),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: scoreColor.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: scoreColor.withOpacity(0.4), width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome, color: scoreColor, size: 18),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    isLive ? '✨ Gemini Multimodal Vision Verified' : '🛡️ Proof-of-Good Engine Verified',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: scoreColor),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: scoreColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '$score / 100',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: scoreColor),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton(
+                  icon: const Icon(Icons.refresh_rounded, size: 18, color: Colors.grey),
+                  tooltip: 'Re-analyze with Gemini Vision',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: _runGeminiMultimodalAnalysis,
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              routingText,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: scoreColor),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '• Transformation: ${res.changeSummary}',
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 3),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '• Scene Match: ${(res.sceneMatchConfidence * 100).toInt()}% Alignment',
+                    style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+                  ),
+                ),
+                Text(
+                  res.isTampered ? '❌ Suspected Digital Copy' : '✅ Verified Authentic Capture',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: res.isTampered ? Colors.red : const Color(0xFF00B074),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (hasBefore && hasAfter) {
+      return Container(
+        margin: const EdgeInsets.only(top: 10, bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.purple.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.purple.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.auto_awesome, size: 16, color: Colors.purple),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Both photos attached. Ready for Gemini Multimodal Analysis.',
+                style: TextStyle(fontSize: 11, color: Colors.purple, fontWeight: FontWeight.bold),
+              ),
+            ),
+            TextButton(
+              onPressed: _runGeminiMultimodalAnalysis,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text('Analyze Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.purple)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   double _calculateConfidenceEstimate() {
@@ -1248,6 +1474,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
                 ),
               ],
             ),
+            _buildRealtimeGeminiAnalysisCard(theme),
             const SizedBox(height: 8),
 
             // GPS Geotag Button
