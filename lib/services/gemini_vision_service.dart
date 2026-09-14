@@ -161,6 +161,8 @@ class GeminiVerificationResult {
       'whatSeenBefore': whatSeenBefore,
       'whatSeenAfter': whatSeenAfter,
       'visualDifference': visualDifference,
+      'detectedObjectsBefore': detectedObjectsBefore,
+      'detectedObjectsAfter': detectedObjectsAfter,
       'isGoodDeedDetected': isGoodDeedDetected,
       'isTampered': isTampered,
       'isLiveAiResult': isLiveAiResult,

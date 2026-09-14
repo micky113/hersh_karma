@@ -1,5 +1,6 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const { VertexAI } = require("@google-cloud/vertexai");
+const { jsonrepair } = require("jsonrepair");
 const cors = require("cors")({ origin: true });
 
 // Initialize Vertex AI on GCP Project hersh-karma
@@ -10,6 +11,14 @@ const vertexAI = new VertexAI({
   project: PROJECT_ID,
   location: LOCATION,
 });
+
+function detectMimeType(base64Str) {
+  if (base64Str.startsWith("/9j/")) return "image/jpeg";
+  if (base64Str.startsWith("iVBORw")) return "image/png";
+  if (base64Str.startsWith("UklGR")) return "image/webp";
+  if (base64Str.startsWith("R0lGOD")) return "image/gif";
+  return "image/jpeg";
+}
 
 exports.analyzeProofOfGood = onRequest(
   {
@@ -49,76 +58,64 @@ exports.analyzeProofOfGood = onRequest(
         const cleanBefore = beforeImage.replace(/^data:image\/\w+;base64,/, "").trim();
         const cleanAfter = afterImage.replace(/^data:image\/\w+;base64,/, "").trim();
 
+        const mimeBefore = detectMimeType(cleanBefore);
+        const mimeAfter = detectMimeType(cleanAfter);
+
         const generativeModel = vertexAI.getGenerativeModel({
           model: "gemini-2.5-flash",
           generationConfig: {
             responseMimeType: "application/json",
             temperature: 0.1,
-            maxOutputTokens: 1500,
+            maxOutputTokens: 4096,
           },
         });
 
-        const prompt = `You are the Proof-of-Good AI Verification & Object Recognition Engine for the Karma Grid ecosystem.
-Analyze these two photos:
-- Photo 1 is the BEFORE photo.
-- Photo 2 is the AFTER photo.
+        const prompt = `You are the Proof-of-Good AI Multimodal Vision & Object Recognition Engine for the Karma Grid ecosystem.
+Examine Photo 1 (BEFORE) and Photo 2 (AFTER).
 
 Deed Title: "${deedTitle}"
 Category: "${category}"
 Description: "${description || 'Community impact deed'}"
 GPS Coordinates: ${latitude && longitude ? `${latitude}, ${longitude}` : 'Verified enclave'}
 
-CRITICAL STRICT OBJECT RECOGNITION & VERIFICATION RULES:
-1. Object Recognition: Explicitly list all identifiable physical objects, living beings, materials, and ground types in 'detectedObjectsBefore' and 'detectedObjectsAfter'.
-2. Ground Truth Inspection: Carefully inspect what is ACTUALLY visible in the pixels of Photo 1 vs Photo 2.
-3. Identical / Unchanged Photos: If Photo 1 and Photo 2 are identical, duplicate, or show NO visible positive transformation:
-   - Set whatSeenBefore = "Exact description of Photo 1"
-   - Set whatSeenAfter = "Exact description of Photo 2"
-   - Set detectedObjectsBefore = [detected objects in Photo 1]
-   - Set detectedObjectsAfter = [detected objects in Photo 2]
-   - Set visualDifference = "0% difference - identical photos"
-   - Set isGoodDeedDetected = false
-   - Set evidenceScore = 20
-   - Set isTampered = true
-   - Set changeSummary = "Identical photos uploaded: No visible change or action detected."
-   - Set reasoning = "Both photos show an unchanged scene with no evidence of the claimed action."
-4. Irrelevant / Empty Scenes: If photos show an unrelated scene that does NOT contain the claimed activity (e.g. photos of only a plain floor, wall, or empty table when the deed claims animal welfare or tree planting):
-   - Set whatSeenBefore = "Description of Photo 1 (e.g. bare floor with no animals)"
-   - Set whatSeenAfter = "Description of Photo 2 (e.g. bare floor with no animals)"
-   - Set detectedObjectsBefore = [e.g. "bare floor", "tile surface"]
-   - Set detectedObjectsAfter = [e.g. "bare floor", "tile surface"]
-   - Set visualDifference = "No relevant activity, animals, or objects detected"
-   - Set isGoodDeedDetected = false
-   - Set evidenceScore = 25
-   - Set isTampered = true
-   - Set changeSummary = "No ${category} transformation visible in photos."
-   - Set reasoning = "Photos show an unrelated scene that does not match the claimed deed category."
-5. Genuine Positive Transformation:
-   - Set whatSeenBefore = "Description of baseline state in Photo 1"
-   - Set whatSeenAfter = "Description of positive outcome state in Photo 2"
-   - Set detectedObjectsBefore = [list all objects in Photo 1]
-   - Set detectedObjectsAfter = [list all objects in Photo 2]
-   - Set visualDifference = "Detailed description of what positive change occurred"
-   - Set isGoodDeedDetected = true
-   - Set evidenceScore = 90 to 100 for clear transformation in identical location.
-   - Set isTampered = false
-6. DO NOT assume, fabricate, or imagine positive actions or objects that are not visible in the image pixels.
+OBJECT RECOGNITION & VERIFICATION INSTRUCTIONS:
+1. Object Detection:
+   - Identify every physical object, living creature, furniture, tool, vehicle, material, or waste item in Photo 1 and output as a list in 'detectedObjectsBefore'.
+   - Identify every physical object, living creature, furniture, tool, vehicle, material, or waste item in Photo 2 and output as a list in 'detectedObjectsAfter'.
+2. Visual Scene Description:
+   - Provide concise 1-2 sentence description of Photo 1 in 'whatSeenBefore'.
+   - Provide concise 1-2 sentence description of Photo 2 in 'whatSeenAfter'.
+3. Real Difference & Action:
+   - Describe the exact physical difference/transformation between Photo 1 and Photo 2 in 'visualDifference'.
+   - If Photo 1 and Photo 2 are identical, unchanged, or show bare floors/walls with no action:
+     * isGoodDeedDetected = false
+     * evidenceScore = 20
+     * isTampered = true
+     * visualDifference = "0% difference - identical or unchanged photos"
+     * changeSummary = "Unchanged photos uploaded: No positive transformation detected."
+     * reasoning = "Both photos show the same scene with no visible deed or transformation."
+   - If a genuine good deed is observed matching "${category}":
+     * isGoodDeedDetected = true
+     * evidenceScore = 92
+     * isTampered = false
+     * changeSummary = "Concise summary of verified impact"
+     * reasoning = "Explanation of confirmed transformation and scene match."
 
-Return ONLY a valid JSON object matching this schema:
+Return valid JSON adhering to this structure:
 {
-  "whatSeenBefore": "Precise visual description of objects, living beings, and surroundings in Photo 1",
-  "whatSeenAfter": "Precise visual description of objects, living beings, and surroundings in Photo 2",
-  "detectedObjectsBefore": ["object 1", "object 2", "object 3"],
-  "detectedObjectsAfter": ["object 1", "object 2", "object 3"],
-  "visualDifference": "Exact visual changes observed between Photo 1 and Photo 2",
+  "whatSeenBefore": "Concise scene description of Photo 1",
+  "whatSeenAfter": "Concise scene description of Photo 2",
+  "detectedObjectsBefore": ["item 1", "item 2", "item 3"],
+  "detectedObjectsAfter": ["item 1", "item 2", "item 3"],
+  "visualDifference": "Detailed visual change between both photos",
   "isGoodDeedDetected": true,
-  "evidenceScore": 94,
+  "evidenceScore": 92,
   "sceneMatchConfidence": 0.95,
-  "changeSummary": "Clear summary of transformation.",
-  "measurableBefore": "Visible baseline state",
-  "measurableAfter": "Restored outcome state",
+  "changeSummary": "Summary of deed",
+  "measurableBefore": "Baseline state",
+  "measurableAfter": "Outcome state",
   "isTampered": false,
-  "reasoning": "Detailed visual analysis justifying the verdict."
+  "reasoning": "Verdict reasoning"
 }`;
 
         const reqPayload = {
@@ -129,13 +126,13 @@ Return ONLY a valid JSON object matching this schema:
                 { text: prompt },
                 {
                   inlineData: {
-                    mimeType: "image/jpeg",
+                    mimeType: mimeBefore,
                     data: cleanBefore,
                   },
                 },
                 {
                   inlineData: {
-                    mimeType: "image/jpeg",
+                    mimeType: mimeAfter,
                     data: cleanAfter,
                   },
                 },
@@ -150,13 +147,22 @@ Return ONLY a valid JSON object matching this schema:
 
         let parsedJson;
         try {
+          // Attempt standard JSON parse
           parsedJson = JSON.parse(rawText);
         } catch (e1) {
-          const match = rawText.match(/\{[\s\S]*\}/);
-          if (match) {
-            parsedJson = JSON.parse(match[0]);
-          } else {
-            throw new Error("Failed to parse JSON from Vertex AI response.");
+          try {
+            // Attempt jsonrepair
+            const repaired = jsonrepair(rawText);
+            parsedJson = JSON.parse(repaired);
+          } catch (e2) {
+            console.error("jsonrepair error:", e2);
+            const match = rawText.match(/\{[\s\S]*\}/);
+            if (match) {
+              const repairedMatch = jsonrepair(match[0]);
+              parsedJson = JSON.parse(repairedMatch);
+            } else {
+              throw new Error("Failed to parse JSON from Vertex AI response.");
+            }
           }
         }
 
