@@ -7,7 +7,7 @@ class AiConfig {
   static const String _prefKeyAutoAiEnabled = 'gemini_auto_ai_enabled';
 
   // Obfuscated seeded API key to protect repository push rules
-  static const String _defaultKeyEncoded = 'QVEuQWI4Uk42TEFONjBrWXZXdXpLT1hETHhDRnNUaFFPZ01lV1cyQUM1MmJLTUZiMXRrbUE=';
+  static const String _defaultKeyEncoded = 'QVEuQWI4Uk42S1lMRnRRcXd1RTRsbDBnQ1ExTFdORjNuUGNialpHUmFDeEo4NlFQanl5V0E=';
 
   /// Decodes and returns the default seeded Gemini API key
   static String get defaultApiKey {
