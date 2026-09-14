@@ -125,7 +125,7 @@ class GeminiVisionService {
 
   /// Performs a detailed diagnostic test on the provided Gemini API key
   static Future<Map<String, dynamic>> testApiKeyDetailed(String apiKey) async {
-    final key = apiKey.trim();
+    final key = apiKey.trim().replaceAll('"', '').replaceAll("'", "");
     if (key.isEmpty) {
       return {
         'success': false,
@@ -150,10 +150,16 @@ class GeminiVisionService {
           'message': '⚡ Connected! API key authenticated (Prepayment/quota rate-limited).',
           'statusCode': 429,
         };
+      } else if (response.statusCode == 401) {
+        return {
+          'success': false,
+          'message': '❌ Unauthorized (401): Key is invalid or expired. Use an AI Studio key (starts with AIzaSy...) from aistudio.google.com.',
+          'statusCode': 401,
+        };
       } else if (response.statusCode == 400 || response.statusCode == 403) {
         return {
           'success': false,
-          'message': '❌ Invalid API key format or unauthorized credentials (${response.statusCode}).',
+          'message': '❌ Key Rejected (${response.statusCode}): Invalid format or restricted in Google Cloud Console.',
           'statusCode': response.statusCode,
         };
       } else {

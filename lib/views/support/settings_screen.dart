@@ -107,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Configure your Google Gemini Multimodal API key for real-time Before/After evidence analysis and scoring.',
+                  'Configure your Google Gemini Multimodal API key for real-time Before/After evidence analysis and scoring.\n\n🔑 Standard keys start with AIzaSy... (generated free at aistudio.google.com).',
                   style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.3),
                 ),
                 const SizedBox(height: 14),
@@ -117,7 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   controller: keyController,
                   obscureText: false,
                   decoration: InputDecoration(
-                    hintText: 'Enter API Key (AQ.Ab8R... / AIza...)',
+                    hintText: 'Enter API Key (e.g. AIzaSy...)',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     suffixIcon: IconButton(
