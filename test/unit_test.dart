@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hersh_karma/models/karma_action.dart';
@@ -1469,6 +1470,26 @@ void main() {
 
       final testSuccess = await GeminiVisionService.testApiKey('   ');
       expect(testSuccess, isFalse);
+    });
+
+    test('GeminiVisionService should immediately detect duplicate identical photos and reject them', () async {
+      final sampleBytes = Uint8List.fromList(List.generate(500, (i) => i % 256));
+      final duplicateBytes = Uint8List.fromList(List.generate(500, (i) => i % 256));
+
+      final diff = GeminiVisionService.calculateByteDifference(sampleBytes, duplicateBytes);
+      expect(diff, equals(0.0));
+
+      final result = await GeminiVisionService.analyzeEvidence(
+        beforeImageBytes: sampleBytes,
+        afterImageBytes: duplicateBytes,
+        deedTitle: 'Stray Animal Feeding',
+        category: 'Animal Welfare',
+      );
+
+      expect(result.isRejected, isTrue);
+      expect(result.isTampered, isTrue);
+      expect(result.evidenceScore, lessThanOrEqualTo(40));
+      expect(result.changeSummary, contains('Duplicate'));
     });
   });
 }

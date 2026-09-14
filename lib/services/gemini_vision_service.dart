@@ -186,6 +186,37 @@ class GeminiVisionService {
     return result['success'] == true;
   }
 
+  /// Computes visual delta / byte similarity between two image byte arrays
+  static double calculateByteDifference(Uint8List a, Uint8List b) {
+    if (identical(a, b)) return 0.0;
+    if (a.length == b.length) {
+      int diffCount = 0;
+      int sampleCount = a.length > 4000 ? 4000 : a.length;
+      int step = (a.length / sampleCount).floor().clamp(1, a.length);
+      int sampled = 0;
+      for (int i = 0; i < a.length; i += step) {
+        sampled++;
+        if (a[i] != b[i]) diffCount++;
+      }
+      return sampled > 0 ? (diffCount / sampled) : 0.0;
+    }
+
+    final double lengthRatio = (a.length - b.length).abs() / ((a.length + b.length) / 2);
+    if (lengthRatio < 0.03) {
+      int minLen = a.length < b.length ? a.length : b.length;
+      int sampleCount = minLen > 4000 ? 4000 : minLen;
+      int step = (minLen / sampleCount).floor().clamp(1, minLen);
+      int diffCount = 0;
+      int sampled = 0;
+      for (int i = 0; i < minLen; i += step) {
+        sampled++;
+        if ((a[i] - b[i]).abs() > 20) diffCount++;
+      }
+      return sampled > 0 ? (diffCount / sampled) : 0.5;
+    }
+    return 0.5;
+  }
+
   /// Analyzes Before & After evidence using Gemini Vision API
   static Future<GeminiVerificationResult> analyzeEvidence({
     required Uint8List? beforeImageBytes,
@@ -197,6 +228,31 @@ class GeminiVisionService {
     double? longitude,
     bool capturedInApp = true,
   }) async {
+    // 1. Strict Duplicate & Identity Check on actual image bytes
+    if (beforeImageBytes != null && afterImageBytes != null) {
+      final double diffRatio = calculateByteDifference(beforeImageBytes, afterImageBytes);
+      if (diffRatio < 0.04) {
+        return const GeminiVerificationResult(
+          evidenceScore: 25,
+          sceneMatchConfidence: 1.0,
+          changeSummary: '⚠️ Duplicate Photo Detected: Both Before and After photos are identical with no visible change.',
+          measurableBefore: 'Baseline scene captured',
+          measurableAfter: 'Identical photo uploaded (0% transformation)',
+          isTampered: true,
+          isLiveAiResult: false,
+          verdict: DeedStatus.rejected,
+          reasoning: 'Anti-Fraud Engine flagged duplicate photos with zero transformation between before and after states.',
+          scoreBreakdown: {
+            'Location & Geofence Sync': 20,
+            'Scene Match Alignment': 20,
+            'In-App Camera Enclave': 20,
+            'Visual Transformation': 0,
+            'Integrity & Anti-Fraud': 0,
+          },
+        );
+      }
+    }
+
     final apiKey = AiConfig.apiKey;
 
     // Fallback if no images or auto AI disabled or no key
@@ -225,14 +281,26 @@ Category: "$category"
 Description: "${description ?? 'Community impact deed'}"
 GPS Coordinates: ${latitude != null ? '$latitude, $longitude' : 'Verified local coordinate'}
 
-Your task is to inspect the images carefully and evaluate:
-1. Scene Match: Are Photo 1 and Photo 2 taken in the same real-world location and perspective? (Estimate confidence 0.0 to 1.0).
-2. Genuine Transformation: What real positive change occurred (e.g. trash removed, trees/plants watered, animal cared for, repair completed)?
-3. Tampering / Screen Capture / Duplicate Check: Is either image a computer monitor screen photo, stock image, or digital copy? (isTampered: boolean).
-4. Calculate Evidence Score (0 to 100):
-   - 90 to 100: Exceptional clear transformation in identical location.
+CRITICAL STRICT VERIFICATION RULES:
+1. Ground Truth Inspection: Carefully inspect what is ACTUALLY visible in the pixels of Photo 1 vs Photo 2.
+2. Identical / Unchanged Photos: If Photo 1 and Photo 2 are identical, duplicate, or show NO visible positive transformation:
+   - Set evidenceScore = 20
+   - Set isTampered = true
+   - Set changeSummary = "Identical photos uploaded: No visible change or action detected."
+   - Set measurableBefore = "Unchanged scene"
+   - Set measurableAfter = "No change detected"
+   - Set reasoning = "Both photos show an unchanged scene with no evidence of the claimed action."
+3. Irrelevant / Empty Scenes: If photos show an unrelated scene that does NOT contain the claimed activity (e.g. photos of only a plain floor, wall, or empty table when the deed claims animal welfare or tree planting):
+   - Set evidenceScore = 25
+   - Set isTampered = true
+   - Set changeSummary = "No $category transformation visible in photos (blank/unrelated scene)."
+   - Set measurableBefore = "Blank baseline"
+   - Set measurableAfter = "No action performed"
+   - Set reasoning = "Photos show an unrelated scene that does not match the claimed deed category."
+4. Genuine Positive Transformation:
+   - 90 to 100: Exceptional clear transformation in identical location (e.g. trash removed, animal fed, sapling planted).
    - 70 to 89: Good transformation, but slight angle discrepancy or minor ambiguity.
-   - Below 70: Inconsistent locations, no visible change, or suspected manipulation.
+5. DO NOT assume, fabricate, or imagine positive actions that are not visible in the image pixels.
 
 Return ONLY a valid JSON object matching this exact schema:
 {
