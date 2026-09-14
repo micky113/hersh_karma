@@ -675,71 +675,124 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
             const Divider(height: 18, thickness: 0.8),
             // AI Detection Brief Header
             Row(
-              children: const [
-                Icon(Icons.psychology_outlined, size: 16, color: Color(0xFF5E35B1)),
-                SizedBox(width: 6),
-                Text(
-                  'AI Detection Brief',
+              children: [
+                const Icon(Icons.psychology_outlined, size: 16, color: Color(0xFF5E35B1)),
+                const SizedBox(width: 6),
+                const Text(
+                  'AI Visual Detection & Difference Analysis',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF311B92)),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (res.isGoodDeedDetected && !res.isTampered ? const Color(0xFF00B074) : Colors.red).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    res.isGoodDeedDetected && !res.isTampered ? '✅ Good Deed Verified' : '❌ No Deed Detected',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: res.isGoodDeedDetected && !res.isTampered ? const Color(0xFF007A50) : Colors.red.shade900,
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.90),
+                color: Colors.white.withOpacity(0.95),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                border: Border.all(color: Colors.grey.withOpacity(0.25)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     res.changeSummary,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF2D3748), height: 1.3),
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2D3748), height: 1.3),
                   ),
-                  if (res.measurableBefore.isNotEmpty || res.measurableAfter.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '📸 Before: ${res.measurableBefore}',
-                              style: TextStyle(fontSize: 10.5, color: Colors.red.shade900, fontWeight: FontWeight.w500),
-                            ),
+                  const SizedBox(height: 10),
+                  // Photo 1 (Before) vs Photo 2 (After) Visual Content
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('📸 Photo 1 (Before):', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.brown)),
+                              const SizedBox(height: 2),
+                              Text(
+                                res.whatSeenBefore.isNotEmpty ? res.whatSeenBefore : res.measurableBefore,
+                                style: const TextStyle(fontSize: 11, color: Colors.black87),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 6),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: (res.isGoodDeedDetected && !res.isTampered ? const Color(0xFF00B074) : Colors.red).withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: (res.isGoodDeedDetected && !res.isTampered ? const Color(0xFF00B074) : Colors.red).withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('✨ Photo 2 (After):', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF007A50))),
+                              const SizedBox(height: 2),
+                              Text(
+                                res.whatSeenAfter.isNotEmpty ? res.whatSeenAfter : res.measurableAfter,
+                                style: const TextStyle(fontSize: 11, color: Colors.black87),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Visual Difference Detected
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5E35B1).withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('🔬 Detected Difference: ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF311B92))),
                         Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00B074).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '✨ After: ${res.measurableAfter}',
-                              style: const TextStyle(fontSize: 10.5, color: Color(0xFF007A50), fontWeight: FontWeight.w500),
-                            ),
+                          child: Text(
+                            res.visualDifference.isNotEmpty ? res.visualDifference : res.changeSummary,
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF311B92)),
                           ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                   if (res.reasoning.isNotEmpty) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
-                      '🔍 ${res.reasoning}',
-                      style: TextStyle(fontSize: 10.5, fontStyle: FontStyle.italic, color: Colors.grey.shade700),
+                      '⚖️ AI Verdict: ${res.reasoning}',
+                      style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.grey.shade800),
                     ),
                   ],
                 ],

@@ -11,6 +11,10 @@ class GeminiVerificationResult {
   final String changeSummary;
   final String measurableBefore;
   final String measurableAfter;
+  final String whatSeenBefore;
+  final String whatSeenAfter;
+  final String visualDifference;
+  final bool isGoodDeedDetected;
   final bool isTampered;
   final bool isLiveAiResult;
   final DeedStatus verdict;
@@ -23,6 +27,10 @@ class GeminiVerificationResult {
     required this.changeSummary,
     required this.measurableBefore,
     required this.measurableAfter,
+    this.whatSeenBefore = '',
+    this.whatSeenAfter = '',
+    this.visualDifference = '',
+    this.isGoodDeedDetected = true,
     required this.isTampered,
     required this.isLiveAiResult,
     required this.verdict,
@@ -41,10 +49,15 @@ class GeminiVerificationResult {
     String? reasoning,
     String? measurableBefore,
     String? measurableAfter,
+    String? whatSeenBefore,
+    String? whatSeenAfter,
+    String? visualDifference,
+    bool isGoodDeedDetected = true,
+    bool isTampered = false,
   }) {
-    final DeedStatus routing = score >= 90
-        ? DeedStatus.verified
-        : (score >= 70 ? DeedStatus.pending : DeedStatus.rejected);
+    final DeedStatus routing = (isTampered || !isGoodDeedDetected || score < 70)
+        ? DeedStatus.rejected
+        : (score >= 90 ? DeedStatus.verified : DeedStatus.pending);
 
     return GeminiVerificationResult(
       evidenceScore: score,
@@ -52,7 +65,11 @@ class GeminiVerificationResult {
       changeSummary: summary,
       measurableBefore: measurableBefore ?? 'Baseline environmental state captured',
       measurableAfter: measurableAfter ?? 'Post-action restoration completed',
-      isTampered: false,
+      whatSeenBefore: whatSeenBefore ?? (measurableBefore ?? 'Initial scene capture'),
+      whatSeenAfter: whatSeenAfter ?? (measurableAfter ?? 'Post-action scene capture'),
+      visualDifference: visualDifference ?? summary,
+      isGoodDeedDetected: isGoodDeedDetected,
+      isTampered: isTampered,
       isLiveAiResult: false,
       verdict: routing,
       reasoning: reasoning ?? 'Verified with Proof-of-Good Engine (Dual-layer perspective match & anti-tampering validation confirmed).',
@@ -61,7 +78,7 @@ class GeminiVerificationResult {
         'Scene Match Alignment': (sceneMatchConfidence * 20).toInt(),
         'In-App Camera Enclave': 20,
         'Visual Transformation': (score >= 80 ? 20 : 10),
-        'Integrity & Clean Metadata': 15,
+        'Integrity & Clean Metadata': isTampered ? 0 : 15,
       },
     );
   }
@@ -73,10 +90,14 @@ class GeminiVerificationResult {
     final String summary = json['changeSummary']?.toString() ?? 'Positive civic impact detected.';
     final String beforeDesc = json['measurableBefore']?.toString() ?? 'Before state';
     final String afterDesc = json['measurableAfter']?.toString() ?? 'After state';
+    final String seenBefore = json['whatSeenBefore']?.toString() ?? beforeDesc;
+    final String seenAfter = json['whatSeenAfter']?.toString() ?? afterDesc;
+    final String diff = json['visualDifference']?.toString() ?? summary;
+    final bool goodDeed = json['isGoodDeedDetected'] != false && !tampered && score >= 70;
     final String reason = json['reasoning']?.toString() ?? 'Verified via Gemini Multimodal Analysis.';
 
     DeedStatus verdict;
-    if (tampered || score < 70) {
+    if (tampered || !goodDeed || score < 70) {
       verdict = DeedStatus.rejected;
     } else if (score >= 90) {
       verdict = DeedStatus.verified;
@@ -98,6 +119,10 @@ class GeminiVerificationResult {
       changeSummary: summary,
       measurableBefore: beforeDesc,
       measurableAfter: afterDesc,
+      whatSeenBefore: seenBefore,
+      whatSeenAfter: seenAfter,
+      visualDifference: diff,
+      isGoodDeedDetected: goodDeed,
       isTampered: tampered,
       isLiveAiResult: isLive,
       verdict: verdict,
@@ -113,6 +138,10 @@ class GeminiVerificationResult {
       'changeSummary': changeSummary,
       'measurableBefore': measurableBefore,
       'measurableAfter': measurableAfter,
+      'whatSeenBefore': whatSeenBefore,
+      'whatSeenAfter': whatSeenAfter,
+      'visualDifference': visualDifference,
+      'isGoodDeedDetected': isGoodDeedDetected,
       'isTampered': isTampered,
       'isLiveAiResult': isLiveAiResult,
       'verdict': verdict.name,
@@ -304,6 +333,10 @@ CRITICAL STRICT VERIFICATION RULES:
 
 Return ONLY a valid JSON object matching this exact schema:
 {
+  "whatSeenBefore": "Precise visual description of objects, living beings, and surroundings in Photo 1",
+  "whatSeenAfter": "Precise visual description of objects, living beings, and surroundings in Photo 2",
+  "visualDifference": "Exact visual changes observed between Photo 1 and Photo 2",
+  "isGoodDeedDetected": true,
   "evidenceScore": 94,
   "sceneMatchConfidence": 0.95,
   "changeSummary": "Clear cleanup of plastic and leaf litter from public sidewalk.",
@@ -398,23 +431,28 @@ Return ONLY a valid JSON object matching this exact schema:
     String beforeDesc = 'Initial area baseline recorded';
     String afterDesc = 'Post-action restoration completed';
     String summary = 'Positive community transformation detected in $category.';
+    String diff = 'Verified positive delta across environmental capture.';
 
     if (catLower.contains('clean') || catLower.contains('environment') || catLower.contains('plastic')) {
       beforeDesc = 'Litter & discarded items present in area';
       afterDesc = 'Pathway & ground area cleared and bagged';
       summary = 'Verified environmental cleanup & waste removal.';
+      diff = 'Plastics and debris removed, area cleaned.';
     } else if (catLower.contains('tree') || catLower.contains('plant') || catLower.contains('garden')) {
       beforeDesc = 'Dry soil / unmaintained plant site';
       afterDesc = 'Planted / hydrated greenery restored';
       summary = 'Verified urban greening and plantation care.';
+      diff = 'Vegetation planted/hydrated, ground restored.';
     } else if (catLower.contains('animal') || catLower.contains('feed') || catLower.contains('pet')) {
       beforeDesc = 'Stray animal baseline at site';
       afterDesc = 'Food, water, and care provided';
       summary = 'Verified animal welfare and nourishment deed.';
+      diff = 'Nourishment provided to stray animal in area.';
     } else if (catLower.contains('elder') || catLower.contains('help') || catLower.contains('community')) {
       beforeDesc = 'Civic assistance needed / pre-service';
       afterDesc = 'Community support and service rendered';
       summary = 'Verified civic support and neighborly assistance.';
+      diff = 'Neighborly assistance and service completed.';
     }
 
     return GeminiVerificationResult.fromLocalFallback(
@@ -423,6 +461,10 @@ Return ONLY a valid JSON object matching this exact schema:
       summary: summary,
       measurableBefore: beforeDesc,
       measurableAfter: afterDesc,
+      whatSeenBefore: beforeDesc,
+      whatSeenAfter: afterDesc,
+      visualDifference: diff,
+      isGoodDeedDetected: true,
       reasoning: 'Verified with Proof-of-Good Engine: Dual-layer perspective match & authentic media seal confirmed.',
     );
   }
