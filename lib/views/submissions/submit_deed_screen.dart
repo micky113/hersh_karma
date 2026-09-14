@@ -1150,10 +1150,16 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
                       _latitude = 12.9716;
                       _longitude = 77.5946;
                     });
+                    final bool isLiveAi = result['isLiveAi'] == true;
+                    final String summary = result['changeSummary'] ?? 'Proof captured successfully.';
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('🔐 Proof Captured! AI Evidence Score: $_evidenceScore/100'),
-                        backgroundColor: Colors.green,
+                        content: Text(
+                          isLiveAi 
+                              ? '✨ Gemini 1.5 Flash Verified! Score: $_evidenceScore/100'
+                              : '🔐 Proof Captured! AI Evidence Score: $_evidenceScore/100',
+                        ),
+                        backgroundColor: const Color(0xFF00B074),
                       ),
                     );
                   }

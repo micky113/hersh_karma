@@ -19,6 +19,8 @@ import 'package:hersh_karma/services/mock/mock_karma_service.dart';
 import 'package:hersh_karma/services/mock/mock_wallet_service.dart';
 import 'package:hersh_karma/models/promotion/promotion_engine.dart';
 import 'package:hersh_karma/core/localization/app_localizations.dart';
+import 'package:hersh_karma/core/config/ai_config.dart';
+import 'package:hersh_karma/services/gemini_vision_service.dart';
 
 void main() {
   // Setup Mock SharedPreferences before all tests
@@ -1370,6 +1372,94 @@ void main() {
       expect(gateResult.karmaDetail, equals('740 / 1,000 Lifetime Karma'));
       expect(gateResult.verificationDetail, equals('19 / 25 Verified Deeds'));
       expect(gateResult.trustPassed, isTrue);
+    });
+  });
+
+  group('Proof of Good - Gemini Vision Multimodal AI Verification Tests', () {
+    test('AiConfig should initialize with default Gemini API key and allow custom key configuration', () async {
+      await AiConfig.initialize();
+      expect(AiConfig.hasValidApiKey, isTrue);
+      expect(AiConfig.apiKey, equals(AiConfig.defaultApiKey));
+      expect(AiConfig.modelName, equals('gemini-1.5-flash'));
+      expect(AiConfig.maskedApiKey, contains('...'));
+
+      await AiConfig.setApiKey('AIzaSyTestMockCustomKey123456789');
+      expect(AiConfig.apiKey, equals('AIzaSyTestMockCustomKey123456789'));
+
+      await AiConfig.resetToDefault();
+      expect(AiConfig.apiKey, equals(AiConfig.defaultApiKey));
+    });
+
+    test('GeminiVerificationResult should parse valid JSON and route score >= 90 to auto-verified', () {
+      final json = {
+        'evidenceScore': 94,
+        'sceneMatchConfidence': 0.96,
+        'changeSummary': 'High volume litter removed and sidewalk restored.',
+        'measurableBefore': 'Dense plastic waste',
+        'measurableAfter': 'Clean sidewalk',
+        'isTampered': false,
+        'reasoning': 'Identical wall textures and confirmed transformation.',
+      };
+
+      final result = GeminiVerificationResult.fromJson(json, isLive: true);
+      expect(result.evidenceScore, equals(94));
+      expect(result.sceneMatchConfidence, equals(0.96));
+      expect(result.isAutoVerified, isTrue);
+      expect(result.isQueuedForValidators, isFalse);
+      expect(result.isRejected, isFalse);
+      expect(result.isLiveAiResult, isTrue);
+      expect(result.scoreBreakdown['In-App Live Enclave'], equals(20));
+    });
+
+    test('GeminiVerificationResult should route score between 70 and 89 to pending validators', () {
+      final json = {
+        'evidenceScore': 78,
+        'sceneMatchConfidence': 0.82,
+        'changeSummary': 'Plausible park cleanup with minor perspective difference.',
+        'measurableBefore': 'Park area before',
+        'measurableAfter': 'Park area after',
+        'isTampered': false,
+        'reasoning': 'Good transformation but angle shifted slightly.',
+      };
+
+      final result = GeminiVerificationResult.fromJson(json, isLive: true);
+      expect(result.evidenceScore, equals(78));
+      expect(result.isAutoVerified, isFalse);
+      expect(result.isQueuedForValidators, isTrue);
+      expect(result.isRejected, isFalse);
+    });
+
+    test('GeminiVerificationResult should immediately reject tampered or score < 70 evidence', () {
+      final json = {
+        'evidenceScore': 45,
+        'sceneMatchConfidence': 0.30,
+        'changeSummary': 'Suspected computer monitor photo of stock image.',
+        'isTampered': true,
+        'reasoning': 'Moiré pattern detected and location mismatch.',
+      };
+
+      final result = GeminiVerificationResult.fromJson(json, isLive: true);
+      expect(result.isRejected, isTrue);
+      expect(result.isTampered, isTrue);
+      expect(result.isAutoVerified, isFalse);
+      expect(result.isQueuedForValidators, isFalse);
+    });
+
+    test('GeminiVisionService should provide resilient fallback when running without network or bytes', () async {
+      final fallbackResult = await GeminiVisionService.analyzeEvidence(
+        beforeImageBytes: null,
+        afterImageBytes: null,
+        deedTitle: 'Tree Plantation Drive',
+        category: 'Environment',
+        latitude: 12.9716,
+        longitude: 77.5946,
+        capturedInApp: true,
+      );
+
+      expect(fallbackResult.evidenceScore, greaterThanOrEqualTo(70));
+      expect(fallbackResult.sceneMatchConfidence, greaterThanOrEqualTo(0.80));
+      expect(fallbackResult.isTampered, isFalse);
+      expect(fallbackResult.scoreBreakdown.isNotEmpty, isTrue);
     });
   });
 }

@@ -80,12 +80,14 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
 
     // Scroll settings list view to make Logout visible
-    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
     await tester.pumpAndSettle();
 
     // 5. Perform Logout
     final logoutTile = find.text('Logout Passport');
     expect(logoutTile, findsOneWidget);
+    await tester.ensureVisible(logoutTile);
+    await tester.pumpAndSettle();
     await tester.tap(logoutTile);
     await tester.pumpAndSettle();
 

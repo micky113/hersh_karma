@@ -4,6 +4,8 @@ import '../../providers/auth_provider.dart';
 import '../../core/routes/app_routes.dart';
 import '../../models/user_profile.dart';
 import '../../services/voice_service.dart';
+import '../../services/gemini_vision_service.dart';
+import '../../core/config/ai_config.dart';
 import 'language_hub_modal.dart';
 import '../../core/localization/app_localizations.dart';
 
@@ -75,6 +77,168 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showGeminiConfigDialog(BuildContext context) {
+    final keyController = TextEditingController(text: AiConfig.apiKey);
+    String selectedModel = AiConfig.modelName;
+    bool isTesting = false;
+    String? testResult;
+    bool? testSuccess;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const Row(
+            children: [
+              Icon(Icons.auto_awesome, color: Colors.purple),
+              SizedBox(width: 8),
+              Text('Gemini Vision AI Engine', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Configure your Google Gemini Multimodal API key for real-time Before/After evidence analysis and scoring.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey, height: 1.3),
+                ),
+                const SizedBox(height: 14),
+                const Text('Gemini API Key', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: keyController,
+                  obscureText: false,
+                  decoration: InputDecoration(
+                    hintText: 'Enter API Key (AQ.Ab8R... / AIza...)',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () => keyController.clear(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text('Multimodal Vision Model', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  value: selectedModel,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'gemini-1.5-flash', child: Text('gemini-1.5-flash (Fast & Low Cost)')),
+                    DropdownMenuItem(value: 'gemini-2.0-flash', child: Text('gemini-2.0-flash (Next Gen Flash)')),
+                    DropdownMenuItem(value: 'gemini-1.5-pro', child: Text('gemini-1.5-pro (Deep Reasoning)')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setDialogState(() => selectedModel = val);
+                    }
+                  },
+                ),
+                const SizedBox(height: 14),
+                if (testResult != null)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: (testSuccess == true ? Colors.green : Colors.red).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: (testSuccess == true ? Colors.green : Colors.red).withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          testSuccess == true ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+                          color: testSuccess == true ? Colors.green : Colors.red,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            testResult!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: testSuccess == true ? Colors.green.shade800 : Colors.red.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await AiConfig.resetToDefault();
+                keyController.text = AiConfig.defaultApiKey;
+                setDialogState(() {
+                  selectedModel = AiConfig.defaultModel;
+                  testResult = 'Reset to platform default API key.';
+                  testSuccess = true;
+                });
+                setState(() {});
+              },
+              child: const Text('Reset Default', style: TextStyle(color: Colors.grey, fontSize: 12)),
+            ),
+            OutlinedButton(
+              onPressed: isTesting
+                  ? null
+                  : () async {
+                      setDialogState(() {
+                        isTesting = true;
+                        testResult = 'Testing API key connection...';
+                        testSuccess = null;
+                      });
+
+                      final success = await GeminiVisionService.testApiKey(keyController.text);
+
+                      setDialogState(() {
+                        isTesting = false;
+                        testSuccess = success;
+                        testResult = success
+                            ? '✅ Connected! Gemini API key is valid and responsive.'
+                            : '⚠️ Connection check failed. Check key format or network.';
+                      });
+                    },
+              child: isTesting
+                  ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Text('Test Connection', style: TextStyle(fontSize: 12)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00B074),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                await AiConfig.setApiKey(keyController.text);
+                await AiConfig.setModelName(selectedModel);
+                if (mounted) {
+                  setState(() {});
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✨ Gemini Vision AI settings saved successfully!'),
+                      backgroundColor: Color(0xFF00B074),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Save Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
       ),
     );
@@ -260,6 +424,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text(AppLocalizations.translateWithContext(context, 'settings_admin_sub', defaultValue: 'Ecosystem oversight, verification queue & audit log')),
             trailing: const Icon(Icons.chevron_right_rounded, color: Color(0xFF00B074)),
             onTap: () => _handleAdminAccess(user),
+          ),
+          const Divider(),
+          _buildCategoryHeader('AI & MULTIMODAL VERIFICATION'),
+          ListTile(
+            leading: const Icon(Icons.auto_awesome, color: Colors.purple),
+            title: const Text('Gemini Vision AI Engine', style: TextStyle(fontWeight: FontWeight.bold)),
+            subtitle: Text('Model: ${AiConfig.modelName} • Key: ${AiConfig.maskedApiKey}'),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.purple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text('Configure', style: TextStyle(color: Colors.purple, fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+            onTap: () => _showGeminiConfigDialog(context),
           ),
           const Divider(),
           _buildCategoryHeader(AppLocalizations.translateWithContext(context, 'settings_support', defaultValue: 'SUPPORT & COMPLIANCE')),

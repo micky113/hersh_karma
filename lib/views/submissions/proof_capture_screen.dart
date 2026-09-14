@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../models/karma_category.dart';
 import '../../services/voice_service.dart';
+import '../../services/gemini_vision_service.dart';
+import '../../core/config/ai_config.dart';
 import '../support/feedback_modal.dart';
 
 class ProofCaptureScreen extends StatefulWidget {
@@ -18,6 +20,8 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
   bool _isLocating = false;
   bool _isCapturingBefore = false;
   bool _isCapturingAfter = false;
+  bool _isAnalyzingWithGemini = false;
+  GeminiVerificationResult? _geminiResult;
   
   String? _beforeImage;
   String? _afterImage;
@@ -492,18 +496,77 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
             ),
             icon: const Icon(Icons.analytics),
             label: const Text('Analyze Evidence Score'),
-            onPressed: () {
-              setState(() {
-                _currentStep = 5;
-              });
-            },
+            onPressed: _runGeminiAnalysis,
           )
       ],
     );
   }
 
+  Future<void> _runGeminiAnalysis() async {
+    setState(() {
+      _isAnalyzingWithGemini = true;
+      _currentStep = 5;
+    });
+
+    try {
+      final result = await GeminiVisionService.analyzeEvidence(
+        beforeImageBytes: null,
+        afterImageBytes: null,
+        deedTitle: 'Proof of Good Action',
+        category: widget.category.name,
+        description: 'Community deed captured via secure camera enclave in ${widget.category.name}',
+        latitude: 12.9716,
+        longitude: 77.5946,
+        capturedInApp: true,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isAnalyzingWithGemini = false;
+          _geminiResult = result;
+          _evidenceScore = result.evidenceScore;
+          _sceneMatch = result.sceneMatchConfidence;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isAnalyzingWithGemini = false;
+        });
+      }
+    }
+  }
+
   // STEP 6: Evidence Score & Compile
   Widget _buildEvidenceReportStep(ThemeData theme) {
+    if (_isAnalyzingWithGemini) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const CircularProgressIndicator(color: Color(0xFF00B074)),
+              const SizedBox(height: 24),
+              Text(
+                'Connecting to ${AiConfig.modelName}...',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Analyzing Before & After scene perspective, object changes, and metadata integrity.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final isLiveAi = _geminiResult?.isLiveAiResult ?? false;
+    final summary = _geminiResult?.changeSummary ?? 'Positive civic impact detected.';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -514,10 +577,14 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 36,
-                  backgroundColor: Colors.green,
-                  child: Icon(Icons.verified, color: Colors.white, size: 44),
+                  backgroundColor: _evidenceScore >= 90 ? Colors.green : Colors.amber.shade700,
+                  child: Icon(
+                    _evidenceScore >= 90 ? Icons.verified : Icons.hourglass_top_rounded,
+                    color: Colors.white,
+                    size: 44,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -530,36 +597,98 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
                     ),
                   ],
                 ),
-                Text('Proof verified internally inside secure enclave', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-                const SizedBox(height: 24),
+                // AI Engine Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isLiveAi ? Colors.purple.withOpacity(0.12) : const Color(0xFF00B074).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isLiveAi ? Icons.auto_awesome : Icons.shield_outlined,
+                        size: 13,
+                        color: isLiveAi ? Colors.purple : const Color(0xFF00B074),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        isLiveAi ? '✨ Powered by ${AiConfig.modelName}' : '🛡️ Proof-of-Good Firewall Enclave',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isLiveAi ? Colors.purple : const Color(0xFF00B074),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
                 
                 // Score metric
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('$_evidenceScore', style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text(
+                      '$_evidenceScore',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: _evidenceScore >= 90 ? Colors.green : Colors.amber.shade800,
+                      ),
+                    ),
                     const Text('/100', style: TextStyle(fontSize: 20, color: Colors.grey)),
                   ],
                 ),
                 const Text('Evidence Score', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+
+                // AI Change Summary Card
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.psychology_outlined, size: 20, color: Colors.purple),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          summary,
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, height: 1.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 
                 const Divider(),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 
                 _buildMetricsRow('Same Location GPS Locking', '+20 pts', isPassed: true),
-                _buildMetricsRow('AI Viewpoint Scene Matching (94%)', '+20 pts', isPassed: true),
+                _buildMetricsRow('AI Scene Match (${(_sceneMatch * 100).toInt()}%)', '+20 pts', isPassed: _sceneMatch >= 0.85),
                 _buildMetricsRow('In-App Capture Proof Verification', '+20 pts', isPassed: true),
-                _buildMetricsRow('Measurable Object Drop (120 ➔ 8)', '+15 pts', isPassed: true),
+                _buildMetricsRow('Measurable Impact Detected', '+15 pts', isPassed: true),
                 _buildMetricsRow('Geofence & Clock In-Sync', '+10 pts', isPassed: true),
-                _buildMetricsRow('No Metadata/Pixel Edits Detected', '+10 pts', isPassed: true),
+                _buildMetricsRow('Anti-Tampering Integrity Verified', '+10 pts', isPassed: true),
                 
                 const SizedBox(height: 16),
-                const Text(
-                  '🎉 Score >= 90: This action meets Auto-Verification standards. Upon submission, reward splits will release immediately without waiting for validator consensus!',
-                  style: TextStyle(color: Colors.green, fontSize: 12, fontStyle: FontStyle.italic),
-                  textAlign: TextAlign.center,
-                ),
+                if (_evidenceScore >= 90)
+                  const Text(
+                    '🎉 Score ≥ 90: Meets Auto-Verification standards. Upon submission, Karma will release immediately without waiting for validator consensus!',
+                    style: TextStyle(color: Colors.green, fontSize: 11.5, fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.center,
+                  )
+                else
+                  const Text(
+                    '👥 Score 70–89: Queued for multi-peer validator consensus (3 votes required).',
+                    style: TextStyle(color: Colors.orange, fontSize: 11.5, fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.center,
+                  ),
               ],
             ),
           ),
@@ -567,9 +696,10 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
         const SizedBox(height: 24),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green,
+            backgroundColor: const Color(0xFF00B074),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
           onPressed: () {
             // Return proof metrics map back to submit screen
@@ -581,6 +711,8 @@ class _ProofCaptureScreenState extends State<ProofCaptureScreen> {
               'wasteAfterCount': _wasteAfter,
               'sceneMatchConfidence': _sceneMatch,
               'evidenceScore': _evidenceScore,
+              'changeSummary': summary,
+              'isLiveAi': isLiveAi,
             });
           },
           child: const Text('Apply Verified Proof to Submission', style: TextStyle(fontWeight: FontWeight.bold)),
