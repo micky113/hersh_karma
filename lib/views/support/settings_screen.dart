@@ -136,9 +136,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   items: const [
-                    DropdownMenuItem(value: 'gemini-1.5-flash', child: Text('gemini-1.5-flash (Fast & Low Cost)')),
-                    DropdownMenuItem(value: 'gemini-2.0-flash', child: Text('gemini-2.0-flash (Next Gen Flash)')),
-                    DropdownMenuItem(value: 'gemini-1.5-pro', child: Text('gemini-1.5-pro (Deep Reasoning)')),
+                    DropdownMenuItem(value: 'gemini-flash-latest', child: Text('gemini-flash-latest (Recommended Flash)')),
+                    DropdownMenuItem(value: 'gemini-3.6-flash', child: Text('gemini-3.6-flash (Fast & Accurate)')),
+                    DropdownMenuItem(value: 'gemini-3.5-flash-lite', child: Text('gemini-3.5-flash-lite (Ultra Lightweight)')),
+                    DropdownMenuItem(value: 'gemini-3.1-pro-preview', child: Text('gemini-3.1-pro-preview (Deep Reasoning)')),
                   ],
                   onChanged: (val) {
                     if (val != null) {
@@ -203,14 +204,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         testSuccess = null;
                       });
 
-                      final success = await GeminiVisionService.testApiKey(keyController.text);
+                      final detailed = await GeminiVisionService.testApiKeyDetailed(keyController.text);
+                      final success = detailed['success'] == true;
+                      final message = detailed['message']?.toString() ?? '';
 
                       setDialogState(() {
                         isTesting = false;
                         testSuccess = success;
-                        testResult = success
-                            ? '✅ Connected! Gemini API key is valid and responsive.'
-                            : '⚠️ Connection check failed. Check key format or network.';
+                        testResult = message;
                       });
                     },
               child: isTesting

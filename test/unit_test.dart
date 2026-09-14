@@ -1380,7 +1380,7 @@ void main() {
       await AiConfig.initialize();
       expect(AiConfig.hasValidApiKey, isTrue);
       expect(AiConfig.apiKey, equals(AiConfig.defaultApiKey));
-      expect(AiConfig.modelName, equals('gemini-1.5-flash'));
+      expect(AiConfig.modelName, equals('gemini-flash-latest'));
       expect(AiConfig.maskedApiKey, contains('...'));
 
       await AiConfig.setApiKey('AIzaSyTestMockCustomKey123456789');
@@ -1460,6 +1460,15 @@ void main() {
       expect(fallbackResult.sceneMatchConfidence, greaterThanOrEqualTo(0.80));
       expect(fallbackResult.isTampered, isFalse);
       expect(fallbackResult.scoreBreakdown.isNotEmpty, isTrue);
+    });
+
+    test('GeminiVisionService testApiKeyDetailed should reject empty key', () async {
+      final emptyResult = await GeminiVisionService.testApiKeyDetailed('');
+      expect(emptyResult['success'], isFalse);
+      expect(emptyResult['message'], contains('empty'));
+
+      final testSuccess = await GeminiVisionService.testApiKey('   ');
+      expect(testSuccess, isFalse);
     });
   });
 }

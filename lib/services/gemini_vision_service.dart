@@ -123,36 +123,62 @@ class GeminiVerificationResult {
 class GeminiVisionService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-  /// Tests if a given Gemini API Key is valid and can connect
-  static Future<bool> testApiKey(String apiKey) async {
-    if (apiKey.trim().isEmpty) return false;
-    try {
-      final url = Uri.parse('$_baseUrl/${AiConfig.modelName}:generateContent?key=${apiKey.trim()}');
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {'text': 'Ping. Reply with {"status": "ok"}'}
-              ]
-            }
-          ],
-          'generationConfig': {
-            'response_mime_type': 'application/json',
-            'maxOutputTokens': 50,
-          }
-        }),
-      ).timeout(const Duration(seconds: 8));
+  /// Performs a detailed diagnostic test on the provided Gemini API key
+  static Future<Map<String, dynamic>> testApiKeyDetailed(String apiKey) async {
+    final key = apiKey.trim();
+    if (key.isEmpty) {
+      return {
+        'success': false,
+        'message': 'API key cannot be empty.',
+        'statusCode': 0,
+      };
+    }
 
-      return response.statusCode == 200;
-    } catch (_) {
-      return false;
+    try {
+      final url = Uri.parse('$_baseUrl?key=$key');
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': '✅ Connected! Gemini API Key is valid and authorized.',
+          'statusCode': 200,
+        };
+      } else if (response.statusCode == 429) {
+        return {
+          'success': true,
+          'message': '⚡ Connected! API key authenticated (Prepayment/quota rate-limited).',
+          'statusCode': 429,
+        };
+      } else if (response.statusCode == 400 || response.statusCode == 403) {
+        return {
+          'success': false,
+          'message': '❌ Invalid API key format or unauthorized credentials (${response.statusCode}).',
+          'statusCode': response.statusCode,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': '⚠️ Connection failed with status ${response.statusCode}.',
+          'statusCode': response.statusCode,
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': '⚠️ Network check error: $e',
+        'statusCode': 0,
+      };
     }
   }
 
-  /// Analyzes Before & After evidence using Gemini 1.5 Flash Vision API
+  /// Tests if a given Gemini API Key is valid and can connect
+  static Future<bool> testApiKey(String apiKey) async {
+    final result = await testApiKeyDetailed(apiKey);
+    return result['success'] == true;
+  }
+
+  /// Analyzes Before & After evidence using Gemini Vision API
   static Future<GeminiVerificationResult> analyzeEvidence({
     required Uint8List? beforeImageBytes,
     required Uint8List? afterImageBytes,
@@ -212,7 +238,8 @@ Return ONLY a valid JSON object matching this exact schema:
 }
 ''';
 
-      final url = Uri.parse('$_baseUrl/${AiConfig.modelName}:generateContent?key=$apiKey');
+      final model = AiConfig.modelName;
+      final url = Uri.parse('$_baseUrl/$model:generateContent?key=$apiKey');
       final requestBody = jsonEncode({
         'contents': [
           {
@@ -267,7 +294,9 @@ Return ONLY a valid JSON object matching this exact schema:
         latitude: latitude,
         longitude: longitude,
         capturedInApp: capturedInApp,
-        fallbackReason: 'Gemini Cloud API status ${response.statusCode}. Evaluated with local firewall.',
+        fallbackReason: response.statusCode == 429
+            ? 'Gemini quota/prepayment exhausted (429). Local Proof-of-Good Firewall engine applied.'
+            : 'Gemini Cloud API status ${response.statusCode}. Evaluated with local firewall.',
       );
     } catch (e) {
       // Network timeout / offline fallback

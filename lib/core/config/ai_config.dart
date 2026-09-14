@@ -18,7 +18,7 @@ class AiConfig {
     }
   }
 
-  static const String defaultModel = 'gemini-1.5-flash';
+  static const String defaultModel = 'gemini-flash-latest';
 
   static String _cachedApiKey = '';
   static String _cachedModel = defaultModel;
@@ -59,7 +59,7 @@ class AiConfig {
     return _cachedApiKey;
   }
 
-  /// Gets the active Gemini Model name (e.g. gemini-1.5-flash)
+  /// Gets the active Gemini Model name (e.g. gemini-flash-latest)
   static String get modelName => _cachedModel;
 
   /// Checks if AI automated verification is enabled
