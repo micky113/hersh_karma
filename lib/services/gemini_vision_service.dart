@@ -14,6 +14,8 @@ class GeminiVerificationResult {
   final String whatSeenBefore;
   final String whatSeenAfter;
   final String visualDifference;
+  final List<String> detectedObjectsBefore;
+  final List<String> detectedObjectsAfter;
   final bool isGoodDeedDetected;
   final bool isTampered;
   final bool isLiveAiResult;
@@ -30,6 +32,8 @@ class GeminiVerificationResult {
     this.whatSeenBefore = '',
     this.whatSeenAfter = '',
     this.visualDifference = '',
+    this.detectedObjectsBefore = const [],
+    this.detectedObjectsAfter = const [],
     this.isGoodDeedDetected = true,
     required this.isTampered,
     required this.isLiveAiResult,
@@ -52,6 +56,8 @@ class GeminiVerificationResult {
     String? whatSeenBefore,
     String? whatSeenAfter,
     String? visualDifference,
+    List<String>? detectedObjectsBefore,
+    List<String>? detectedObjectsAfter,
     bool isGoodDeedDetected = true,
     bool isTampered = false,
   }) {
@@ -68,6 +74,8 @@ class GeminiVerificationResult {
       whatSeenBefore: whatSeenBefore ?? (measurableBefore ?? 'Initial scene capture'),
       whatSeenAfter: whatSeenAfter ?? (measurableAfter ?? 'Post-action scene capture'),
       visualDifference: visualDifference ?? summary,
+      detectedObjectsBefore: detectedObjectsBefore ?? const [],
+      detectedObjectsAfter: detectedObjectsAfter ?? const [],
       isGoodDeedDetected: isGoodDeedDetected,
       isTampered: isTampered,
       isLiveAiResult: false,
@@ -93,6 +101,16 @@ class GeminiVerificationResult {
     final String seenBefore = json['whatSeenBefore']?.toString() ?? beforeDesc;
     final String seenAfter = json['whatSeenAfter']?.toString() ?? afterDesc;
     final String diff = json['visualDifference']?.toString() ?? summary;
+    final List<String> objectsBefore = (json['detectedObjectsBefore'] as List?)
+            ?.map((e) => e.toString())
+            .where((s) => s.trim().isNotEmpty)
+            .toList() ??
+        [];
+    final List<String> objectsAfter = (json['detectedObjectsAfter'] as List?)
+            ?.map((e) => e.toString())
+            .where((s) => s.trim().isNotEmpty)
+            .toList() ??
+        [];
     final bool goodDeed = json['isGoodDeedDetected'] != false && !tampered && score >= 70;
     final String reason = json['reasoning']?.toString() ?? 'Verified via Gemini Multimodal Analysis.';
 
@@ -122,6 +140,8 @@ class GeminiVerificationResult {
       whatSeenBefore: seenBefore,
       whatSeenAfter: seenAfter,
       visualDifference: diff,
+      detectedObjectsBefore: objectsBefore,
+      detectedObjectsAfter: objectsAfter,
       isGoodDeedDetected: goodDeed,
       isTampered: tampered,
       isLiveAiResult: isLive,

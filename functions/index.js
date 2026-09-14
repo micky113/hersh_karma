@@ -58,7 +58,7 @@ exports.analyzeProofOfGood = onRequest(
           },
         });
 
-        const prompt = `You are the Proof-of-Good AI Verification Engine for the Karma Grid ecosystem.
+        const prompt = `You are the Proof-of-Good AI Verification & Object Recognition Engine for the Karma Grid ecosystem.
 Analyze these two photos:
 - Photo 1 is the BEFORE photo.
 - Photo 2 is the AFTER photo.
@@ -68,39 +68,48 @@ Category: "${category}"
 Description: "${description || 'Community impact deed'}"
 GPS Coordinates: ${latitude && longitude ? `${latitude}, ${longitude}` : 'Verified enclave'}
 
-CRITICAL STRICT VERIFICATION RULES:
-1. Ground Truth Inspection: Carefully inspect what is ACTUALLY visible in the pixels of Photo 1 vs Photo 2.
-2. Identical / Unchanged Photos: If Photo 1 and Photo 2 are identical, duplicate, or show NO visible positive transformation:
+CRITICAL STRICT OBJECT RECOGNITION & VERIFICATION RULES:
+1. Object Recognition: Explicitly list all identifiable physical objects, living beings, materials, and ground types in 'detectedObjectsBefore' and 'detectedObjectsAfter'.
+2. Ground Truth Inspection: Carefully inspect what is ACTUALLY visible in the pixels of Photo 1 vs Photo 2.
+3. Identical / Unchanged Photos: If Photo 1 and Photo 2 are identical, duplicate, or show NO visible positive transformation:
    - Set whatSeenBefore = "Exact description of Photo 1"
    - Set whatSeenAfter = "Exact description of Photo 2"
+   - Set detectedObjectsBefore = [detected objects in Photo 1]
+   - Set detectedObjectsAfter = [detected objects in Photo 2]
    - Set visualDifference = "0% difference - identical photos"
    - Set isGoodDeedDetected = false
    - Set evidenceScore = 20
    - Set isTampered = true
    - Set changeSummary = "Identical photos uploaded: No visible change or action detected."
    - Set reasoning = "Both photos show an unchanged scene with no evidence of the claimed action."
-3. Irrelevant / Empty Scenes: If photos show an unrelated scene that does NOT contain the claimed activity (e.g. photos of only a plain floor, wall, or empty table when the deed claims animal welfare or tree planting):
+4. Irrelevant / Empty Scenes: If photos show an unrelated scene that does NOT contain the claimed activity (e.g. photos of only a plain floor, wall, or empty table when the deed claims animal welfare or tree planting):
    - Set whatSeenBefore = "Description of Photo 1 (e.g. bare floor with no animals)"
    - Set whatSeenAfter = "Description of Photo 2 (e.g. bare floor with no animals)"
+   - Set detectedObjectsBefore = [e.g. "bare floor", "tile surface"]
+   - Set detectedObjectsAfter = [e.g. "bare floor", "tile surface"]
    - Set visualDifference = "No relevant activity, animals, or objects detected"
    - Set isGoodDeedDetected = false
    - Set evidenceScore = 25
    - Set isTampered = true
    - Set changeSummary = "No ${category} transformation visible in photos."
    - Set reasoning = "Photos show an unrelated scene that does not match the claimed deed category."
-4. Genuine Positive Transformation:
+5. Genuine Positive Transformation:
    - Set whatSeenBefore = "Description of baseline state in Photo 1"
    - Set whatSeenAfter = "Description of positive outcome state in Photo 2"
+   - Set detectedObjectsBefore = [list all objects in Photo 1]
+   - Set detectedObjectsAfter = [list all objects in Photo 2]
    - Set visualDifference = "Detailed description of what positive change occurred"
    - Set isGoodDeedDetected = true
    - Set evidenceScore = 90 to 100 for clear transformation in identical location.
    - Set isTampered = false
-5. DO NOT assume, fabricate, or imagine positive actions that are not visible in the image pixels.
+6. DO NOT assume, fabricate, or imagine positive actions or objects that are not visible in the image pixels.
 
 Return ONLY a valid JSON object matching this schema:
 {
   "whatSeenBefore": "Precise visual description of objects, living beings, and surroundings in Photo 1",
   "whatSeenAfter": "Precise visual description of objects, living beings, and surroundings in Photo 2",
+  "detectedObjectsBefore": ["object 1", "object 2", "object 3"],
+  "detectedObjectsAfter": ["object 1", "object 2", "object 3"],
   "visualDifference": "Exact visual changes observed between Photo 1 and Photo 2",
   "isGoodDeedDetected": true,
   "evidenceScore": 94,

@@ -717,7 +717,7 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
                     style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF2D3748), height: 1.3),
                   ),
                   const SizedBox(height: 10),
-                  // Photo 1 (Before) vs Photo 2 (After) Visual Content
+                  // Photo 1 (Before) vs Photo 2 (After) Visual Content & Object Recognition
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -738,6 +738,24 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
                                 res.whatSeenBefore.isNotEmpty ? res.whatSeenBefore : res.measurableBefore,
                                 style: const TextStyle(fontSize: 11, color: Colors.black87),
                               ),
+                              if (res.detectedObjectsBefore.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  children: res.detectedObjectsBefore.map((obj) => Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.brown.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '🏷️ $obj',
+                                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.brown),
+                                    ),
+                                  )).toList(),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -760,6 +778,28 @@ class _SubmitDeedScreenState extends State<SubmitDeedScreen> {
                                 res.whatSeenAfter.isNotEmpty ? res.whatSeenAfter : res.measurableAfter,
                                 style: const TextStyle(fontSize: 11, color: Colors.black87),
                               ),
+                              if (res.detectedObjectsAfter.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  children: res.detectedObjectsAfter.map((obj) => Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: (res.isGoodDeedDetected && !res.isTampered ? const Color(0xFF00B074) : Colors.red).withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '🏷️ $obj',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        color: res.isGoodDeedDetected && !res.isTampered ? const Color(0xFF007A50) : Colors.red.shade900,
+                                      ),
+                                    ),
+                                  )).toList(),
+                                ),
+                              ],
                             ],
                           ),
                         ),
